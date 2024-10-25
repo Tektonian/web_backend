@@ -14,6 +14,7 @@
     "description": "",
     "devDependencies": {
         "@types/node": "^22.7.8",
+        "@types/sequelize": "^4.28.20",
         "cors": "^2.8.5",
         "dotenv": "^16.4.5",
         "eslint": "^9.13.0",
@@ -26,7 +27,10 @@
     },
     "dependencies": {
         "@types/express": "^5.0.0",
+        "better-sqlite3": "^11.5.0",
         "morgan": "^1.10.0",
+        "mysql2": "^3.11.3",
+        "sequelize": "^6.37.4",
         "ts-node": "^10.9.2"
     }
 }
