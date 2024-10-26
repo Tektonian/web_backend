@@ -1,33 +1,26 @@
-import { Request, Response, NextFunction } from "express";
+import express from "express";
+import bodyParser from "body-parser";
+import cors from "cors";
+import requestInfoRoutes from "./routes/requestInfoRoutes";
+import requestInfoSequelize from "./dbconfig/requestInfoDatabase";
 
-interface netProps {
-    req: Request;
-    res: Response;
-    next: NextFunction;
-}
-
-const express = require("express");
-const bodyParser = require("body-parser");
-const logger = require("morgan"); // 로깅 라이브러리
-const cors = require("cors"); // cors 보안
 const app = express();
-
-app.set("port", process.env.PORT || 3000);
+const PORT = process.env.PORT || 8080;
 
 app.use(cors());
-
 app.use(bodyParser.urlencoded({ extended: true }));
-
 app.use(bodyParser.json());
 
-app.use(({ req, res, next }: netProps) => {
-    res.setHeader(
-        // Do not Touch!
-        "Content-Security-Policy-Report-Only",
-        "default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; frame-src 'self'",
-    );
+app.use("/request-info", requestInfoRoutes);
 
-    next();
-});
-
-app.use(logger("combined"));
+requestInfoSequelize
+    .sync()
+    .then(() => {
+        console.log("RequestInfo database & tables synced successfully!");
+        app.listen(PORT, () => {
+            console.log(`Server is running on http://localhost:${PORT}`);
+        });
+    })
+    .catch((error) => {
+        console.error("Failed to sync database:", error);
+    });
