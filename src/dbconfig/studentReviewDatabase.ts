@@ -1,7 +1,7 @@
 import { Sequelize } from "sequelize";
 
-const corpProfileSequelize = new Sequelize(
-    "corpProfile",
+const studentReviewSequelize = new Sequelize(
+    "studentReview",
     "Min",
     "starcraft973",
     {
@@ -10,4 +10,4 @@ const corpProfileSequelize = new Sequelize(
     },
 );
 
-export default corpProfileSequelize;
+export default studentReviewSequelize;

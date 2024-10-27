@@ -2,8 +2,8 @@ import { Sequelize } from "sequelize";
 
 const studentProfileSequelize = new Sequelize(
     "studentProfile",
-    "root ",
-    "1q2w3e4r",
+    "Min",
+    "starcraft973",
     {
         host: "localhost",
         dialect: "mysql",
