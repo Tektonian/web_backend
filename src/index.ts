@@ -3,7 +3,7 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import requestInfoRoutes from "./routes/requestInfoRoutes";
 import requestInfoSequelize from "./dbconfig/requestInfoDatabase";
-
+import { chatTest } from "./dbconfig/chatDatabase";
 const app = express();
 const PORT = process.env.PORT || 8080;
 
@@ -12,6 +12,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 app.use("/request-info", requestInfoRoutes);
+
+chatTest();
 
 requestInfoSequelize
     .sync()
