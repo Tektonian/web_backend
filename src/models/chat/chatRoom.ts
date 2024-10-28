@@ -9,8 +9,10 @@ const chatRoomsSchema = new mongoose.Schema(
     },
     {
         collection: "chat_rooms",
-        timestamps: true,
-    },
+        timestamps: {
+            createdAt: "created_at",
+            updatedAt: "updated_at",
+        },    },
 );
 
 const chatRoom = mongoose.model("chat_rooms", chatRoomsSchema);
