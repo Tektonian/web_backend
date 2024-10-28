@@ -6,6 +6,7 @@ import {
     transaction,
 } from "../../models/chat";
 import type { UserAttributes } from "../../models/UserAttributes";
+import { pushMessageQueue } from "./messageQueue";
 
 export const createUser = async (user: UserAttributes) => {
     return await chatUser.create({
@@ -40,8 +41,8 @@ export const createChatRoom = async (
     });
 };
 
-export const getChatRoomByRequest = async (request_id: string) => {
-    return await chatRoom.findOne({ request_id: request_id });
+export const getChatRoomsByRequest = async (request_id: string) => {
+    return await chatRoom.find({ request_id: request_id });
 };
 
 export const getChatRoomsByUser = async (user: UserAttributes) => {
@@ -54,27 +55,16 @@ export const delChatRoomByRequest = async (request_id: string) => {
 };
 
 export const sendMessage = async (
-    request_id: string,
+    chatRoom_id: string,
     sender: UserAttributes,
     message: string,
 ) => {
-    const found = await chatRoom.findOneAndUpdate(
-        { request_id: request_id },
-        { $inc: { message_seq: 1 } },
-    );
-
     const sendUser = await getUser(sender);
-    return chatContent.create({
-        chatroom_id: found._id,
-        message: message,
-        sender_id: sendUser._id,
-        seq: found?.message_seq,
-    });
+    await pushMessageQueue(chatRoom_id, message, sendUser._id);
 };
 
-export const getMessagesByRequest = async (request_id: string) => {
-    const chatRoom = await getChatRoomByRequest(request_id);
-    const messages = await chatContent.find({ chatroom_id: chatRoom._id });
+export const getMessagesByChatRoom = async (chatRoom_id: string) => {
+    const messages = await chatContent.find({ chatroom_id: chatRoom_id });
 
     return messages;
 };
