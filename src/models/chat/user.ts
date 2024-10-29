@@ -4,6 +4,7 @@ const userSchema = new mongoose.Schema(
     {
         uuid: { type: mongoose.Types.UUID, required: true, unique: true },
         user_name_glb: { type: Map, required: true },
+        email: { type: String, default: "", required: true },
         image_url: { type: String, default: "" },
     },
     {
