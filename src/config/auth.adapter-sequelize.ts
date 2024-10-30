@@ -52,8 +52,6 @@ export default function SequelizeAdapter(client: Sequelize): Adapter {
                         },
                         transaction: T,
                     });
-                    console.log("In", userInstance);
-                    console.log("cr", createdUser);
                     const consumerInstance = await Consumer.create(
                         {
                             user_id: createdUser?.dataValues.id,
