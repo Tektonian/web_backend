@@ -3,10 +3,10 @@ import { skipCSRFCheck } from "@auth/core";
 import Credential from "@auth/express/providers/credentials";
 import Google from "@auth/express/providers/google";
 import Nodemailer from "@auth/express/providers/nodemailer";
-import SequelizeAdapter from "@auth/sequelize-adapter";
 import { Sequelize, DataTypes } from "sequelize";
 import { models } from "../models";
 import dotenv from "dotenv";
+import SequelizeAdapter from "./auth.adapter-sequelize";
 dotenv.config({ path: ".env.local" });
 
 const sequelize = new Sequelize("tektonian", "root", "gang1234", {
@@ -36,15 +36,7 @@ const handleCredentialLoginOrRegister = ({
 };
 
 export const authConfig: ExpressAuthConfig = {
-    adapter: SequelizeAdapter(sequelize, {
-        models: {
-            User: sequelize.define("user", {
-                ...models.User.schema,
-                password: DataTypes.STRING,
-                salt: DataTypes.STRING,
-            }),
-        },
-    }),
+    adapter: SequelizeAdapter(sequelize),
     session: { strategy: "jwt" },
     providers: [
         Google,
