@@ -8,8 +8,6 @@ export interface UserAttributes {
   user_id: any;
   username?: string;
   email: string;
-  password?: string;
-  salt?: string;
   created_at?: Date;
   email_verified?: Date;
   image?: string;
@@ -18,15 +16,13 @@ export interface UserAttributes {
 
 export type UserPk = "user_id";
 export type UserId = User[UserPk];
-export type UserOptionalAttributes = "user_id" | "username" | "password" | "salt" | "created_at" | "email_verified" | "image" | "roles";
+export type UserOptionalAttributes = "user_id" | "username" | "created_at" | "email_verified" | "image" | "roles";
 export type UserCreationAttributes = Optional<UserAttributes, UserOptionalAttributes>;
 
 export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   user_id!: any;
   username?: string;
   email!: string;
-  password?: string;
-  salt?: string;
   created_at?: Date;
   email_verified?: Date;
   image?: string;
@@ -84,14 +80,6 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
     email: {
       type: DataTypes.STRING(255),
       allowNull: false
-    },
-    password: {
-      type: DataTypes.STRING(32),
-      allowNull: true
-    },
-    salt: {
-      type: DataTypes.STRING(7),
-      allowNull: true
     },
     email_verified: {
       type: DataTypes.DATE,

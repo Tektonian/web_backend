@@ -14,11 +14,13 @@ export interface AccountAttributes {
   scope?: string;
   id_token?: string;
   session_state?: string;
+  password?: string;
+  salt?: string;
 }
 
 export type AccountPk = "provider" | "providerAccountId";
 export type AccountId = Account[AccountPk];
-export type AccountOptionalAttributes = "refresh_token" | "access_token" | "expires_at" | "token_type" | "scope" | "id_token" | "session_state";
+export type AccountOptionalAttributes = "refresh_token" | "access_token" | "expires_at" | "token_type" | "scope" | "id_token" | "session_state" | "password" | "salt";
 export type AccountCreationAttributes = Optional<AccountAttributes, AccountOptionalAttributes>;
 
 export class Account extends Model<AccountAttributes, AccountCreationAttributes> implements AccountAttributes {
@@ -33,6 +35,8 @@ export class Account extends Model<AccountAttributes, AccountCreationAttributes>
   scope?: string;
   id_token?: string;
   session_state?: string;
+  password?: string;
+  salt?: string;
 
   // Account belongsTo User via user_id
   user!: User;
@@ -90,6 +94,14 @@ export class Account extends Model<AccountAttributes, AccountCreationAttributes>
     },
     session_state: {
       type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    password: {
+      type: DataTypes.STRING(32),
+      allowNull: true
+    },
+    salt: {
+      type: DataTypes.STRING(7),
       allowNull: true
     }
   }, {

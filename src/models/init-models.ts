@@ -7,6 +7,8 @@ import { Consumer as _Consumer } from "./Consumer";
 import type { ConsumerAttributes, ConsumerCreationAttributes } from "./Consumer";
 import { Corporation as _Corporation } from "./Corporation";
 import type { CorporationAttributes, CorporationCreationAttributes } from "./Corporation";
+import { CorporationReview as _CorporationReview } from "./CorporationReview";
+import type { CorporationReviewAttributes, CorporationReviewCreationAttributes } from "./CorporationReview";
 import { ExamHistory as _ExamHistory } from "./ExamHistory";
 import type { ExamHistoryAttributes, ExamHistoryCreationAttributes } from "./ExamHistory";
 import { LanguageExam as _LanguageExam } from "./LanguageExam";
@@ -19,30 +21,28 @@ import { School as _School } from "./School";
 import type { SchoolAttributes, SchoolCreationAttributes } from "./School";
 import { Student as _Student } from "./Student";
 import type { StudentAttributes, StudentCreationAttributes } from "./Student";
+import { StudentReview as _StudentReview } from "./StudentReview";
+import type { StudentReviewAttributes, StudentReviewCreationAttributes } from "./StudentReview";
 import { User as _User } from "./User";
 import type { UserAttributes, UserCreationAttributes } from "./User";
 import { VerificationToken as _VerificationToken } from "./VerificationToken";
 import type { VerificationTokenAttributes, VerificationTokenCreationAttributes } from "./VerificationToken";
-import { knex_migrations as _knex_migrations } from "./knex_migrations";
-import type { knex_migrationsAttributes, knex_migrationsCreationAttributes } from "./knex_migrations";
-import { knex_migrations_lock as _knex_migrations_lock } from "./knex_migrations_lock";
-import type { knex_migrations_lockAttributes, knex_migrations_lockCreationAttributes } from "./knex_migrations_lock";
 
 export {
   _AcademicHistory as AcademicHistory,
   _Account as Account,
   _Consumer as Consumer,
   _Corporation as Corporation,
+  _CorporationReview as CorporationReview,
   _ExamHistory as ExamHistory,
   _LanguageExam as LanguageExam,
   _Organization as Organization,
   _Request as Request,
   _School as School,
   _Student as Student,
+  _StudentReview as StudentReview,
   _User as User,
   _VerificationToken as VerificationToken,
-  _knex_migrations as knex_migrations,
-  _knex_migrations_lock as knex_migrations_lock,
 };
 
 export type {
@@ -54,6 +54,8 @@ export type {
   ConsumerCreationAttributes,
   CorporationAttributes,
   CorporationCreationAttributes,
+  CorporationReviewAttributes,
+  CorporationReviewCreationAttributes,
   ExamHistoryAttributes,
   ExamHistoryCreationAttributes,
   LanguageExamAttributes,
@@ -66,14 +68,12 @@ export type {
   SchoolCreationAttributes,
   StudentAttributes,
   StudentCreationAttributes,
+  StudentReviewAttributes,
+  StudentReviewCreationAttributes,
   UserAttributes,
   UserCreationAttributes,
   VerificationTokenAttributes,
   VerificationTokenCreationAttributes,
-  knex_migrationsAttributes,
-  knex_migrationsCreationAttributes,
-  knex_migrations_lockAttributes,
-  knex_migrations_lockCreationAttributes,
 };
 
 export function initModels(sequelize: Sequelize) {
@@ -81,16 +81,16 @@ export function initModels(sequelize: Sequelize) {
   const Account = _Account.initModel(sequelize);
   const Consumer = _Consumer.initModel(sequelize);
   const Corporation = _Corporation.initModel(sequelize);
+  const CorporationReview = _CorporationReview.initModel(sequelize);
   const ExamHistory = _ExamHistory.initModel(sequelize);
   const LanguageExam = _LanguageExam.initModel(sequelize);
   const Organization = _Organization.initModel(sequelize);
   const Request = _Request.initModel(sequelize);
   const School = _School.initModel(sequelize);
   const Student = _Student.initModel(sequelize);
+  const StudentReview = _StudentReview.initModel(sequelize);
   const User = _User.initModel(sequelize);
   const VerificationToken = _VerificationToken.initModel(sequelize);
-  const knex_migrations = _knex_migrations.initModel(sequelize);
-  const knex_migrations_lock = _knex_migrations_lock.initModel(sequelize);
 
   Request.belongsTo(Consumer, { as: "consumer", foreignKey: "consumer_id"});
   Consumer.hasMany(Request, { as: "Requests", foreignKey: "consumer_id"});
@@ -118,15 +118,15 @@ export function initModels(sequelize: Sequelize) {
     Account: Account,
     Consumer: Consumer,
     Corporation: Corporation,
+    CorporationReview: CorporationReview,
     ExamHistory: ExamHistory,
     LanguageExam: LanguageExam,
     Organization: Organization,
     Request: Request,
     School: School,
     Student: Student,
+    StudentReview: StudentReview,
     User: User,
     VerificationToken: VerificationToken,
-    knex_migrations: knex_migrations,
-    knex_migrations_lock: knex_migrations_lock,
   };
 }
