@@ -9,9 +9,14 @@ import dotenv from "dotenv";
 import SequelizeAdapter from "./auth.adapter-sequelize";
 dotenv.config({ path: ".env.local" });
 
-const sequelize = new Sequelize("tektonian", "root", "gang1234", {
-    dialect: "mysql",
-});
+const sequelize = new Sequelize(
+    process.env.MYSQL_DATABASE,
+    process.env.MYSQL_USER,
+    process.env.MYSQL_PASSWORD,
+    {
+        dialect: "mysql",
+    },
+);
 
 // Most of the codes are from https://github.com/nextauthjs/next-auth/blob/main/packages/core/src/lib/actions/callback/handle-login.ts#L26
 // Since there is no proper handler for credential Login or Signin(Register)
@@ -132,35 +137,7 @@ export const authConfig: ExpressAuthConfig = {
             from: process.env.EMAIL_FROM,
             sendVerificationRequest: customSendVerificationRequest,
             generateVerificationToken: () => {
-                console.log("generateVerificationToken");
-                return crypto.randomUUID().split("-")[0];
-            },
-        }),
-        Credential({
-            credentials: {
-                email: {},
-                passwd: {},
-            },
-            // next is signIn callback
-            // @ts-ignore
-            authorize: async (credentials) => {
-                console.log("Authorize: ", credentials);
-                let user = null;
-
-                const password = credentials.passwd ?? "";
-                const email = credentials?.email;
-                user = await models.User.findOne({
-                    where: { email: credentials.email },
-                    attributes: ["user_id", "username", "email"],
-                });
-                console.log("USER", user);
-                // @ts-ignore
-                if (!user) {
-                    return user.dataValues;
-                    throw new Error("User not found");
-                }
-
-                return user.dataValues;
+                return crypto.randomUUID();
             },
         }),
     ],
@@ -205,37 +182,11 @@ export const authConfig: ExpressAuthConfig = {
                     return true;
                 }
             }
-            if (account !== null && account.type === "credentials") {
-                return true;
-                // @ts-ignore
-                const emailVerified = await adapter.getAccount(
-                    // @ts-ignore
-                    account.providerAccountId,
-                );
-            }
-            console.log(
-                "User signin2: ",
-                user,
-                account,
-                profile,
-                email,
-                credentials,
-            );
-
-            if (
-                credentials === undefined ||
-                credentials.email === undefined ||
-                credentials.email === null
-            )
-                return false;
-
-            // @ts-ignore
-            return credentials.email.endsWith(".com");
         },
         async session({ session, token, user }) {
             console.log("Session", session, token, user);
-            //session.sessionToken = token.accessToken;
-            //session.user.id = token.id;
+            // Pass JWT token info to session
+            // https://authjs.dev/guides/extending-the-session#with-jwt
             session.user.id = token.id;
             return session;
         },
