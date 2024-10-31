@@ -11,6 +11,7 @@ import { pushMessageQueue } from "./messageQueue";
 export const createUser = async (user: UserAttributes) => {
     return await chatUser.create({
         uuid: user.user_id,
+        email: user.email,
         user_name_glb: { kr: user.username },
         image_url: user.image,
     });
@@ -50,7 +51,7 @@ export const getChatRoomsByUser = async (user: UserAttributes) => {
     return await chatRoom.find({ participants: { $in: u } });
 };
 
-export const delChatRoomByRequest = async (request_id: string) => {
+export const delChatRoomsByRequest = async (request_id: string) => {
     return await chatRoom.deleteOne({ request_id: request_id });
 };
 
@@ -63,8 +64,44 @@ export const sendMessage = async (
     await pushMessageQueue(chatRoom_id, message, sendUser._id);
 };
 
-export const getMessagesByChatRoom = async (chatRoom_id: string) => {
+export const getChatRoomMessages = async (
+    chatRoom_id: mongoose.Types.ObjectId,
+) => {
     const messages = await chatContent.find({ chatroom_id: chatRoom_id });
 
     return messages;
+};
+
+export const getChatRoomMessagesBySeq = async (
+    chatRoom_id: mongoose.Types.ObjectId,
+    last_seq: number,
+) => {
+    const messages = await chatContent
+        .find({ chatroom_id: chatRoom_id })
+        .gt("seq", last_seq);
+
+    return messages;
+};
+
+export const getChatRoomMessagesBiz = async (
+    chatRoom_id: mongoose.Types.ObjectId,
+    user: UserAttributes,
+) => {
+    const mongoUser = await getUser(user);
+    console.log("mongo", user);
+    const messages = await chatContent.find({ chatroom_id: chatRoom_id });
+    if (mongoUser === null) return [];
+
+    const filteredMessages = messages.map((val) => {
+        console.log(val.sender_id === mongoUser._id);
+        return {
+            message: val.message,
+            direction: mongoUser._id.equals(val.sender_id)
+                ? "outgoing"
+                : "incoming",
+            createdAt: val.created_at,
+        };
+    });
+
+    return filteredMessages;
 };

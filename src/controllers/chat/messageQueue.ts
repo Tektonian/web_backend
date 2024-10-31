@@ -27,7 +27,6 @@ const worker = new Worker(
             chatRoom_id,
             { $inc: { message_seq: 1 } },
         );
-        console.log(data);
         await chatModels.chatContent.create({
             sender_id: sender._id,
             message: data.message,
@@ -45,9 +44,9 @@ const worker = new Worker(
 
 // TODO: error 처리 등을 위한 hook 코드 작성
 worker.on("completed", (job) => {
-    console.log(`${job.id} has completed!`);
+    //console.log(`${job.id} has completed!`);
 });
 
 worker.on("failed", (job, err) => {
-    console.log(`${job.id} has failed with ${err.message}`);
+    //console.log(`${job.id} has failed with ${err.message}`);
 });
