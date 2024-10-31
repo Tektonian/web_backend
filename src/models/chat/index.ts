@@ -5,7 +5,7 @@ import chatContent from "./chatContent";
 import unread from "./unread";
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
-console.log(process.env.MONGODB_URI);
+
 mongoose
     .connect(process.env.MONGODB_URI, {
         dbName: process.env.MONGODB_DATABASE,

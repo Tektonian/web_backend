@@ -5,23 +5,24 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 dotenv.config({ path: ".env.local" });
 
+// Only one queue for now
 const chatContentQueue = new Queue("chatContent");
 
 interface messageQueueDataTypes {
     chatRoom: mongoose.Types.ObjectId;
     message: any;
-    sender: mongoose.Types.ObjectId;
+    sender_id: mongoose.Types.UUID;
 }
 
 export const pushMessageQueue = async (
     chatRoom: mongoose.Types.ObjectId,
     message: string,
-    sender: mongoose.Types.ObjectId,
+    sender_id: mongoose.Types.UUID,
 ) => {
     const data: messageQueueDataTypes = {
         chatRoom: chatRoom,
         message: message,
-        sender: sender,
+        sender_id: sender_id,
     };
     await chatContentQueue.add(chatRoom.toString(), data);
 };
@@ -36,14 +37,11 @@ const worker = new Worker(
             { $inc: { message_seq: 1 } },
         );
 
-        const unread_users = chatRoom?.participants.pull(data.sender);
-
         await chatModels.chatContent.create({
-            sender: data.sender,
+            sender_id: data.sender_id,
             message: data.message,
             chatroom: chatRoom,
             seq: chatRoom?.message_seq,
-            unread_users: unread_users,
         });
     },
     {
