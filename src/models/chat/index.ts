@@ -3,9 +3,13 @@ import chatUser from "./user";
 import chatRoom from "./chatRoom";
 import chatContent from "./chatContent";
 import unread from "./unread";
-
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+console.log(process.env.MONGODB_URI);
 mongoose
-    .connect("mongodb://localhost:27017/", { dbName: "chat" })
+    .connect(process.env.MONGODB_URI, {
+        dbName: process.env.MONGODB_DATABASE,
+    })
     .then(async (val) => {
         console.log("Connected to MongoDB => UserAPI");
         console.log("drop collections");

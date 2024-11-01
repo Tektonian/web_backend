@@ -8,10 +8,13 @@ import type {
 import { Sequelize, Model } from "sequelize";
 import { models } from "../models";
 import { VerificationTokenTypes } from "../models/roles/VerificationToken.types";
+import sequelize from "sequelize";
 
 export default function SequelizeAdapter(client: Sequelize): Adapter {
     const { User, Account, VerificationToken, Consumer } = models;
 
+    // TODO: sync function should not be used in production level
+    // sync is for development only!!
     let _synced = false;
     const sync = async () => {
         if (process.env.NODE_ENV !== "production" && !_synced) {
@@ -29,20 +32,53 @@ export default function SequelizeAdapter(client: Sequelize): Adapter {
     return {
         async createUser(user) {
             await sync();
-            const userInstance = await User.create(user);
-            const consumerInstance = await Consumer.create({
-                user_id: user.id,
-                consumer_email: user.email,
-                consumer_type: "normal",
-                phone_number: "",
-            });
-
-            return userInstance;
+            try {
+                const ret = await client.transaction(async (T) => {
+                    const userInstance = await User.create(
+                        {
+                            username: user.name,
+                            email: user.email,
+                            email_verified: user.emailVerified,
+                            image: user.image,
+                        },
+                        { transaction: T },
+                    );
+                    const createdUser = await User.findOne({
+                        where: { email: user.email },
+                        // user_id as id
+                        attributes: {
+                            exclude: ["user_id"],
+                            include: [["user_id", "id"]],
+                        },
+                        transaction: T,
+                    });
+                    const consumerInstance = await Consumer.create(
+                        {
+                            user_id: createdUser?.dataValues.id,
+                            consumer_email: createdUser?.dataValues.email,
+                            consumer_type: "normal",
+                            phone_number: "",
+                        },
+                        { transaction: T },
+                    );
+                    return createdUser?.get({ plain: true }) ?? null;
+                });
+                return ret;
+            } catch (e) {
+                console.log(e);
+                return null;
+            }
         },
         async gerUser(id) {
             await sync();
 
-            const userInstance = await User.findByPk(id);
+            const userInstance = await User.findByPk(id, {
+                // user_id as id
+                attributes: {
+                    exclude: ["user_id"],
+                    include: [["user_id", "id"]],
+                },
+            });
 
             return userInstance?.get({ plane: true }) ?? null;
         },
@@ -51,29 +87,40 @@ export default function SequelizeAdapter(client: Sequelize): Adapter {
 
             const userInstance = await User.findOne({
                 where: { email },
+                // user_id as id
+                attributes: {
+                    exclude: ["user_id"],
+                    include: [["user_id", "id"]],
+                },
             });
 
             return userInstance?.get({ plain: true }) ?? null;
         },
         async getUserByAccount({ provider, providerAccountId }) {
             await sync();
-
             const accountInstance = await Account.findOne({
                 where: { provider, providerAccountId },
+                // TODO: No idea strage field are included by default!
+                attributes: { exclude: ["UserUserId"] },
             });
 
             if (!accountInstance) {
                 return null;
             }
-
-            const userInstance = await User.findByPk(accountInstance.user_id);
-
+            const userInstance = await User.findByPk(accountInstance.user_id, {
+                // user_id as id
+                attributes: {
+                    exclude: ["user_id"],
+                    include: [["user_id", "id"]],
+                },
+            });
+            const userData = userInstance?.get({ plain: true }) ?? null;
             return userInstance?.get({ plain: true }) ?? null;
         },
         async updateUser(user) {
             await sync();
 
-            await User.update(user, { where: { id: user.id } });
+            await User.update(user, { where: { user_id: user.id } });
             const userInstance = await User.findByPk(user.id);
 
             return userInstance;
@@ -84,9 +131,17 @@ export default function SequelizeAdapter(client: Sequelize): Adapter {
             const userInstance = await User.findByPk(userId);
             // Consumer data of user will be destroyed automatically
             // On delete casacade
-            await User.destroy({ where: { id: userId } });
+            await User.destroy({ where: { user_id: userId } });
 
             return userInstance;
+        },
+        async linkAccount(account) {
+            await sync();
+            // userId to user_id
+            await Account.create({
+                user_id: account.userId,
+                ...account,
+            });
         },
         async unlinkAccount({ provider, providerAccountId }) {
             await sync();
@@ -95,8 +150,14 @@ export default function SequelizeAdapter(client: Sequelize): Adapter {
                 where: { provider, providerAccountId },
             });
         },
-        async createVerificationToken(verificationToken) {
+        async createVerificationToken(
+            verificationToken,
+            tokenType: string = "email",
+        ) {
             await sync();
+
+            verificationToken.token_type =
+                verificationToken.token_type ?? tokenType;
 
             return await VerificationToken.create(verificationToken);
         },

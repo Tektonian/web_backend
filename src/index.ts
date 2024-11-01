@@ -11,7 +11,6 @@ import {
     authenticateUser,
 } from "./middleware/auth.middleware.js";
 import { models } from "./models/index.js";
-import * as chatControl from "./controllers/chat/chat.js";
 import initChat from "./routes/chatRouter.js";
 import { createServer } from "http";
 
@@ -62,7 +61,7 @@ app.get("/", async ({ req, res, next }: netProps) => {
         user: res.session?.user,
     });
 });
-
+/*
 app.post("/chatRooms", async (req, res, next) => {
     const sessionUser = res.session.user;
     if (sessionUser === undefined) res.json("No session");
@@ -91,20 +90,11 @@ app.post("/chatContents", async (req, res, next) => {
     console.log(messages);
     res.json(messages);
 });
-
-chatTest();
-/*
-const httpServer = createServer(app);
-const io = new Server(httpServer, {
-    cors: {
-        credentials: true,
-        origin: "http://localhost:3000",
-    },
-});
 */
+chatTest();
 
 const httpServer = createServer(app);
 
-const io = initChat(httpServer);
+//const io = initChat(httpServer);
 httpServer.listen(8080);
 //app.listen(8080, () => console.log("App listening"));

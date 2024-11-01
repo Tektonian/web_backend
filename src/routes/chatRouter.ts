@@ -1,8 +1,10 @@
 import { Server } from "socket.io";
 import { currentSession } from "../middleware/auth.middleware";
-import * as chatController from "../controllers/chat/chat";
+import { chatController } from "../controllers/chat";
 import { models } from "../models";
+
 export default function initChat(httpServer) {
+    const { chatContentController } = chatController;
     const io = new Server(httpServer, {
         cors: {
             origin: "http://localhost:3000",
@@ -29,7 +31,7 @@ export default function initChat(httpServer) {
             console.log(recv);
             const { chatRoomId, message } = JSON.parse(recv);
             const messagePool =
-                await chatController.getChatRoomMessages(chatRoomId);
+                await chatContentController.getChatRoomMessages(chatRoomId);
             console.log("messagePool", messagePool);
             if (messagePool !== undefined) {
                 // message DB 업데이터
@@ -37,7 +39,7 @@ export default function initChat(httpServer) {
                     where: { email: message.senderName },
                     attributes: ["user_id", "username", "email"],
                 });
-                await chatController.sendMessage(
+                await chatContentController.sendMessage(
                     chatRoomId,
                     user?.dataValues,
                     message.content,

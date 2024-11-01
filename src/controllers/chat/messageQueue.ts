@@ -1,43 +1,55 @@
 import * as chatModels from "../../models/chat";
 import { Queue, Worker } from "bullmq";
 import type { Document } from "mongoose";
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+dotenv.config({ path: ".env.local" });
+
 const chatContentQueue = new Queue("chatContent");
 
+interface messageQueueDataTypes {
+    chatRoom: mongoose.Types.ObjectId;
+    message: any;
+    sender: mongoose.Types.ObjectId;
+}
+
 export const pushMessageQueue = async (
-    chatRoom_id: string,
+    chatRoom: mongoose.Types.ObjectId,
     message: string,
-    sender_id: string,
+    sender: mongoose.Types.ObjectId,
 ) => {
-    const data = {
-        chatRoom_id: chatRoom_id,
+    const data: messageQueueDataTypes = {
+        chatRoom: chatRoom,
         message: message,
-        sender_id: sender_id,
+        sender: sender,
     };
-    await chatContentQueue.add(chatRoom_id, data);
+    await chatContentQueue.add(chatRoom.toString(), data);
 };
 
 const worker = new Worker(
     "chatContent",
     async (job) => {
-        const data = job.data;
-        const chatRoom_id = data.chatRoom_id;
+        const data = job.data as messageQueueDataTypes;
 
-        const sender = await chatModels.chatUser.findById(data.sender_id);
         const chatRoom = await chatModels.chatRoom.findByIdAndUpdate(
-            chatRoom_id,
+            data.chatRoom,
             { $inc: { message_seq: 1 } },
         );
+
+        const unread_users = chatRoom?.participants.pull(data.sender);
+
         await chatModels.chatContent.create({
-            sender_id: sender._id,
+            sender: data.sender,
             message: data.message,
-            chatroom_id: chatRoom._id,
+            chatroom: chatRoom,
             seq: chatRoom?.message_seq,
+            unread_users: unread_users,
         });
     },
     {
         connection: {
-            host: "localhost",
-            port: 6379,
+            host: process.env.REDIS_HOST,
+            port: process.env.REDIS_PORT,
         },
     },
 );

@@ -10,7 +10,7 @@ export interface VerificationTokenAttributes {
 
 export type VerificationTokenPk = "identifier" | "token";
 export type VerificationTokenId = VerificationToken[VerificationTokenPk];
-export type VerificationTokenOptionalAttributes = "expires" | "token_type";
+export type VerificationTokenOptionalAttributes = "expires";
 export type VerificationTokenCreationAttributes = Optional<VerificationTokenAttributes, VerificationTokenOptionalAttributes>;
 
 export class VerificationToken extends Model<VerificationTokenAttributes, VerificationTokenCreationAttributes> implements VerificationTokenAttributes {
@@ -41,8 +41,7 @@ export class VerificationToken extends Model<VerificationTokenAttributes, Verifi
     token_type: {
       type: DataTypes.STRING(45),
       allowNull: false,
-      defaultValue: "normal",
-      comment: "Verification token can be used for various types of entities\\n\\nFor example: verification for corporation user, organization user, and student user \\n\\nSo there could be four types. \\nnull: default type when user sign in\\nstudent: when user verifies itself is student\\norgz: ``\\nCorp: ``"
+      comment: "Verification token can be used for various types of entities\n\nFor example: verification for corporation user, organization user, and student user \n\nSo there could be four types. \nnull: default type when user sign in\nstudent: when user verifies itself is student\norgz: ``\nCorp: ``"
     }
   }, {
     sequelize,

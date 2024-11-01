@@ -2,9 +2,9 @@ import mongoose from "mongoose";
 
 const chatRoomsSchema = new mongoose.Schema(
     {
-        request_id: { type: String, required: true, unique: true },
+        request_id: { type: Number, required: true },
         consumer: { type: mongoose.Types.ObjectId, required: true },
-        participants: { type: Array, required: true },
+        participants: { type: [mongoose.Types.ObjectId], required: true },
         message_seq: { type: Number, default: 0 },
     },
     {
@@ -12,7 +12,8 @@ const chatRoomsSchema = new mongoose.Schema(
         timestamps: {
             createdAt: "created_at",
             updatedAt: "updated_at",
-        },    },
+        },
+    },
 );
 
 const chatRoom = mongoose.model("chat_rooms", chatRoomsSchema);
