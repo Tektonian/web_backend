@@ -26,9 +26,6 @@ export const currentSession = async (
 ) => {
     const session = (await getSession(req, authConfig)) ?? undefined;
     res.session = session;
-    // TODO: check later - code for websocket authentication
-    console.log("socket authen add", session);
-    req.user = session;
 
     return next();
 };

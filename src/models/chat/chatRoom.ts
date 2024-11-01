@@ -3,8 +3,8 @@ import mongoose from "mongoose";
 const chatRoomsSchema = new mongoose.Schema(
     {
         request_id: { type: Number, required: true },
-        consumer: { type: mongoose.Types.ObjectId, required: true },
-        participants: { type: [mongoose.Types.ObjectId], required: true },
+        consumer_id: { type: mongoose.Types.UUID, required: true },
+        participant_ids: { type: [mongoose.Types.UUID], required: true },
         message_seq: { type: Number, default: 0 },
     },
     {

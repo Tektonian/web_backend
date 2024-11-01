@@ -1,10 +1,9 @@
+import mongoose from "mongoose";
 import { Server } from "socket.io";
 import { currentSession } from "../middleware/auth.middleware";
 import { chatController } from "../controllers/chat";
 import { models } from "../models";
 
-<<<<<<< Updated upstream
-=======
 interface joinRequestProps {
     deviceLastSeq: number;
     chatRoomId: string;
@@ -15,10 +14,13 @@ interface messageResponseProps {
     lastReadSequences: number[];
 }
 
-// 메시지 전송 -> 큐 삽입 -> 룸 브로드케스팅 -> 리턴 (받았다고 표시) -> unread 수 전송
->>>>>>> Stashed changes
 export default function initChat(httpServer) {
-    const { chatContentController } = chatController;
+    const {
+        chatContentController,
+        chatRoomController,
+        chatUserController,
+        chatUnreadController,
+    } = chatController;
     const io = new Server(httpServer, {
         cors: {
             origin: "http://localhost:3000",
@@ -27,20 +29,16 @@ export default function initChat(httpServer) {
         path: "/api/chat",
     });
 
-    io.engine.use(currentSession);
-
+    // set user and chatroom datas on socket instance
     io.use((socket, next) => {
-        console.log("Socket", socket.request.user);
-        next();
+        // chatRoom will be set 'join' event
+        socket.data.chatRoom = null;
+        // TODO: should add protocol to get session -> change later
+        socket.request.protocol = "ws";
+        currentSession(socket.request, socket.request, next);
     });
 
     io.on("connection", async (socket) => {
-<<<<<<< Updated upstream
-        console.log("User connected");
-        socket.on("join", (val) => {
-            console.log("Join room ", val);
-            socket.join(val);
-=======
         const sessionUser = socket.request.session;
         // UUID 랑 session id랑 변환이 힘듬;; 그냥 이메일로 검색
         // TODO: 나중에 고치기
@@ -51,7 +49,7 @@ export default function initChat(httpServer) {
         if (chatUser === null) {
             throw new Error("User not exists");
         }
-        console.log("socket.id", socket.id);
+
         socket.on("userTryJoin", async (req: joinRequestProps) => {
             // Is he ok to join?
             const { chatRoomId, deviceLastSeq } = req;
@@ -102,30 +100,18 @@ export default function initChat(httpServer) {
                 // join user after acknowledgement
                 console.log("User joined: ", chatRoomId, " status: ", response);
                 socket.join(chatRoomId);
-                console.log(socket.id, socket.data);
             } catch (e) {
                 // should now reach here
                 throw new Error("User couldn't join the room");
             }
->>>>>>> Stashed changes
         });
 
         socket.on("sendMessage", async (recv, callback) => {
-            console.log(recv);
             const { chatRoomId, message } = JSON.parse(recv);
-<<<<<<< Updated upstream
-=======
             const chatRoom = socket.data.chatRoom;
             console.log("message: ", recv);
-            console.log(
-                "chatRoom: ",
-                chatRoom,
-                chatRoomId,
-                socket.id,
-                socket.data,
-            );
+            console.log("chatRoom: ", chatRoom);
             /*
->>>>>>> Stashed changes
             const messagePool =
                 await chatContentController.getChatRoomMessages(chatRoomId);
             console.log("messagePool", messagePool);
@@ -152,29 +138,15 @@ export default function initChat(httpServer) {
                 alert("Chatroom not exist!");
                 return;
             }
-<<<<<<< Updated upstream
-            socket
-=======
             */
-            try {
-                const responses = await io
-                    .to(chatRoomId)
-                    .timeout(1000)
-                    .emitWithAck("respondMessage", JSON.stringify(message));
-                console.log("chatroom broadcast response", responses);
-            } catch (e) {
-                console.log("chatroom broadcast error", e);
-            }
-            /* socket
->>>>>>> Stashed changes
+            socket
                 .in(chatRoomId)
                 .emit("respondMessage", JSON.stringify(message));
-            */
-            callback(JSON.stringify(message));
         });
 
         socket.on("disconnect", () => {
-            console.log("User disconnected");
+            console.log("User disconnected: ", socket.data.chatRoom);
+            socket.data.chatRoom = null;
         });
     });
 

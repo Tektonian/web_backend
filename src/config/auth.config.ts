@@ -27,7 +27,6 @@ const sequelize = new Sequelize(
 import { createTransport } from "nodemailer";
 
 export async function customSendVerificationRequest(params) {
-    console.log("Custom email", params);
     const { identifier, token, url, provider, theme } = params;
     const { host } = new URL(url);
     // NOTE: You are not required to use `nodemailer`, use whatever you want.
@@ -145,29 +144,12 @@ export const authConfig: ExpressAuthConfig = {
     skipCSRFCheck: skipCSRFCheck, // TODO: remove later
     callbacks: {
         async jwt({ token, user, trigger, account, profile, session }) {
-            console.log(
-                "JWT: ",
-                token,
-                user,
-                trigger,
-                account,
-                profile,
-                session,
-            );
             if (trigger === "update") token.name = session.user.name;
             token.id = user?.id ?? token.id;
             return token;
         },
         async signIn({ user, account, profile, email, credentials }) {
             const adapter = SequelizeAdapter(sequelize) ?? undefined;
-            console.log(
-                "User signing",
-                user,
-                account,
-                profile,
-                email,
-                credentials,
-            );
 
             // Google Oauth2
             if (account !== null && account.provider === "google") {
@@ -184,7 +166,6 @@ export const authConfig: ExpressAuthConfig = {
             }
         },
         async session({ session, token, user }) {
-            console.log("Session", session, token, user);
             // Pass JWT token info to session
             // https://authjs.dev/guides/extending-the-session#with-jwt
             session.user.id = token.id;
@@ -193,10 +174,10 @@ export const authConfig: ExpressAuthConfig = {
     },
     events: {
         async signIn({ user, account, profile, isNewUser }) {
-            console.log("Event signin", user, account, profile, isNewUser);
+            // console.log("Event signin", user, account, profile, isNewUser);
         },
         async session({ session, token }) {
-            console.log("event session", session, token);
+            // console.log("event session", session, token);
         },
     },
     debug: true,

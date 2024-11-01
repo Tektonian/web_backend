@@ -3,20 +3,26 @@ import type { UserAttributes } from "../../models/User";
 import type { RequestAttributes } from "../../models/Request";
 
 export const createChatRoom = async (
-    request_id: string,
+    request_id: number,
     consumer: UserAttributes,
     participants: UserAttributes[],
 ) => {
     const uuidList = participants.map((user) => user.user_id);
 
-    const participants_ids = await chatUser.find({ uuid: { $in: uuidList } });
-    const consumer_id = await chatUser.findOne({ uuid: consumer.user_id });
+    const chatParticipants = await chatUser.find({
+        user_id: { $in: uuidList },
+    });
+    const chatConsumer = await chatUser.findOne({ user_id: consumer.user_id });
 
     await chatRoom.create({
         request_id: request_id,
-        consumer: consumer_id,
-        participants: participants_ids,
+        consumer_id: chatConsumer.user_id,
+        participant_ids: chatParticipants.map((u) => u.user_id),
     });
+};
+
+export const getChatRoomById = async (objectId: string) => {
+    return await chatRoom.findById(objectId);
 };
 
 export const getChatRoomsByRequest = async (request: RequestAttributes) => {
@@ -24,16 +30,16 @@ export const getChatRoomsByRequest = async (request: RequestAttributes) => {
 };
 
 export const getAllChatRoomsByUser = async (user: UserAttributes) => {
-    const chatuser = await chatUser.findOne({ uuid: user.user_id });
+    const chatuser = await chatUser.findOne({ user_id: user.user_id });
 
-    return await chatRoom.find({ participants: chatuser });
+    return await chatRoom.find({ participant_ids: chatuser.user_id });
 };
 
 export const getAliveChatRoomsByUser = async (user: UserAttributes) => {
-    const chatuser = await chatUser.findOne({ uuid: user.user_id });
+    const chatuser = await chatUser.findOne({ user_id: user.user_id });
 
     return await chatRoom.find({
-        participants: chatuser,
+        participant_ids: chatuser.user_id,
         // request_id of chat rooms whose requests are not done yet should be bigger than 0
         request_id: { $gte: 0 },
     });
