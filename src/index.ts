@@ -13,6 +13,7 @@ import {
 import { models } from "./models/index.js";
 import initChat from "./routes/chatRouter.js";
 import { createServer } from "http";
+import { chatController } from "./controllers/chat/index.js";
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -61,7 +62,7 @@ app.get("/", async ({ req, res, next }: netProps) => {
         user: res.session?.user,
     });
 });
-/*
+
 app.post("/chatRooms", async (req, res, next) => {
     const sessionUser = res.session.user;
     if (sessionUser === undefined) res.json("No session");
@@ -69,9 +70,10 @@ app.post("/chatRooms", async (req, res, next) => {
         where: { email: sessionUser.email },
         attributes: ["user_id", "username", "email"],
     });
-    const chatRooms = await chatControl.getChatRoomsByUser(
-        dbUserData?.dataValues,
-    );
+    const chatRooms =
+        await chatController.chatRoomController.getAliveChatRoomsByUser(
+            dbUserData?.dataValues,
+        );
     res.json(chatRooms);
 });
 
@@ -83,14 +85,15 @@ app.post("/chatContents", async (req, res, next) => {
         where: { email: sessionUser.email },
         attributes: ["user_id", "username", "email"],
     });
-    const messages = await chatControl.getChatRoomMessagesBiz(
-        chatroom_id,
-        dbUserData?.dataValues,
-    );
+    const messages =
+        await chatController.chatContentController.getChatRoomMessagesBiz(
+            chatroom_id,
+            dbUserData?.dataValues,
+        );
     console.log(messages);
     res.json(messages);
 });
-*/
+
 chatTest();
 
 const httpServer = createServer(app);
