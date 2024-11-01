@@ -1,6 +1,1 @@
-export type VerificationTokenTypes =
-    | "email"
-    | "credentials"
-    | "corp"
-    | "orgn"
-    | "student";
+export type VerificationTokenTypes = "email" | "corp" | "orgn" | "student";
