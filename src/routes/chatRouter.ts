@@ -47,6 +47,7 @@ export default function initChat(httpServer) {
         );
 
         if (chatUser === null) {
+            return;
             throw new Error("User not exists");
         }
 
@@ -139,6 +140,11 @@ export default function initChat(httpServer) {
                 return;
             }
             */
+            const isSent = await chatContentController.sendMessage(
+                chatRoomId,
+                chatUser,
+                message.content,
+            );
             socket
                 .in(chatRoomId)
                 .emit("respondMessage", JSON.stringify(message));
