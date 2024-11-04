@@ -24,3 +24,9 @@ yarn-error.log*
 
 # sequelizer
 /sequelize
+
+# Python Virtual Environment
+/venv
+
+
+/meilisearch
