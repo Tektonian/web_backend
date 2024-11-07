@@ -1,10 +1,8 @@
 import type { ExpressAuthConfig } from "@auth/express";
 import { skipCSRFCheck } from "@auth/core";
-import Credential from "@auth/express/providers/credentials";
 import Google from "@auth/express/providers/google";
 import Nodemailer from "@auth/express/providers/nodemailer";
-import { Sequelize, DataTypes } from "sequelize";
-import { models } from "../models";
+import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
 import SequelizeAdapter from "./auth.adapter-sequelize";
 dotenv.config({ path: ".env.local" });
@@ -27,6 +25,7 @@ const sequelize = new Sequelize(
 import { createTransport } from "nodemailer";
 
 export async function customSendVerificationRequest(params) {
+    console.log(params);
     const { identifier, token, url, provider, theme } = params;
     const { host } = new URL(url);
     // NOTE: You are not required to use `nodemailer`, use whatever you want.
@@ -144,13 +143,32 @@ export const authConfig: ExpressAuthConfig = {
     skipCSRFCheck: skipCSRFCheck, // TODO: remove later
     callbacks: {
         async jwt({ token, user, trigger, account, profile, session }) {
-            if (trigger === "update") token.name = session.user.name;
-            token.id = user?.id ?? token.id;
+            console.log(
+                "JWT: ",
+                token,
+                user,
+                trigger,
+                account,
+                profile,
+                session,
+            );
+            /**
+                - user sign-in: First time the callback is invoked, user, profile and account will be present.
+                - user sign-up: a user is created for the first time in the database (when AuthConfig.session.strategy is set to "database")
+                - update event: Triggered by the useSession().update method.
+             */
+            if (trigger === "update") {
+                token.name = session.user.name;
+            } else if (trigger == "signIn") {
+                token.email = user.username ?? null;
+                token.id = user?.user_id ?? token.id;
+                token.roles = user?.roles ?? null;
+            }
             return token;
         },
         async signIn({ user, account, profile, email, credentials }) {
             const adapter = SequelizeAdapter(sequelize) ?? undefined;
-
+            console.log(user, account, profile, email);
             // Google Oauth2
             if (account !== null && account.provider === "google") {
                 return profile?.email_verified;
@@ -168,7 +186,10 @@ export const authConfig: ExpressAuthConfig = {
         async session({ session, token, user }) {
             // Pass JWT token info to session
             // https://authjs.dev/guides/extending-the-session#with-jwt
+            console.log("Session: ", session, token, user);
+
             session.user.id = token.id;
+            session.user.roles = user.roles;
             return session;
         },
     },
