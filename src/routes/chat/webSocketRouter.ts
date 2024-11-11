@@ -1,5 +1,6 @@
 import { QueueEvents } from "bullmq";
-import { Server, Socket } from "socket.io";
+import { HydratedDocument } from "mongoose";
+import { Server } from "socket.io";
 import { currentSession } from "../../middleware/auth.middleware";
 import { chatController } from "../../controllers/chat";
 import type {
@@ -13,12 +14,10 @@ import type {
     IChatroom,
 } from "../../types/chat/chatSchema.types";
 import { ISessionUser } from "../../config/auth.types";
-interface resM {
-    recv: string;
-}
+
 const ResMessageRactory = (
-    message: IChatContent,
-    sender: IChatUser,
+    message: HydratedDocument<IChatContent>,
+    sender: HydratedDocument<IChatUser>,
     lastReadSequences: number[],
 ): resMessage => {
     let ret: resMessage;
@@ -45,8 +44,8 @@ const ResMessageRactory = (
 };
 
 const ResMessagesFactory = (
-    messages: IChatContent[],
-    sender: IChatUser,
+    messages: HydratedDocument<IChatContent>[],
+    sender: HydratedDocument<IChatUser>,
     lastReadSequences: number[],
 ): resMessage[] => {
     // TODO: bit wise operation later
@@ -57,147 +56,6 @@ const ResMessagesFactory = (
     // console.log("RET: ", messages);
     return ret;
 };
-
-const registerHelper = (eventFlow) => {
-    // list ([a]) to object {a: 'a'}
-    const globalArgs = eventFlow.globalArgs;
-    console.log("Global args", globalArgs, eventFlow.globalArgs);
-    const eventTargets = eventFlow.eventTargets;
-    const chains = eventFlow.chains;
-    for (let chain of chains) {
-        const target = eventTargets[chain.eventTarget];
-        const eventName = chain.eventName;
-        const localArgs = chain.args;
-        if (localArgs === undefined) {
-            target.on(eventName, chain.handler.bind(target, globalArgs));
-        } else {
-            target.on(eventName, chain.handler.bind(target, globalArgs));
-        }
-    }
-};
-
-export default function initChat(httpServer) {
-    const {
-        chatContentController,
-        chatRoomController,
-        chatUserController,
-        chatUnreadController,
-    } = chatController;
-
-    const io = new Server(httpServer, {
-        cors: {
-            origin: "http://localhost:3000",
-            credentials: true,
-        },
-        path: "/api/chat",
-    });
-
-    // set user and chatroom datas on socket instance
-    io.use((socket, next) => {
-        // chatRoom will be set 'join' event
-        socket.data.chatRoom = null;
-        // TODO: should add protocol to get session -> change later
-        socket.request.protocol = "ws";
-        currentSession(socket.request, socket.request, next);
-    });
-
-    io.on("connection", async (socket) => {
-        const userSentEvent = new QueueEvents("userSentMessage");
-        const updateChatRoomEvent = new QueueEvents("updateChatRoom");
-        const sessionUser: ISessionUser = socket.request.session.user;
-        // When you connected to a chat create one time chatuser identity
-        // MEANS!!! that you should not use ObjectId of user
-        const chatUser: IChatUser = await chatUserController.createUser({
-            user_id: sessionUser.id,
-            email: sessionUser.email,
-            username: sessionUser.name,
-            image: "",
-        });
-
-        if (chatUser === null) {
-            return;
-            throw new Error("User not created");
-        }
-
-        // then send user ObjectId to a client, so we can identify user
-        try {
-            const is_connected = await socket
-                .timeout(500)
-                .emitWithAck("connected", { id: chatUser._id });
-            console.log("User connected: ", is_connected);
-        } catch (e) {
-            // if no response, disconnect
-            console.log("User failed to connect", e);
-            socket.disconnect(true);
-        }
-        socket.data.chatUser = chatUser;
-
-        const eventRegisterFlow = {
-            globalArgs: {
-                io,
-                socket,
-                userSentEvent,
-                updateChatRoomEvent,
-                chatUserController,
-                chatRoomController,
-                chatUnreadController,
-                chatContentController,
-                chatUser,
-            },
-            eventTargets: {
-                socket,
-                userSentEvent,
-                updateChatRoomEvent,
-            },
-            chains: [
-                {
-                    eventTarget: "socket",
-                    eventName: "userTryJoin",
-                    handler: userTryJoinHandler,
-                },
-                {
-                    eventTarget: "socket",
-                    eventName: "userTryUnjoin",
-                    handler: userTryUnJoinHandler,
-                },
-                {
-                    eventTarget: "socket",
-                    eventName: "updateChatRoom",
-                    handler: updateChatRoomHandler,
-                },
-                {
-                    eventTarget: "socket",
-                    eventName: "updateLastRead",
-                    handler: updateLastReadHandler,
-                },
-                {
-                    eventTarget: "socket",
-                    eventName: "sendMessage",
-                    handler: sendMessageHandler,
-                },
-                {
-                    eventTarget: "socket",
-                    eventName: "disconnect",
-                    handler: socketDisconnectHandler,
-                },
-                {
-                    eventTarget: "userSentEvent",
-                    eventName: chatUser._id.toString(),
-                    handler: userSentEventHandler,
-                },
-                {
-                    eventTarget: "updateChatRoomEvent",
-                    eventName: chatUser._id.toString(),
-                    handler: updateChatRoomHandler,
-                },
-            ],
-        };
-
-        registerHelper(eventRegisterFlow);
-    });
-
-    return io;
-}
 
 async function updateChatRoomHandler(globalArgs, { jobId, returnvalue }) {
     const { socket } = globalArgs;
@@ -239,8 +97,6 @@ async function userTryUnJoinHandler(globalArgs) {
     if (chatRoom !== null) {
         console.log("User leave room: ", chatRoom);
         socket.leave(chatRoom._id);
-        const jobName = `${chatRoom._id.toString()}:${chatUser._id.toString()}`;
-        userSentEvent.removeAllListeners(jobName);
     }
     socket.data.chatRoom = null;
 }
@@ -249,13 +105,9 @@ async function socketDisconnectHandler(globalArgs) {
     const { socket, userSentEvent, updateChatRoomEvent, chatUserController } =
         globalArgs;
     const chatUser = socket.data.chatUser;
-    userSentEvent.disconnect();
-    updateChatRoomEvent.removeAllListeners(chatUser._id.toString());
-    updateChatRoomEvent.disconnect();
+
     await chatUserController.delUserById(chatUser._id);
     console.log("User disconnected: ", socket.data.chatRoom);
-    socket.data.chatRoom = null;
-    socket.data.user = null;
     socket.disconnect(true);
 }
 
@@ -296,7 +148,6 @@ async function userSentEventHandler(
 }
 
 async function userTryJoinHandler(globalArgs, req: reqTryJoinProps) {
-    console.log("argument", globalArgs);
     const {
         socket,
         chatRoomController,
@@ -312,7 +163,7 @@ async function userTryJoinHandler(globalArgs, req: reqTryJoinProps) {
 
     // set socket.data if user joined a room
     socket.data.chatRoom = chatRoom;
-    socket.data.user = chatUser;
+    socket.data.chatUser = chatUser;
     console.log("Socket chatroom", socket.data.chatRoom);
     if (chatRoom === null) {
         return;
@@ -358,9 +209,6 @@ async function userTryJoinHandler(globalArgs, req: reqTryJoinProps) {
         lastReadSequences: lastReadSeqences,
     });
 
-    const jobName = `${chatRoom._id.toString()}:${chatUser._id.toString()}`;
-    console.log("jobName: ", jobName);
-
     try {
         const response = await socket
             .timeout(500)
@@ -372,4 +220,214 @@ async function userTryJoinHandler(globalArgs, req: reqTryJoinProps) {
         // should now reach here
         throw new Error("User couldn't join the room");
     }
+}
+
+const eventRegistHelper = async (eventFlow) => {
+    // list ([a]) to object {a: 'a'}
+    const globalArgs = eventFlow.globalArgs;
+    const eventTargets = eventFlow.eventTargets;
+    const chains = eventFlow.chains;
+    for (let chain of chains) {
+        const target = eventTargets[chain.eventTarget];
+
+        // Check lazy evaluation
+        const eventName =
+            typeof chain.eventName === "function"
+                ? chain.eventName()
+                : chain.eventName;
+
+        const action = chain.action;
+
+        const nextChains: undefined | any[] = chain.chains;
+        const nextEventFlow = {
+            globalArgs: globalArgs,
+            eventTargets: eventTargets,
+            chains: nextChains,
+        };
+
+        // Disconnect
+        if (action === "disconnect") {
+            await target.disconnect();
+
+            // Check recursive
+            if (nextChains !== undefined) {
+                await eventRegistHelper(nextEventFlow);
+            }
+        }
+        // Unregist events
+        else if (chain.handler === undefined || action === "off") {
+            await target.off(eventName);
+            // Check recursive
+            if (nextChains !== undefined) {
+                await eventRegistHelper(nextEventFlow);
+            }
+        }
+        // Regist events
+        else {
+            // Check recursive
+            if (nextChains === undefined) {
+                await target.on(
+                    eventName,
+                    chain.handler.bind(target, globalArgs),
+                );
+            } else {
+                await target.on(eventName, async (...args) => {
+                    await chain.handler.call(target, globalArgs, ...args);
+                    await eventRegistHelper(nextEventFlow);
+                });
+            }
+        }
+        // If end
+    }
+    // For end
+};
+
+export default function initChat(httpServer) {
+    const {
+        chatContentController,
+        chatRoomController,
+        chatUserController,
+        chatUnreadController,
+    } = chatController;
+
+    const io = new Server(httpServer, {
+        cors: {
+            origin: "http://localhost:3000",
+            credentials: true,
+        },
+        path: "/api/chat",
+    });
+
+    // set user and chatroom datas on socket instance
+    io.use((socket, next) => {
+        // chatRoom will be set 'join' event
+        socket.data.chatRoom = null;
+        // TODO: should add protocol to get session -> change later
+        socket.request.protocol = "ws";
+        currentSession(socket.request, socket.request, next);
+    });
+
+    io.on("connection", async (socket) => {
+        const userSentEvent = new QueueEvents("userSentMessage");
+        const updateChatRoomEvent = new QueueEvents("updateChatRoom");
+        const sessionUser: ISessionUser = socket.request.session?.user;
+        if (sessionUser === undefined) {
+            return;
+        }
+        // When you connected to a chat create one time chatuser identity
+        // MEANS!!! that you should not use ObjectId of user
+        const chatUser: IChatUser = await chatUserController.createUser({
+            user_id: sessionUser.id,
+            email: sessionUser.email,
+            username: sessionUser.name,
+            image: "",
+        });
+
+        if (chatUser === null) {
+            return;
+            throw new Error("User not created");
+        }
+
+        // then send user ObjectId to a client, so we can identify user
+        try {
+            const is_connected = await socket
+                .timeout(500)
+                .emitWithAck("connected", { id: chatUser._id });
+            console.log("User connected: ", is_connected);
+        } catch (e) {
+            // if no response, disconnect
+            console.log("User failed to connect", e);
+            socket.disconnect(true);
+            return;
+        }
+        socket.data.chatUser = chatUser;
+
+        const eventRegisterFlow = {
+            globalArgs: {
+                io,
+                socket,
+                userSentEvent,
+                updateChatRoomEvent,
+                chatUserController,
+                chatRoomController,
+                chatUnreadController,
+                chatContentController,
+                chatUser,
+            },
+            eventTargets: {
+                socket,
+                userSentEvent,
+                updateChatRoomEvent,
+            },
+            chains: [
+                {
+                    description: "Events when user try joined",
+                    eventTarget: "socket",
+                    eventName: "userTryJoin",
+                    handler: userTryJoinHandler,
+                    chains: [
+                        {
+                            description:
+                                "After user joined a chatroom, the `socket.data.chatRoom` should be set so we will evaluate eventName later",
+                            eventTarget: "userSentEvent",
+                            eventName: () =>
+                                `${socket.data.chatUser._id.toString()}:${socket.data.chatRoom._id.toString()}`,
+                            handler: userSentEventHandler,
+                        },
+                    ],
+                },
+                {
+                    description:
+                        "When user leave a chatroom, make user leave a socket room and remove eventlistenr",
+                    eventTarget: "socket",
+                    eventName: "userTryUnjoin",
+                    handler: userTryUnJoinHandler,
+                    chains: [
+                        {
+                            description:
+                                "remove eventlistener of userSentEvent",
+                            eventTarget: "userSentEvent",
+                            action: "off",
+                            eventName: () =>
+                                `${socket.data.chatUser._id.toString()}:${socket.data.chatRoom._id.toString()}`,
+                        },
+                    ],
+                },
+                {
+                    eventTarget: "socket",
+                    eventName: "updateLastRead",
+                    handler: updateLastReadHandler,
+                },
+                {
+                    eventTarget: "socket",
+                    eventName: "sendMessage",
+                    handler: sendMessageHandler,
+                },
+                {
+                    eventTarget: "updateChatRoomEvent",
+                    eventName: () => socket.data.chatUser._id.toString(),
+                    handler: updateChatRoomHandler,
+                },
+                {
+                    eventTarget: "socket",
+                    eventName: "disconnect",
+                    handler: socketDisconnectHandler,
+                    chains: [
+                        {
+                            eventTarget: "userSentEvent",
+                            action: "disconnect",
+                        },
+                        {
+                            eventTarget: "updateChatRoomEvent",
+                            action: "disconnect",
+                        },
+                    ],
+                },
+            ],
+        };
+
+        eventRegistHelper(eventRegisterFlow);
+    });
+
+    return io;
 }
