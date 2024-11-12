@@ -1,27 +1,29 @@
 import mongoose from "mongoose";
-import { chatContent, chatUser } from "../../models/chat";
+import * as ChatModels from "../../models/chat";
 import type { UserAttributes } from "../../models/User";
 import { pushMessageQueue } from "./messageQueue";
 
+const { ChatUser, ChatContent } = ChatModels;
+
 export const sendMessage = async (
     chatRoomId: mongoose.Types.ObjectId,
-    sender: UserAttributes,
+    sender: mongoose.Types.ObjectId,
     message: string,
 ) => {
-    const chatSender = await chatUser.findOne({ user_id: sender.user_id });
+    console.log("Send message", chatRoomId, sender, message);
 
-    if (chatSender === null) {
+    if (sender === null) {
         throw Error("User not exist in Mongodb");
         return;
     }
 
-    await pushMessageQueue(chatRoomId, message, chatSender.user_id);
+    await pushMessageQueue(chatRoomId, message, sender);
 };
 
 export const getChatRoomMessages = async (
     chatRoomId: mongoose.Types.ObjectId,
 ) => {
-    const messages = await chatContent.find({ chatroom: chatRoomId });
+    const messages = await ChatContent.find({ chatroom: chatRoomId });
 
     return messages;
 };
@@ -30,31 +32,42 @@ export const getChatRoomMessagesOfUser = async (
     chatRoomId: mongoose.Types.ObjectId,
     mongoUser: mongoose.Types.ObjectId,
 ) => {
-    const messages = await chatContent.find({ chatroom_id: chatRoomId });
+    const messages = await ChatContent.find({ chatroom_id: chatRoomId });
 
     return messages;
 };
 
 export const getChatRoomMessagesBySeq = async (
-    chatRoomId: mongoose.Types.ObjectId,
+    chatroom: mongoose.Types.ObjectId,
     last_seq: number,
 ) => {
-    const messages = await chatContent
-        .find({ chatroom_id: chatRoomId })
-        .gt("seq", last_seq);
+    const messages = await ChatContent.find({ chatroom: chatroom }).gt(
+        "seq",
+        last_seq,
+    );
 
     return messages;
+};
+
+export const getChatRoomLastMessage = async (
+    chatroom: mongoose.Types.ObjectId,
+) => {
+    const message = await ChatContent.findOne({
+        $and: [{ chatroom: chatroom }, { seq: chatroom.message_seq - 1 }],
+    });
+
+    return message;
 };
 
 export const getChatRoomMessagesBiz = async (
     chatRoomId: mongoose.Types.ObjectId,
     user: UserAttributes,
 ) => {
-    const mongoUser = await chatUser.findOne({ user_id: user.user_id });
+    const mongoUser = await ChatUser.findOne({ user_id: user.user_id });
     if (mongoUser === null) {
         throw Error("User not exist in Mongodb");
     }
-    const messages = await chatContent.find({ chatroom: chatRoomId });
+    const messages = await ChatContent.find({ chatroom: chatRoomId });
     if (messages === null) return [];
 
     const filteredMessages = messages.map((val) => {
