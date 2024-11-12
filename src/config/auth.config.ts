@@ -23,6 +23,7 @@ const sequelize = new Sequelize(
 // See github issue: https://github.com/nextauthjs/next-auth/issues/11088
 
 import { createTransport } from "nodemailer";
+import Credentials from "@auth/core/providers/credentials";
 
 export async function customSendVerificationRequest(params) {
     console.log(params);
@@ -138,12 +139,26 @@ export const authConfig: ExpressAuthConfig = {
                 return crypto.randomUUID();
             },
         }),
+        // TODO: Only for developing
+        Credentials({
+            credentials: {
+                email: {},
+            },
+            authorize: async (credentials) => {
+                const adapter = SequelizeAdapter(sequelize);
+                const userInstance = await adapter.getUserByEmail(
+                    credentials.email,
+                );
+                console.log("User instance: ", userInstance);
+                return userInstance;
+            },
+        }),
     ],
 
     skipCSRFCheck: skipCSRFCheck, // TODO: remove later
     callbacks: {
         async jwt({ token, user, trigger, account, profile, session }) {
-            console.log(
+            /*console.log(
                 "JWT: ",
                 token,
                 user,
@@ -152,6 +167,7 @@ export const authConfig: ExpressAuthConfig = {
                 profile,
                 session,
             );
+            */
             /**
                 - user sign-in: First time the callback is invoked, user, profile and account will be present.
                 - user sign-up: a user is created for the first time in the database (when AuthConfig.session.strategy is set to "database")
@@ -159,16 +175,34 @@ export const authConfig: ExpressAuthConfig = {
              */
             if (trigger === "update") {
                 token.name = session.user.name;
-            } else if (trigger == "signIn") {
-                token.email = user.username ?? null;
-                token.id = user?.user_id ?? token.id;
+            }
+            // TOOD: for debugging
+            else if (
+                trigger === "signIn" &&
+                account?.provider === "credentials"
+            ) {
+                const adapter = SequelizeAdapter(sequelize);
+                const userInstance = await adapter.getUserByEmail(user.email);
+                token.id = userInstance?.id;
+                token.email = userInstance?.email;
+                token.name = userInstance.username;
+                token.roles = userInstance.roles;
+            } else if (trigger === "signIn") {
+                token.name = user.username;
+                token.email = user.email ?? null;
+                token.id = user?.user_id ?? null;
                 token.roles = user?.roles ?? null;
             }
             return token;
         },
         async signIn({ user, account, profile, email, credentials }) {
             const adapter = SequelizeAdapter(sequelize) ?? undefined;
-            console.log(user, account, profile, email);
+
+            // ALERT: For development environment
+            if (account !== null && account.provider === "credentials")
+                return true;
+
+            // console.log(user, account, profile, email);
             // Google Oauth2
             if (account !== null && account.provider === "google") {
                 return profile?.email_verified;
@@ -186,10 +220,12 @@ export const authConfig: ExpressAuthConfig = {
         async session({ session, token, user }) {
             // Pass JWT token info to session
             // https://authjs.dev/guides/extending-the-session#with-jwt
-            console.log("Session: ", session, token, user);
+            // console.log("Session: ", session, token, user);
 
-            session.user.id = token.id;
-            session.user.roles = user.roles;
+            session.user.id = token.id ?? undefined;
+            session.user.email = token.email ?? undefined;
+            session.user.name = token.name;
+            session.user.roles = token.roles ?? [];
             return session;
         },
     },
