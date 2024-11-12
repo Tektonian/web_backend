@@ -32,10 +32,11 @@ const ResMessageRactory = (
     ret = {
         _id: message._id,
         seq: message.seq,
+        chatRoomId: message.chatroom,
         unreadCount: cnt,
         contentType: "text",
         content: message.content,
-        senderName: sender.user_name_glb["kr"] ?? "",
+        senderName: sender.username ?? "",
         createdAt: new Date(),
         updatedAt: new Date(),
     };
@@ -57,10 +58,22 @@ const ResMessagesFactory = (
     return ret;
 };
 
+// See pushUpdateChatRoom function in messageQueue.ts file
 async function updateChatRoomHandler(globalArgs, { jobId, returnvalue }) {
     const { socket } = globalArgs;
-    console.log("On update chat room", JSON.parse(returnvalue));
-    socket.emit("updateChatRoom", JSON.parse(returnvalue));
+    const { message, chatUser } = JSON.parse(returnvalue);
+    const ret = {
+        _id: message._id,
+        seq: message.seq,
+        chatRoomId: message.chatroom,
+        contentType: "text",
+        content: message.content,
+        senderName: chatUser.username ?? "",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+    };
+    console.log("updateHanlder: ", ret);
+    socket.emit("updateChatRoom", JSON.stringify(ret));
 }
 
 async function sendMessageHandler(globalArgs, recv) {
@@ -101,14 +114,18 @@ async function userTryUnJoinHandler(globalArgs) {
     socket.data.chatRoom = null;
 }
 
-async function socketDisconnectHandler(globalArgs) {
+async function socketDisconnectHandler(globalArgs, reason) {
     const { socket, userSentEvent, updateChatRoomEvent, chatUserController } =
         globalArgs;
     const chatUser = socket.data.chatUser;
+    console.log(
+        "User disconnected: ",
+        socket.data.chatUser,
+        " reason ",
+        reason,
+    );
 
     await chatUserController.delUserById(chatUser._id);
-    console.log("User disconnected: ", socket.data.chatRoom);
-    socket.disconnect(true);
 }
 
 async function userSentEventHandler(
@@ -316,6 +333,8 @@ export default function initChat(httpServer) {
         }
         // When you connected to a chat create one time chatuser identity
         // MEANS!!! that you should not use ObjectId of user
+        // TODO: 기기별 1개로 재한 필요함
+        // 지금은 채팅 페이지에서 유저가 요청하는데로 생성하고 있음
         const chatUser: IChatUser = await chatUserController.createUser({
             user_id: sessionUser.id,
             email: sessionUser.email,
@@ -336,12 +355,25 @@ export default function initChat(httpServer) {
             console.log("User connected: ", is_connected);
         } catch (e) {
             // if no response, disconnect
-            console.log("User failed to connect", e);
             socket.disconnect(true);
+            await chatUserController.delUserById(chatUser._id);
+            console.log("User failed to connect", e);
             return;
         }
         socket.data.chatUser = chatUser;
 
+        /**
+         * There could be three types of events. "on" | "off" | "disconnect"
+         * All connections are already made so there is no "connect" event
+         *
+         * Types of three events are as follows
+         *
+         * "on": handler: Function, action: undefined | "on"
+         * "off": handler: undefined, action: undefined | "off"
+         * "disconnect": handler: undefined, action: "disconnect"
+         *
+         * TODO: add error handler later
+         */
         const eventRegisterFlow = {
             globalArgs: {
                 io,
@@ -371,7 +403,7 @@ export default function initChat(httpServer) {
                                 "After user joined a chatroom, the `socket.data.chatRoom` should be set so we will evaluate eventName later",
                             eventTarget: "userSentEvent",
                             eventName: () =>
-                                `${socket.data.chatUser._id.toString()}:${socket.data.chatRoom._id.toString()}`,
+                                `${socket.data.chatRoom._id.toString()}:${socket.data.chatUser._id.toString()}`,
                             handler: userSentEventHandler,
                         },
                     ],
@@ -410,7 +442,7 @@ export default function initChat(httpServer) {
                 },
                 {
                     eventTarget: "socket",
-                    eventName: "disconnect",
+                    eventName: "disconnecting",
                     handler: socketDisconnectHandler,
                     chains: [
                         {
