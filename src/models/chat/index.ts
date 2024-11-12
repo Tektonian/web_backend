@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
-import chatUser from "./user";
-import chatRoom from "./chatRoom";
-import chatContent from "./chatContent";
-import unread from "./unread";
+import ChatUser from "./ChatUser";
+import ChatContent from "./ChatContet";
+import ChatRoom from "./chatRoom";
+import Unread from "./unread";
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 
@@ -13,13 +13,13 @@ mongoose
     .then(async (val) => {
         console.log("Connected to MongoDB => UserAPI");
         console.log("drop collections");
-        await val.connection.dropCollection("users");
+        await val.connection.dropCollection("chat_users");
         await val.connection.dropCollection("chat_rooms");
         await val.connection.dropCollection("chat_contents");
-        await val.connection.dropCollection("unread");
+        await val.connection.dropCollection("unreads");
     })
     .catch((err) => {
         console.log(err);
     });
 
-export { chatUser, chatRoom, chatContent, unread };
+export { ChatUser, ChatContent, ChatRoom, Unread };

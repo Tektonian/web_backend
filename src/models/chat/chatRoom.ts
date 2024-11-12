@@ -1,10 +1,11 @@
-import mongoose from "mongoose";
+import mongoose, { Schema, Types } from "mongoose";
+import { IChatroom } from "../../types/chat/chatSchema.types";
 
-const chatRoomsSchema = new mongoose.Schema(
+const chatRoomSchema = new Schema<IChatroom>(
     {
         request_id: { type: Number, required: true },
-        consumer_id: { type: mongoose.Types.UUID, required: true },
-        participant_ids: { type: [mongoose.Types.UUID], required: true },
+        consumer_id: { type: Schema.Types.UUID, required: true },
+        participant_ids: { type: [Types.UUID], required: true },
         message_seq: { type: Number, default: 0 },
     },
     {
@@ -16,6 +17,6 @@ const chatRoomsSchema = new mongoose.Schema(
     },
 );
 
-const chatRoom = mongoose.model("chat_rooms", chatRoomsSchema);
+const ChatRoom = mongoose.model("chat_rooms", chatRoomSchema);
 
-export default chatRoom;
+export default ChatRoom;
