@@ -4,167 +4,46 @@
 module.exports = {
     async up(queryInterface, Sequelize) {
         const DataTypes = require("sequelize").DataTypes;
-
+        const fs = require("fs");
+        const JpSchoolDataest = await fs.readFileSync(
+            "../../school_dataset/assets/jp/school_list.csv",
+            "utf-8",
+        );
+        const rows = JpSchoolDataest.split("\n");
         const MeiliSearch = require("meilisearch").MeiliSearch;
         const client = new MeiliSearch({
             host: "http://127.0.0.1:7700",
             apiKey: "1zBmtAMDjgWPGLcTPAhEy-kRZv44BzxywQ1UHPkIYE0",
         });
-        const school = queryInterface.sequelize.define(
-            "School",
-            {
-                school_id: {
-                    type: DataTypes.INTEGER,
-                    allowNull: false,
-                    primaryKey: true,
-                },
-                school_name_glb: {
-                    type: DataTypes.STRING(255),
-                    allowNull: true,
-                },
-                nationality: {
-                    type: DataTypes.STRING(4),
-                    allowNull: true,
-                },
-                coordinate: {
-                    type: "MULTIPOINT",
-                    allowNull: true,
-                    comment: "School can have multiple campus\n",
-                },
-            },
-            {
-                tableName: "School",
-                timestamps: false,
-                indexes: [
-                    {
-                        name: "PRIMARY",
-                        unique: true,
-                        using: "BTREE",
-                        fields: [{ name: "school_id" }],
-                    },
-                ],
-            },
-        );
 
-        const request = queryInterface.sequelize.define(
-            "Request",
-            {
-                request_id: {
-                    autoIncrement: true,
-                    type: Sequelize.DataTypes.INTEGER,
-                    allowNull: false,
-                    primaryKey: true,
-                },
-                consumer_id: {
-                    type: Sequelize.DataTypes.INTEGER,
-                    allowNull: false,
-                    references: {
-                        model: "Consumer",
-                        key: "consumer_id",
-                    },
-                },
-                title: {
-                    type: Sequelize.DataTypes.STRING(255),
-                    allowNull: false,
-                },
-                subtitle: {
-                    type: Sequelize.DataTypes.JSON,
-                    allowNull: true,
-                },
-                head_count: {
-                    type: Sequelize.DataTypes.TINYINT.UNSIGNED,
-                    allowNull: true,
-                },
-                reward_price: {
-                    type: Sequelize.DataTypes.INTEGER,
-                    allowNull: false,
-                },
-                currency: {
-                    type: Sequelize.DataTypes.STRING(7),
-                    allowNull: false,
-                },
-                content: {
-                    type: Sequelize.DataTypes.TEXT,
-                    allowNull: false,
-                },
-                are_needed: {
-                    type: Sequelize.DataTypes.JSON,
-                    allowNull: true,
-                },
-                are_required: {
-                    type: Sequelize.DataTypes.JSON,
-                    allowNull: true,
-                },
-                start_date: {
-                    type: Sequelize.DataTypes.DATEONLY,
-                    allowNull: true,
-                },
-                end_date: {
-                    type: Sequelize.DataTypes.DATEONLY,
-                    allowNull: true,
-                },
-                address: {
-                    type: Sequelize.DataTypes.STRING(255),
-                    allowNull: true,
-                },
-                address_cordinate: {
-                    type: "POINT",
-                    allowNull: true,
-                },
-                provide_food: {
-                    type: Sequelize.DataTypes.BLOB,
-                    allowNull: true,
-                },
-                provide_trans_exp: {
-                    type: Sequelize.DataTypes.BLOB,
-                    allowNull: true,
-                },
-                prep_material: {
-                    type: Sequelize.DataTypes.JSON,
-                    allowNull: true,
-                },
-                status: {
-                    type: Sequelize.DataTypes.TINYINT,
-                    allowNull: true,
-                    comment:
-                        "There could be various statuses of a request.\n\nFor example\n\nPosted: consumer wrote a request but not paid\nPaid: consumer paid for a request\nOutdated: No provider(s) contracted with a consumer\nContracted: provider(s) contracted with a consumer\nFinished: work has been done!\nFailed: Contraction didn’t work properly\n",
-                },
-            },
-            {
-                tableName: "Request",
-                imestamps: false,
-                createdAt: false,
-                updatedAt: false,
-                indexes: [
-                    {
-                        name: "PRIMARY",
-                        unique: true,
-                        using: "BTREE",
-                        fields: [{ name: "request_id" }],
-                    },
-                    {
-                        name: "consumer_id_idx",
-                        using: "BTREE",
-                        fields: [{ name: "consumer_id" }],
-                    },
-                ],
-            },
-        );
-        school.addHook("beforeBulkCreate", async (requests, option) => {
+        const db = require("../models");
+        const School = db.sequelize.models.School;
+        const Request = db.sequelize.models.Request;
+        const User = db.sequelize.models.User;
+        const Student = db.sequelize.models.Student;
+        const Corporation = db.sequelize.models.Corporation;
+        const Organization = db.sequelize.models.Organization;
+        const Consumer = db.sequelize.models.Consumer;
+        const AcademicHistory = db.sequelize.models.AcademicHistory;
+
+        School.addHook("beforeBulkCreate", async (schools, option) => {
             const index = client.index("school");
-
-            requests.map(async (val) => {
+            schools.map(async (val) => {
                 const model = val.dataValues;
                 const document = {
                     id: model.school_id,
+                    school_name: model.school_name,
+                    school_name_glb: model.school_name_glb,
+                    country_code: model.country_code,
+                    _geo: JSON.parse(JSON.stringify(model.coordinate)),
                 };
                 let ret = await index.addDocuments([document], {
                     primaryKey: "id",
                 });
-                console.log("Meilisearch school", ret);
+                // console.log("Meilisearch school", ret);
             });
         });
-        request.addHook("beforeBulkCreate", async (requests, option) => {
+        Request.addHook("beforeBulkCreate", async (requests, option) => {
             const index = client.index("request");
 
             requests.map(async (val) => {
@@ -176,71 +55,159 @@ module.exports = {
                     reward_price: model.reward_price,
                     currency: model.currency,
                     content: model.content,
-                    _geo: JSON.parse(JSON.stringify(model.address)),
+                    _geo: JSON.parse(JSON.stringify(model.address_coordinate)),
                 };
-                console.log(document);
+                // console.log(document);
                 let ret = await index.addDocuments([document], {
                     primaryKey: "id",
                 });
-                console.log("Meailisearch", ret);
+                // console.log("Meailisearch", ret);
             });
         });
 
-        await queryInterface.bulkInsert("Corporation", [
+        for (let i = 0; i < rows.length; i++) {
+            if (i === 0) {
+                continue;
+            }
+            const row = rows[i].split(",");
+            const kr = row.at(-2) ?? null;
+            const jp = row[8] ?? null;
+            const en = row.at(-1) ?? null;
+            const lng = row[1];
+            const lat = row[2];
+            const address = row[9];
+            const coordinate = {
+                type: "Point",
+                coordinates: [Number(lat), Number(lng)],
+            };
+            // console.log("School ", row);
+            await School.bulkCreate([
+                {
+                    school_id: i,
+                    school_name: jp,
+                    school_name_glb: JSON.stringify({ kr: kr, jp: jp, en: en }),
+                    country_code: "jp",
+                    address: address,
+                    coordinate: coordinate,
+                    /*queryInterface.sequelize.fn(
+                        "ST_GeomFromText",
+                        `POINT(${lng} ${lat})`,
+                    ),
+                    */
+                },
+            ]);
+        }
+
+        await Corporation.bulkCreate([
             {
                 corp_id: 1,
-                corp_name: "OSUNG",
+                corp_name: "SaSUNG",
                 nationality: "kr",
                 corp_num: 123,
             },
+            {
+                corp_id: 2,
+                corp_name: "Onasonic",
+                nationality: "jp",
+                corp_num: 54,
+            },
+            {
+                corp_id: 3,
+                corp_name: "Nonedai",
+                nationality: "kr",
+                corp_num: 928,
+            },
+            {
+                corp_id: 4,
+                corp_name: "Yuyota",
+                nationality: "jp",
+                corp_num: 83,
+            },
         ]);
 
-        await queryInterface.bulkInsert("Organization", [
+        await Organization.bulkCreate([
             {
                 orgn_id: 1,
                 orgn_code: 123,
                 nationality: "kr",
                 full_name: "Ilgong",
             },
+            {
+                orgn_id: 2,
+                orgn_code: 523,
+                nationality: "jp",
+                full_name: "Japan emb",
+            },
+            {
+                orgn_id: 3,
+                orgn_code: 928,
+                nationality: "kr",
+                full_name: "Hankook Kyouone",
+            },
+            {
+                orgn_id: 4,
+                orgn_code: 99,
+                nationality: "jp",
+                full_name: "Ilbon Kyouone",
+            },
         ]);
 
-        await queryInterface.bulkInsert("User", [
-            {
-                username: "test0",
-                email: "test0@test.com",
-                email_verified: new Date(),
-                roles: '["admin"]',
-            },
-            {
-                username: "test1",
-                email: "test1@test.com",
-                email_verified: new Date(),
-                roles: '["admin"]',
-            },
-            {
-                username: "kang",
-                email: "kang@gmail.com",
-                created_at: new Date(),
-                email_verified: new Date(),
-                roles: '["student"]',
-            },
-            {
-                username: "corp",
-                email: "corp@gmail.com",
-                created_at: new Date(),
-                email_verified: new Date(),
-            },
-            {
-                username: "orgn",
-                email: "orgn@gmail.com",
-                created_at: new Date(),
-                email_verified: new Date(),
-            },
-        ]);
+        const test0User = await User.create({
+            username: "test0",
+            email: "test0@test.com",
+            email_verified: new Date(),
+            roles: '["admin"]',
+        });
+        const test1User = await User.create({
+            username: "test1",
+            email: "test1@test.com",
+            email_verified: new Date(),
+            roles: '["admin"]',
+        });
+        const kangUser = await User.create({
+            username: "kang",
+            email: "kang@gmail.com",
+            created_at: new Date(),
+            email_verified: new Date(),
+            roles: '["student"]',
+        });
+        await User.create({
+            username: "student_1_corp",
+            email: "student@test.com",
+            created_at: new Date(),
+            email_verified: new Date(),
+            roles: '["student"]',
+        });
+
+        await User.create({
+            username: "corp_1_user",
+            email: "corp@gmail.com",
+            created_at: new Date(),
+            email_verified: new Date(),
+            roles: '["corp"]',
+        });
+        await User.create({
+            username: "orgn_1_user",
+            email: "orgn@gmail.com",
+            created_at: new Date(),
+            email_verified: new Date(),
+            roles: '["orgn"]',
+        });
+        const corpUser = await User.findOne({
+            where: { email: "corp@gmail.com" },
+        });
+        const studentUser = await User.findOne({
+            where: { email: "student@test.com" },
+        });
+        const orgnUser = await User.findOne({
+            where: { email: "orgn@gmail.com" },
+        });
+
         const users = await queryInterface.sequelize.query(
             "select user_id, username, email from User;",
         );
-        console.log(users[0][0].user_id.toString("hex"));
+
+        // Create normal consumer first
         const consumers = users[0].map((val, idx) => {
             return {
                 user_id: val.user_id,
@@ -249,88 +216,106 @@ module.exports = {
                 phone_number: "",
             };
         });
-        const corp = users[0].reduce((prev, curr, idx, arr) => {
-            if (!arr[idx].email.startsWith("corp")) return prev;
 
-            return {
-                user_id: arr[idx].user_id,
-                orgn_id: 1,
-                consumer_type: "corp",
-                consumer_email: arr[idx].email,
-                phone_number: "",
-                consumer_verified: new Date(),
-            };
-        }, []);
+        console.log("tes", orgnUser.get({ plain: true }));
+        const orgnConsumer = await Consumer.create({
+            user_id: orgnUser.user_id,
+            orgn_id: 1,
+            consumer_type: "orgn",
+            consumer_email: orgnUser.email,
+            phone_number: "01033333333",
+            consumer_verified: new Date(),
+        });
 
-        const orgz = users[0].reduce((prev, curr, idx, arr) => {
-            if (!arr[idx].email.startsWith("orgn")) return prev;
+        const corpConsumer = await Consumer.create({
+            user_id: corpUser.user_id,
+            corp_id: 1,
+            consumer_type: "corp",
+            consumer_email: corpUser.email,
+            phone_number: "01011111111",
+            consumer_verified: new Date(),
+        });
 
-            return {
-                user_id: arr[idx].user_id,
-                corp_id: 1,
-                consumer_type: "orgn",
-                consumer_email: arr[idx].email,
-                phone_number: "",
-                consumer_verified: new Date(),
-            };
-        }, []);
-        consumers.push(corp);
-        consumers.push(orgz);
-        await queryInterface.bulkInsert("Consumer", consumers);
-        /**
-         * Add seed commands here.
-         *
-         * Example:
-         * await queryInterface.bulkInsert('People', [{
-         *   name: 'John Doe',
-         *   isBetaMember: false
-         * }], {});
-         */
-        const corp_consumer = await queryInterface.sequelize.query(
-            "select consumer_id from Consumer where corp_id=1;",
-        );
-
-        for (let i = 1; i < 100; i++) {
-            let lat = Math.floor(Math.random() * 80000) + 10000;
-            let lng = Math.floor(Math.random() * 80000) + 10000;
-            await request.bulkCreate([
-                {
-                    request_id: 2 * i,
-                    consumer_id: corp_consumer[0][0].consumer_id,
-                    title: "오사카 통역 알바",
-                    reward_price: 20000,
-                    currency: "yen",
-                    content: "알바구함",
-                    address: `{ lat: 37.${lat}, lng: 127.${lng} }`,
-                    address_cordinate: queryInterface.sequelize.fn(
-                        "ST_GeomFromText",
-                        "POINT(37.584896 127.0317056)",
-                    ),
+        await Request.bulkCreate([
+            {
+                request_id: 1,
+                consumer_id: corpConsumer.consumer_id,
+                title: "오사카 통역 알바",
+                reward_price: 21400,
+                currency: "yen",
+                content: "알바구함",
+                address: "오사카 요도야바시 역",
+                address_coordinate: {
+                    type: "Point",
+                    coordinates: [34.6967451, 135.5011539],
                 },
-            ]);
-            await request.bulkCreate([
-                {
-                    request_id: 2 * i + 1,
-                    consumer_id: corp_consumer[0][0].consumer_id,
-                    title: "한국 서울 통역 알바",
-                    reward_price: 20000,
-                    currency: "won",
-                    content: "알바구함",
-                    address: `{ lat: 37.${lat}, lng: 127.${lng} }`,
-                    address_cordinate: queryInterface.sequelize.fn(
-                        "ST_GeomFromText",
-                        "POINT(37.584896 127.0317056)",
-                    ),
+            },
+            {
+                request_id: 2,
+                consumer_id: orgnConsumer.consumer_id,
+                title: "도쿄 통역 알바",
+                reward_price: 19400,
+                currency: "yen",
+                content: "알바구함",
+                address: "신주쿠 워싱턴 호텔",
+                address_coordinate: {
+                    type: "Point",
+                    coordinates: [35.6896103, 139.6991946],
                 },
-            ]);
-        }
-        const fs = require("fs");
-        const delimeter = ",";
-        const schoolDataset = fs
-            .readFileSync("./meilisearch/school_list.orig.csv", "utf-8")
-            .split("\r\n");
+            },
+            {
+                request_id: 3,
+                consumer_id: corpConsumer.consumer_id,
+                title: "한국 서울 통역 알바",
+                reward_price: 20000,
+                currency: "won",
+                content: "알바구함",
+                address: `서울 코엑스`,
+                address_coordinate: {
+                    type: "Point",
+                    coordinates: [37.5116828, 127.059151],
+                },
+            },
+        ]);
 
-        const keys = schoolDataset[0].split(delimeter);
+        const schools = await School.findAll();
+        console.log(schools[0]);
+
+        const studentProfile = await Student.create({
+            user_id: studentUser.user_id,
+            name_glb: `{"kr": ${studentUser.username}}`,
+            nationality: "kr",
+            age: 32,
+            email_verified: new Date(),
+            phone_number: "01022222222",
+            emergency_contact: "01044444444",
+            gender: "male",
+            image: "",
+            has_car: 0,
+        });
+        const acaHis1 = await AcademicHistory.create({
+            school_id: schools[0].school_id,
+            student_id: studentProfile.student_id,
+            degree: "학사",
+            start_date: new Date(),
+            end_date: new Date(),
+            status: "졸업",
+            faculty: "컴공",
+            school_email: "",
+            is_attending: 1,
+        });
+
+        const acaHis2 = await AcademicHistory.create({
+            school_id: schools[1].school_id,
+            student_id: studentProfile.student_id,
+            degree: "석사",
+            start_date: new Date(),
+            end_date: new Date(),
+            status: "재학중",
+            faculty: "운영체제",
+            school_email: "school@email.com",
+            is_attending: true,
+        });
 
         const sleep = (ms) => {
             return new Promise((resolve) => {
@@ -342,12 +327,21 @@ module.exports = {
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.bulkDelete("User", null, {});
+        const MeiliSearch = require("meilisearch").MeiliSearch;
+        const client = new MeiliSearch({
+            host: "http://127.0.0.1:7700",
+            apiKey: "1zBmtAMDjgWPGLcTPAhEy-kRZv44BzxywQ1UHPkIYE0",
+        });
+        client.deleteIndex("school");
+        client.deleteIndex("request");
+        await queryInterface.bulkDelete("Request", null, {});
+        await queryInterface.bulkDelete("School", null, {});
+        await queryInterface.bulkDelete("Consumer", null, {});
         await queryInterface.bulkDelete("Student", null, {});
+        await queryInterface.bulkDelete("User", null, {});
         await queryInterface.bulkDelete("Organization", null, {});
         await queryInterface.bulkDelete("Corporation", null, {});
-        await queryInterface.bulkDelete("Consumer", null, {});
-        await queryInterface.bulkDelete("Request", null, {});
+        await queryInterface.bulkDelete("AcademicHistory", null, {});
         /**
          * Add commands to revert seed here.
          *
