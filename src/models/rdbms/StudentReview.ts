@@ -3,7 +3,8 @@ import { DataTypes, Model, Optional } from 'sequelize';
 
 export interface StudentReviewAttributes {
   id: number;
-  corp_id: number;
+  corp_id?: number;
+  orgn_id?: number;
   consumer_id: number;
   student_id: number;
   request_id: number;
@@ -18,16 +19,18 @@ export interface StudentReviewAttributes {
   praise?: string;
   need_improve?: string;
   created_at?: Date;
+  updated_at?: Date;
 }
 
 export type StudentReviewPk = "id";
 export type StudentReviewId = StudentReview[StudentReviewPk];
-export type StudentReviewOptionalAttributes = "id" | "praise" | "need_improve" | "created_at";
+export type StudentReviewOptionalAttributes = "id" | "corp_id" | "orgn_id" | "praise" | "need_improve" | "created_at" | "updated_at";
 export type StudentReviewCreationAttributes = Optional<StudentReviewAttributes, StudentReviewOptionalAttributes>;
 
 export class StudentReview extends Model<StudentReviewAttributes, StudentReviewCreationAttributes> implements StudentReviewAttributes {
   id!: number;
-  corp_id!: number;
+  corp_id?: number;
+  orgn_id?: number;
   consumer_id!: number;
   student_id!: number;
   request_id!: number;
@@ -42,6 +45,7 @@ export class StudentReview extends Model<StudentReviewAttributes, StudentReviewC
   praise?: string;
   need_improve?: string;
   created_at?: Date;
+  updated_at?: Date;
 
 
   static initModel(sequelize: Sequelize.Sequelize): typeof StudentReview {
@@ -54,7 +58,13 @@ export class StudentReview extends Model<StudentReviewAttributes, StudentReviewC
     },
     corp_id: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true,
+      comment: "Have no idea that this field could be utilized late;;"
+    },
+    orgn_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: "Have no idea that this field could be utilized late;;"
     },
     consumer_id: {
       type: DataTypes.INTEGER,

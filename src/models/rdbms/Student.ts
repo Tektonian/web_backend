@@ -10,7 +10,6 @@ export interface StudentAttributes {
   name_glb: object;
   nationality: string;
   age: string;
-  created_at?: Date;
   email_verified?: Date;
   phone_number: string;
   emergency_contact: string;
@@ -18,11 +17,13 @@ export interface StudentAttributes {
   image?: string;
   has_car?: any;
   keyword_list?: object;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
 export type StudentPk = "student_id";
 export type StudentId = Student[StudentPk];
-export type StudentOptionalAttributes = "student_id" | "created_at" | "email_verified" | "image" | "has_car" | "keyword_list";
+export type StudentOptionalAttributes = "student_id" | "email_verified" | "image" | "has_car" | "keyword_list" | "created_at" | "updated_at";
 export type StudentCreationAttributes = Optional<StudentAttributes, StudentOptionalAttributes>;
 
 export class Student extends Model<StudentAttributes, StudentCreationAttributes> implements StudentAttributes {
@@ -31,7 +32,6 @@ export class Student extends Model<StudentAttributes, StudentCreationAttributes>
   name_glb!: object;
   nationality!: string;
   age!: string;
-  created_at?: Date;
   email_verified?: Date;
   phone_number!: string;
   emergency_contact!: string;
@@ -39,6 +39,8 @@ export class Student extends Model<StudentAttributes, StudentCreationAttributes>
   image?: string;
   has_car?: any;
   keyword_list?: object;
+  created_at?: Date;
+  updated_at?: Date;
 
   // Student hasMany AcademicHistory via student_id
   AcademicHistories!: AcademicHistory[];

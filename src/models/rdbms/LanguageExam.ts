@@ -8,11 +8,12 @@ export interface LanguageExamAttributes {
   exam_result_type?: string;
   exam_results?: object;
   exam_level?: object;
+  lang_country_code?: string;
 }
 
 export type LanguageExamPk = "exam_id";
 export type LanguageExamId = LanguageExam[LanguageExamPk];
-export type LanguageExamOptionalAttributes = "exam_name_glb" | "exam_result_type" | "exam_results" | "exam_level";
+export type LanguageExamOptionalAttributes = "exam_name_glb" | "exam_result_type" | "exam_results" | "exam_level" | "lang_country_code";
 export type LanguageExamCreationAttributes = Optional<LanguageExamAttributes, LanguageExamOptionalAttributes>;
 
 export class LanguageExam extends Model<LanguageExamAttributes, LanguageExamCreationAttributes> implements LanguageExamAttributes {
@@ -21,6 +22,7 @@ export class LanguageExam extends Model<LanguageExamAttributes, LanguageExamCrea
   exam_result_type?: string;
   exam_results?: object;
   exam_level?: object;
+  lang_country_code?: string;
 
   // LanguageExam hasMany ExamHistory via exam_id
   ExamHistories!: ExamHistory[];
@@ -60,6 +62,10 @@ export class LanguageExam extends Model<LanguageExamAttributes, LanguageExamCrea
       type: DataTypes.JSON,
       allowNull: true,
       comment: "Exam level should contain normalized score of the test"
+    },
+    lang_country_code: {
+      type: DataTypes.STRING(45),
+      allowNull: true
     }
   }, {
     sequelize,
