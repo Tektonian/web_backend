@@ -1,80 +1,76 @@
 import mongoose from "mongoose";
-import { chatContent, chatUser } from "../../models/chat";
+import * as ChatModels from "../../models/chat";
 import type { UserAttributes } from "../../models/User";
 import { pushMessageQueue } from "./messageQueue";
-import { gt } from "drizzle-orm";
+
+const { ChatUser, ChatContent } = ChatModels;
 
 export const sendMessage = async (
-    chatRoom_id: mongoose.Types.ObjectId,
-    sender: UserAttributes,
+    chatRoomId: mongoose.Types.ObjectId,
+    sender: mongoose.Types.ObjectId,
     message: string,
 ) => {
-    const chatSender = await chatUser.findOne({ uuid: sender.user_id });
+    console.log("Send message", chatRoomId, sender, message);
 
-    if (chatSender === null) {
+    if (sender === null) {
         throw Error("User not exist in Mongodb");
         return;
     }
 
-    await pushMessageQueue(chatRoom_id, message, chatSender._id);
+    await pushMessageQueue(chatRoomId, message, sender);
 };
 
 export const getChatRoomMessages = async (
-    chatRoom_id: mongoose.Types.ObjectId,
+    chatRoomId: mongoose.Types.ObjectId,
 ) => {
-    const messages = await chatContent.find({ chatroom_id: chatRoom_id });
+    const messages = await ChatContent.find({ chatroom: chatRoomId });
 
     return messages;
 };
 
 export const getChatRoomMessagesOfUser = async (
-    chatRoom_id: mongoose.Types.ObjectId,
+    chatRoomId: mongoose.Types.ObjectId,
     mongoUser: mongoose.Types.ObjectId,
 ) => {
-    const messages = await chatContent
-        .find({ chatroom_id: chatRoom_id })
-        .updateMany({}, { $pull: { unread_users: mongoUser } });
+    const messages = await ChatContent.find({ chatroom_id: chatRoomId });
 
     return messages;
 };
 
 export const getChatRoomMessagesBySeq = async (
-    chatRoom_id: mongoose.Types.ObjectId,
+    chatroom: mongoose.Types.ObjectId,
     last_seq: number,
 ) => {
-    const messages = await chatContent
-        .find({ chatroom_id: chatRoom_id })
-        .gt("seq", last_seq);
+    const messages = await ChatContent.find({ chatroom: chatroom }).gt(
+        "seq",
+        last_seq,
+    );
 
     return messages;
 };
 
-export const getChatRoomMessagesBySeqOfUser = async (
-    chatRoom_id: mongoose.Types.ObjectId,
-    last_seq: number,
-    mongoUser: mongoose.Types.ObjectId,
+export const getChatRoomLastMessage = async (
+    chatroom: mongoose.Types.ObjectId,
 ) => {
-    const messages = await chatContent
-        .find({ chatroom_id: chatRoom_id })
-        .gt("seq", last_seq)
-        .updateMany({}, { $pull: { unread_users: mongoUser } });
+    const message = await ChatContent.findOne({
+        $and: [{ chatroom: chatroom }, { seq: chatroom.message_seq - 1 }],
+    });
 
-    return messages;
+    return message;
 };
 
 export const getChatRoomMessagesBiz = async (
-    chatRoom_id: mongoose.Types.ObjectId,
+    chatRoomId: mongoose.Types.ObjectId,
     user: UserAttributes,
 ) => {
-    const mongoUser = await chatUser.findOne({ uuid: user.user_id });
+    const mongoUser = await ChatUser.findOne({ user_id: user.user_id });
     if (mongoUser === null) {
         throw Error("User not exist in Mongodb");
     }
-    const messages = await chatContent.find({ chatroom_id: chatRoom_id });
+    const messages = await ChatContent.find({ chatroom: chatRoomId });
     if (messages === null) return [];
 
     const filteredMessages = messages.map((val) => {
-        console.log(val.sender_id === mongoUser._id);
         return {
             message: val.message,
             direction: mongoUser._id.equals(val.sender_id)

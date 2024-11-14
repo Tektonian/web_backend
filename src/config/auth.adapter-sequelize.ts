@@ -84,6 +84,7 @@ export default function SequelizeAdapter(client: Sequelize): Adapter {
         },
         async getUserByEmail(email) {
             await sync();
+            console.error(email);
 
             const userInstance = await User.findOne({
                 where: { email },
@@ -93,7 +94,6 @@ export default function SequelizeAdapter(client: Sequelize): Adapter {
                     include: [["user_id", "id"]],
                 },
             });
-
             return userInstance?.get({ plain: true }) ?? null;
         },
         async getUserByAccount({ provider, providerAccountId }) {
@@ -123,7 +123,7 @@ export default function SequelizeAdapter(client: Sequelize): Adapter {
             await User.update(user, { where: { user_id: user.id } });
             const userInstance = await User.findByPk(user.id);
 
-            return userInstance;
+            return userInstance!.get({ plain: true });
         },
         async deleteUser(userId) {
             await sync();

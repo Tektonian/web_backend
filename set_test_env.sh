@@ -38,6 +38,7 @@ function clean {
 function gen_data {
     echo "Generating data"
     echo "Check sequelize/config file before you run the script"
+    cp seeders/* ${SEQ}/seeders/
     cd ${SEQ}
     npx sequelize-cli db:seed:all
     cd ..

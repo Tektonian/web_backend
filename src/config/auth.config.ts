@@ -1,10 +1,8 @@
 import type { ExpressAuthConfig } from "@auth/express";
 import { skipCSRFCheck } from "@auth/core";
-import Credential from "@auth/express/providers/credentials";
 import Google from "@auth/express/providers/google";
 import Nodemailer from "@auth/express/providers/nodemailer";
-import { Sequelize, DataTypes } from "sequelize";
-import { models } from "../models";
+import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
 import SequelizeAdapter from "./auth.adapter-sequelize";
 dotenv.config({ path: ".env.local" });
@@ -25,9 +23,10 @@ const sequelize = new Sequelize(
 // See github issue: https://github.com/nextauthjs/next-auth/issues/11088
 
 import { createTransport } from "nodemailer";
+import Credentials from "@auth/core/providers/credentials";
 
 export async function customSendVerificationRequest(params) {
-    console.log("Custom email", params);
+    console.log(params);
     const { identifier, token, url, provider, theme } = params;
     const { host } = new URL(url);
     // NOTE: You are not required to use `nodemailer`, use whatever you want.
@@ -140,12 +139,26 @@ export const authConfig: ExpressAuthConfig = {
                 return crypto.randomUUID();
             },
         }),
+        // TODO: Only for developing
+        Credentials({
+            credentials: {
+                email: {},
+            },
+            authorize: async (credentials) => {
+                const adapter = SequelizeAdapter(sequelize);
+                const userInstance = await adapter.getUserByEmail(
+                    credentials.email,
+                );
+                console.log("User instance: ", userInstance);
+                return userInstance;
+            },
+        }),
     ],
 
     skipCSRFCheck: skipCSRFCheck, // TODO: remove later
     callbacks: {
         async jwt({ token, user, trigger, account, profile, session }) {
-            console.log(
+            /*console.log(
                 "JWT: ",
                 token,
                 user,
@@ -154,21 +167,42 @@ export const authConfig: ExpressAuthConfig = {
                 profile,
                 session,
             );
-            if (trigger === "update") token.name = session.user.name;
-            token.id = user?.id ?? token.id;
+            */
+            /**
+                - user sign-in: First time the callback is invoked, user, profile and account will be present.
+                - user sign-up: a user is created for the first time in the database (when AuthConfig.session.strategy is set to "database")
+                - update event: Triggered by the useSession().update method.
+             */
+            if (trigger === "update") {
+                token.name = session.user.name;
+            }
+            // TOOD: for debugging
+            else if (
+                trigger === "signIn" &&
+                account?.provider === "credentials"
+            ) {
+                const adapter = SequelizeAdapter(sequelize);
+                const userInstance = await adapter.getUserByEmail(user.email);
+                token.id = userInstance?.id;
+                token.email = userInstance?.email;
+                token.name = userInstance.username;
+                token.roles = userInstance.roles;
+            } else if (trigger === "signIn") {
+                token.name = user.username;
+                token.email = user.email ?? null;
+                token.id = user?.user_id ?? null;
+                token.roles = user?.roles ?? null;
+            }
             return token;
         },
         async signIn({ user, account, profile, email, credentials }) {
             const adapter = SequelizeAdapter(sequelize) ?? undefined;
-            console.log(
-                "User signing",
-                user,
-                account,
-                profile,
-                email,
-                credentials,
-            );
 
+            // ALERT: For development environment
+            if (account !== null && account.provider === "credentials")
+                return true;
+
+            // console.log(user, account, profile, email);
             // Google Oauth2
             if (account !== null && account.provider === "google") {
                 return profile?.email_verified;
@@ -184,19 +218,23 @@ export const authConfig: ExpressAuthConfig = {
             }
         },
         async session({ session, token, user }) {
-            console.log("Session", session, token, user);
             // Pass JWT token info to session
             // https://authjs.dev/guides/extending-the-session#with-jwt
-            session.user.id = token.id;
+            // console.log("Session: ", session, token, user);
+
+            session.user.id = token.id ?? undefined;
+            session.user.email = token.email ?? undefined;
+            session.user.name = token.name;
+            session.user.roles = token.roles ?? [];
             return session;
         },
     },
     events: {
         async signIn({ user, account, profile, isNewUser }) {
-            console.log("Event signin", user, account, profile, isNewUser);
+            // console.log("Event signin", user, account, profile, isNewUser);
         },
         async session({ session, token }) {
-            console.log("event session", session, token);
+            // console.log("event session", session, token);
         },
     },
     debug: true,
