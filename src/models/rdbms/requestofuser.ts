@@ -1,8 +1,13 @@
 import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
-import type { Consumer, ConsumerId } from "./Consumer";
 
-export interface RequestAttributes {
+export interface requestofuserAttributes {
+    user_id: any;
+    username?: string;
+    image?: string;
+    consumer_type: string;
+    consumer_email: string;
+    phone_number: string;
     request_id: number;
     consumer_id: number;
     title: string;
@@ -20,18 +25,16 @@ export interface RequestAttributes {
     provide_food?: any;
     provide_trans_exp?: any;
     prep_material?: object;
+    created_at?: Date;
     status?: number;
     start_time?: string;
     end_time?: string;
-    created_at?: Date;
-    updated_at?: Date;
-    corp_id?: number;
-    orgn_id?: number;
 }
 
-export type RequestPk = "request_id";
-export type RequestId = Request[RequestPk];
-export type RequestOptionalAttributes =
+export type requestofuserOptionalAttributes =
+    | "user_id"
+    | "username"
+    | "image"
     | "request_id"
     | "subtitle"
     | "head_count"
@@ -44,22 +47,25 @@ export type RequestOptionalAttributes =
     | "provide_food"
     | "provide_trans_exp"
     | "prep_material"
+    | "created_at"
     | "status"
     | "start_time"
-    | "end_time"
-    | "created_at"
-    | "updated_at"
-    | "corp_id"
-    | "orgn_id";
-export type RequestCreationAttributes = Optional<
-    RequestAttributes,
-    RequestOptionalAttributes
+    | "end_time";
+export type requestofuserCreationAttributes = Optional<
+    requestofuserAttributes,
+    requestofuserOptionalAttributes
 >;
 
-export class Request
-    extends Model<RequestAttributes, RequestCreationAttributes>
-    implements RequestAttributes
+export class requestofuser
+    extends Model<requestofuserAttributes, requestofuserCreationAttributes>
+    implements requestofuserAttributes
 {
+    user_id!: any;
+    username?: string;
+    image?: string;
+    consumer_type!: string;
+    consumer_email!: string;
+    phone_number!: string;
     request_id!: number;
     consumer_id!: number;
     title!: string;
@@ -77,36 +83,49 @@ export class Request
     provide_food?: any;
     provide_trans_exp?: any;
     prep_material?: object;
+    created_at?: Date;
     status?: number;
     start_time?: string;
     end_time?: string;
-    created_at?: Date;
-    updated_at?: Date;
-    corp_id?: number;
-    orgn_id?: number;
 
-    // Request belongsTo Consumer via consumer_id
-    consumer!: Consumer;
-    getConsumer!: Sequelize.BelongsToGetAssociationMixin<Consumer>;
-    setConsumer!: Sequelize.BelongsToSetAssociationMixin<Consumer, ConsumerId>;
-    createConsumer!: Sequelize.BelongsToCreateAssociationMixin<Consumer>;
-
-    static initModel(sequelize: Sequelize.Sequelize): typeof Request {
-        return Request.init(
+    static initModel(sequelize: Sequelize.Sequelize): typeof requestofuser {
+        return requestofuser.init(
             {
+                user_id: {
+                    type: DataTypes.BLOB,
+                    allowNull: false,
+                    defaultValue: Sequelize.Sequelize.literal(
+                        "uuid_to_bin(uuid())",
+                    ),
+                },
+                username: {
+                    type: DataTypes.STRING(64),
+                    allowNull: true,
+                },
+                image: {
+                    type: DataTypes.STRING(255),
+                    allowNull: true,
+                },
+                consumer_type: {
+                    type: DataTypes.STRING(255),
+                    allowNull: false,
+                },
+                consumer_email: {
+                    type: DataTypes.STRING(255),
+                    allowNull: false,
+                },
+                phone_number: {
+                    type: DataTypes.STRING(32),
+                    allowNull: false,
+                },
                 request_id: {
-                    autoIncrement: true,
                     type: DataTypes.INTEGER,
                     allowNull: false,
-                    primaryKey: true,
+                    defaultValue: 0,
                 },
                 consumer_id: {
                     type: DataTypes.INTEGER,
                     allowNull: false,
-                    references: {
-                        model: "Consumer",
-                        key: "consumer_id",
-                    },
                 },
                 title: {
                     type: DataTypes.STRING(255),
@@ -182,36 +201,11 @@ export class Request
                     type: DataTypes.TIME,
                     allowNull: true,
                 },
-                corp_id: {
-                    type: DataTypes.INTEGER,
-                    allowNull: true,
-                    comment:
-                        "Have no idea that this field could be utilized late;;",
-                },
-                orgn_id: {
-                    type: DataTypes.INTEGER,
-                    allowNull: true,
-                    comment:
-                        "Have no idea that this field could be utilized late;;",
-                },
             },
             {
                 sequelize,
-                tableName: "Request",
+                tableName: "requestofuser",
                 timestamps: true,
-                indexes: [
-                    {
-                        name: "PRIMARY",
-                        unique: true,
-                        using: "BTREE",
-                        fields: [{ name: "request_id" }],
-                    },
-                    {
-                        name: "consumer_id_idx",
-                        using: "BTREE",
-                        fields: [{ name: "consumer_id" }],
-                    },
-                ],
             },
         );
     }

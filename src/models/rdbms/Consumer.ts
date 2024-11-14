@@ -7,7 +7,7 @@ import type { User, UserId } from './User';
 
 export interface ConsumerAttributes {
   consumer_id: number;
-  user_id: any;
+  user_id?: any;
   corp_id?: number;
   orgn_id?: number;
   consumer_type: string;
@@ -15,16 +15,17 @@ export interface ConsumerAttributes {
   consumer_verified?: Date;
   phone_number: string;
   created_at?: Date;
+  updated_at?: Date;
 }
 
 export type ConsumerPk = "consumer_id";
 export type ConsumerId = Consumer[ConsumerPk];
-export type ConsumerOptionalAttributes = "consumer_id" | "corp_id" | "orgn_id" | "consumer_verified" | "created_at";
+export type ConsumerOptionalAttributes = "consumer_id" | "user_id" | "corp_id" | "orgn_id" | "consumer_verified" | "created_at" | "updated_at";
 export type ConsumerCreationAttributes = Optional<ConsumerAttributes, ConsumerOptionalAttributes>;
 
 export class Consumer extends Model<ConsumerAttributes, ConsumerCreationAttributes> implements ConsumerAttributes {
   consumer_id!: number;
-  user_id!: any;
+  user_id?: any;
   corp_id?: number;
   orgn_id?: number;
   consumer_type!: string;
@@ -32,6 +33,7 @@ export class Consumer extends Model<ConsumerAttributes, ConsumerCreationAttribut
   consumer_verified?: Date;
   phone_number!: string;
   created_at?: Date;
+  updated_at?: Date;
 
   // Consumer hasMany Request via consumer_id
   Requests!: Request[];
@@ -71,7 +73,7 @@ export class Consumer extends Model<ConsumerAttributes, ConsumerCreationAttribut
     },
     user_id: {
       type: DataTypes.BLOB,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: 'User',
         key: 'user_id'

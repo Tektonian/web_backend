@@ -9,14 +9,14 @@ export interface UserAttributes {
   username?: string;
   email: string;
   created_at?: Date;
-  email_verified?: Date;
+  updated_at?: Date;
   image?: string;
   roles?: object;
 }
 
 export type UserPk = "user_id";
 export type UserId = User[UserPk];
-export type UserOptionalAttributes = "user_id" | "username" | "created_at" | "email_verified" | "image" | "roles";
+export type UserOptionalAttributes = "user_id" | "username" | "created_at" | "updated_at" | "image" | "roles";
 export type UserCreationAttributes = Optional<UserAttributes, UserOptionalAttributes>;
 
 export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
@@ -24,7 +24,7 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
   username?: string;
   email!: string;
   created_at?: Date;
-  email_verified?: Date;
+  updated_at?: Date;
   image?: string;
   roles?: object;
 
@@ -80,11 +80,6 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
     email: {
       type: DataTypes.STRING(255),
       allowNull: false
-    },
-    email_verified: {
-      type: DataTypes.DATE,
-      allowNull: true,
-      comment: "Insert verified time \/ if not the default value should be null"
     },
     image: {
       type: DataTypes.STRING(255),

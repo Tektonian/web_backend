@@ -14,13 +14,14 @@ export interface CorporationReviewAttributes {
   sense_of_achive?: number;
   work_intensity?: number;
   pay_satisfaction?: number;
-  created_at?: Date;
   CorporationReviewcol?: string;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
 export type CorporationReviewPk = "id";
 export type CorporationReviewId = CorporationReview[CorporationReviewPk];
-export type CorporationReviewOptionalAttributes = "id" | "review_text" | "prep_requirement" | "work_atmosphere" | "sense_of_achive" | "work_intensity" | "pay_satisfaction" | "created_at" | "CorporationReviewcol";
+export type CorporationReviewOptionalAttributes = "id" | "review_text" | "prep_requirement" | "work_atmosphere" | "sense_of_achive" | "work_intensity" | "pay_satisfaction" | "CorporationReviewcol" | "created_at" | "updated_at";
 export type CorporationReviewCreationAttributes = Optional<CorporationReviewAttributes, CorporationReviewOptionalAttributes>;
 
 export class CorporationReview extends Model<CorporationReviewAttributes, CorporationReviewCreationAttributes> implements CorporationReviewAttributes {
@@ -36,8 +37,9 @@ export class CorporationReview extends Model<CorporationReviewAttributes, Corpor
   sense_of_achive?: number;
   work_intensity?: number;
   pay_satisfaction?: number;
-  created_at?: Date;
   CorporationReviewcol?: string;
+  created_at?: Date;
+  updated_at?: Date;
 
 
   static initModel(sequelize: Sequelize.Sequelize): typeof CorporationReview {

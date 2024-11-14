@@ -13,11 +13,12 @@ export interface AcademicHistoryAttributes {
   status: string;
   faculty: string;
   school_email?: string;
+  is_attending?: number;
 }
 
 export type AcademicHistoryPk = "id";
 export type AcademicHistoryId = AcademicHistory[AcademicHistoryPk];
-export type AcademicHistoryOptionalAttributes = "id" | "school_email";
+export type AcademicHistoryOptionalAttributes = "id" | "school_email" | "is_attending";
 export type AcademicHistoryCreationAttributes = Optional<AcademicHistoryAttributes, AcademicHistoryOptionalAttributes>;
 
 export class AcademicHistory extends Model<AcademicHistoryAttributes, AcademicHistoryCreationAttributes> implements AcademicHistoryAttributes {
@@ -30,6 +31,7 @@ export class AcademicHistory extends Model<AcademicHistoryAttributes, AcademicHi
   status!: string;
   faculty!: string;
   school_email?: string;
+  is_attending?: number;
 
   // AcademicHistory belongsTo School via school_id
   school!: School;
@@ -89,6 +91,12 @@ export class AcademicHistory extends Model<AcademicHistoryAttributes, AcademicHi
     school_email: {
       type: DataTypes.STRING(255),
       allowNull: true
+    },
+    is_attending: {
+      type: DataTypes.TINYINT,
+      allowNull: true,
+      defaultValue: 0,
+      comment: "Whether a student is attending a school now or not.\n\nIf a Student is connected to multiple AcademicHistory, only one is_attending should be set true.\n\nUser can have multiple AcademicHistory, but s\/he must be attending only one school.\n\n"
     }
   }, {
     sequelize,

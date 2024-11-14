@@ -1,8 +1,7 @@
 import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
-import type { Consumer, ConsumerId } from "./Consumer";
 
-export interface RequestAttributes {
+export interface requestofcorporationAttributes {
     request_id: number;
     consumer_id: number;
     title: string;
@@ -20,18 +19,21 @@ export interface RequestAttributes {
     provide_food?: any;
     provide_trans_exp?: any;
     prep_material?: object;
+    created_at?: Date;
     status?: number;
     start_time?: string;
     end_time?: string;
-    created_at?: Date;
-    updated_at?: Date;
-    corp_id?: number;
-    orgn_id?: number;
+    corp_id: number;
+    corp_name: string;
+    corp_domain?: string;
+    nationality: string;
+    corp_address?: string;
+    phone_number?: string;
+    logo_image?: string;
+    site_url?: string;
 }
 
-export type RequestPk = "request_id";
-export type RequestId = Request[RequestPk];
-export type RequestOptionalAttributes =
+export type requestofcorporationOptionalAttributes =
     | "request_id"
     | "subtitle"
     | "head_count"
@@ -44,21 +46,27 @@ export type RequestOptionalAttributes =
     | "provide_food"
     | "provide_trans_exp"
     | "prep_material"
+    | "created_at"
     | "status"
     | "start_time"
     | "end_time"
-    | "created_at"
-    | "updated_at"
     | "corp_id"
-    | "orgn_id";
-export type RequestCreationAttributes = Optional<
-    RequestAttributes,
-    RequestOptionalAttributes
+    | "corp_domain"
+    | "corp_address"
+    | "phone_number"
+    | "logo_image"
+    | "site_url";
+export type requestofcorporationCreationAttributes = Optional<
+    requestofcorporationAttributes,
+    requestofcorporationOptionalAttributes
 >;
 
-export class Request
-    extends Model<RequestAttributes, RequestCreationAttributes>
-    implements RequestAttributes
+export class requestofcorporation
+    extends Model<
+        requestofcorporationAttributes,
+        requestofcorporationCreationAttributes
+    >
+    implements requestofcorporationAttributes
 {
     request_id!: number;
     consumer_id!: number;
@@ -77,36 +85,32 @@ export class Request
     provide_food?: any;
     provide_trans_exp?: any;
     prep_material?: object;
+    created_at?: Date;
     status?: number;
     start_time?: string;
     end_time?: string;
-    created_at?: Date;
-    updated_at?: Date;
-    corp_id?: number;
-    orgn_id?: number;
+    corp_id!: number;
+    corp_name!: string;
+    corp_domain?: string;
+    nationality!: string;
+    corp_address?: string;
+    phone_number?: string;
+    logo_image?: string;
+    site_url?: string;
 
-    // Request belongsTo Consumer via consumer_id
-    consumer!: Consumer;
-    getConsumer!: Sequelize.BelongsToGetAssociationMixin<Consumer>;
-    setConsumer!: Sequelize.BelongsToSetAssociationMixin<Consumer, ConsumerId>;
-    createConsumer!: Sequelize.BelongsToCreateAssociationMixin<Consumer>;
-
-    static initModel(sequelize: Sequelize.Sequelize): typeof Request {
-        return Request.init(
+    static initModel(
+        sequelize: Sequelize.Sequelize,
+    ): typeof requestofcorporation {
+        return requestofcorporation.init(
             {
                 request_id: {
-                    autoIncrement: true,
                     type: DataTypes.INTEGER,
                     allowNull: false,
-                    primaryKey: true,
+                    defaultValue: 0,
                 },
                 consumer_id: {
                     type: DataTypes.INTEGER,
                     allowNull: false,
-                    references: {
-                        model: "Consumer",
-                        key: "consumer_id",
-                    },
                 },
                 title: {
                     type: DataTypes.STRING(255),
@@ -184,34 +188,42 @@ export class Request
                 },
                 corp_id: {
                     type: DataTypes.INTEGER,
-                    allowNull: true,
-                    comment:
-                        "Have no idea that this field could be utilized late;;",
+                    allowNull: false,
+                    defaultValue: 0,
                 },
-                orgn_id: {
-                    type: DataTypes.INTEGER,
+                corp_name: {
+                    type: DataTypes.STRING(255),
+                    allowNull: false,
+                },
+                corp_domain: {
+                    type: DataTypes.STRING(255),
                     allowNull: true,
-                    comment:
-                        "Have no idea that this field could be utilized late;;",
+                },
+                nationality: {
+                    type: DataTypes.STRING(4),
+                    allowNull: false,
+                },
+                corp_address: {
+                    type: DataTypes.STRING(255),
+                    allowNull: true,
+                },
+                phone_number: {
+                    type: DataTypes.STRING(255),
+                    allowNull: true,
+                },
+                logo_image: {
+                    type: DataTypes.STRING(255),
+                    allowNull: true,
+                },
+                site_url: {
+                    type: DataTypes.STRING(255),
+                    allowNull: true,
                 },
             },
             {
                 sequelize,
-                tableName: "Request",
+                tableName: "requestofcorporation",
                 timestamps: true,
-                indexes: [
-                    {
-                        name: "PRIMARY",
-                        unique: true,
-                        using: "BTREE",
-                        fields: [{ name: "request_id" }],
-                    },
-                    {
-                        name: "consumer_id_idx",
-                        using: "BTREE",
-                        fields: [{ name: "consumer_id" }],
-                    },
-                ],
             },
         );
     }
