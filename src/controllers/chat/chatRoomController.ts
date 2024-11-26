@@ -1,6 +1,6 @@
 import * as ChatModels from "../../models/chat";
-import type { UserAttributes } from "../../models/User";
-import type { RequestAttributes } from "../../models/Request";
+import type { UserAttributes } from "../../models/rdbms/User";
+import type { RequestAttributes } from "../../models/rdbms/Request";
 
 const { ChatRoom, ChatUser, Unread } = ChatModels;
 

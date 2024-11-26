@@ -205,7 +205,7 @@ export class requestofuser
             {
                 sequelize,
                 tableName: "requestofuser",
-                timestamps: true,
+                timestamps: false,
             },
         );
     }

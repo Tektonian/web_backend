@@ -13,10 +13,10 @@ mongoose
     .then(async (val) => {
         console.log("Connected to MongoDB => UserAPI");
         console.log("drop collections");
-        await val.connection.dropCollection("chat_users");
-        await val.connection.dropCollection("chat_rooms");
-        await val.connection.dropCollection("chat_contents");
-        await val.connection.dropCollection("unreads");
+        //await val.connection.dropCollection("chat_users");
+        //await val.connection.dropCollection("chat_rooms");
+        //await val.connection.dropCollection("chat_contents");
+        //await val.connection.dropCollection("unreads");
     })
     .catch((err) => {
         console.log(err);

@@ -4,7 +4,7 @@ import cors from "cors";
 import { QueueEvents } from "bullmq";
 import { createSession } from "better-sse";
 import verificationRouter from "./routes/verificationRoute.js";
-import { chatTest } from "./dbconfig/chatDatabase.js";
+import { chatTest } from "./dummyChatDatabase.js";
 import { authConfig } from "./config/auth.config.js";
 import { ExpressAuth } from "@auth/express";
 import {
@@ -73,84 +73,36 @@ app.get("/", async ({ req, res, next }: netProps) => {
     });
 });
 
-app.post("/chatRooms", async (req, res, next) => {
-    const sessionUser = res.session.user;
-    if (sessionUser === undefined) res.json("No session");
-    const dbUserData = await models.User.findOne({
-        where: { email: sessionUser.email },
-        attributes: ["user_id", "username", "email"],
-    });
-    const chatRooms =
-        await chatController.chatRoomController.getAllChatRoomsByUser(
-            dbUserData?.dataValues,
-        );
-
-    const ResChatRoomFactory = async (chatRoom: IChatroom): ResChatRoom => {
-        const consumer = await chatController.chatUserController.getUserByUUID(
-            chatRoom.consumer_id,
-        );
-        const participants =
-            await chatController.chatUserController.getUsersByUUID(
-                chatRoom.participant_ids,
-            );
-        const consumerName = consumer?.username;
-        const participantNames = participants.map((part) => part.username);
-        const resChatroom: ResChatRoom = {
-            chatRoomId: chatRoom._id.toString(),
-            messageSeq: chatRoom.message_seq,
-            consumerName: consumerName,
-            providerNames: participantNames,
-        };
-
-        return resChatroom;
-    };
-
-    const resChatRooms = await Promise.all(
-        chatRooms.map((chatRoom) => ResChatRoomFactory(chatRoom)),
-    );
-    res.json(resChatRooms);
-});
-
-app.post("/chatContents", async (req, res, next) => {
-    const { chatroom_id } = req.body;
-    const sessionUser = res.session.user;
-    if (sessionUser === undefined) res.json("No session");
-    const dbUserData = await models.User.findOne({
-        where: { email: sessionUser.email },
-        attributes: ["user_id", "username", "email"],
-    });
-    const messages =
-        await chatController.chatContentController.getChatRoomMessagesBiz(
-            chatroom_id,
-            dbUserData?.dataValues,
-        );
-    res.json(messages);
-});
-
-app.get("/sse", async (req, res) => {
+app.get("/api/sse", async (req, res) => {
     const session = await createSession(req, res, {
         headers: { "access-control-allow-credentials": "true" },
     });
-
     const user = res.session?.user;
     if (user === undefined) return;
 
+    const totalUnread =
+        await chatController.chatUnreadController.getTotalUnreadCount(user.id);
+    session.push({ unreadTotalCount: totalUnread });
+    console.log("sse", user, totalUnread);
     const callback = ({ jobId, returnvalue }) => {
-        console.log("sseEvent: ", session);
-        session.push(returnvalue, "message");
+        // console.log("sseEvent: ", returnvalue);
+        // returnvalue is already JSON.stringfied value
+        // if you send returnvalue through SSE it will be JSON.stringfied once more
+        // So unwrap(=JSON.parse) the data before send.
+        session.push(JSON.parse(returnvalue), "alarm");
     };
-    console.log("SSE connected: ", user.id.toString("hex"));
+    // console.log("SSE connected: ", user.id.toString("hex"));
     sseEvent.on(`${user.id.toString("hex")}`, callback);
 
     session.on("disconnected", () => {
-        console.log("SSE disconnected");
+        // console.log("SSE disconnected");
         sseEvent.off(`${user.id.toString("hex")}`, callback);
     });
 });
 
-chatTest();
+// chatTest();
 
 const httpServer = createServer(app);
 
-//const io = initChat(httpServer);
+const io = initChat(httpServer);
 httpServer.listen(8080);

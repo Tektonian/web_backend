@@ -1,7 +1,6 @@
-import { Sequelize } from "sequelize";
 import { createTransport } from "nodemailer";
 import express, { Request, Response } from "express";
-import { models } from "../models";
+import { models } from "../models/rdbms";
 import dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local" });

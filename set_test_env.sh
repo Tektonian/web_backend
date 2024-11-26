@@ -19,7 +19,7 @@ function copy {
     echo "[3] copying datas"
 
     cp seeders/* ${SEQ}/seeders/
-    cp ./src/models/* ${SEQ}/models/
+    npx sequelize-auto -h "localhost" -d "tektonian" -u "test_user" -e "mysql" -o "${SEQ}/models" -v true -p 3306
     echo "[4] copying done"
 }
 
