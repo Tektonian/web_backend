@@ -15,6 +15,8 @@ import AcademicHistoryRouter from "./routes/AcademicHistoryRouter";
 import ExamHistoryRouter from "./routes/LanguageHistory";
 import CorporationRouter from "./routes/CorporationRouter";
 import CorporationReviewRouter from "./routes/CorporationReviewRouter";
+import RecommendRouter from "./routes/recommend/recommend";
+import ChatRouter from "./routes/chat/chatRouter";
 import SSEAlarmRouter from "./routes/chat/sseRouter";
 import initChat from "./routes/chat/webSocketRouter";
 
@@ -47,7 +49,9 @@ app.use("/api/academic-histories", AcademicHistoryRouter);
 app.use("/api/exam-histories", ExamHistoryRouter);
 app.use("/api/corporations", CorporationRouter);
 app.use("/api/corporation-reviews", CorporationReviewRouter);
+app.use("/api/recommend", RecommendRouter);
 
+app.use("/api/message", ChatRouter);
 const httpServer = createServer(app);
 
 const io = initChat(httpServer);
