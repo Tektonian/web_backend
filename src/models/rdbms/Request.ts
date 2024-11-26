@@ -198,7 +198,7 @@ export class Request
             {
                 sequelize,
                 tableName: "Request",
-                timestamps: true,
+                timestamps: false,
                 indexes: [
                     {
                         name: "PRIMARY",

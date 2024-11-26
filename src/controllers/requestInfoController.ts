@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import RequestInfo from "../models/requestInfo";
+import RequestInfo from "../models/rdbms/requestInfo";
 
 export const createRequestInfo = async (
     req: Request,
