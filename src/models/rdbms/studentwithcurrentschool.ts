@@ -193,7 +193,7 @@ export class studentwithcurrentschool
                     allowNull: false,
                 },
                 coordinate: {
-                    type: DataTypes.GEOGRAPHY,
+                    type: DataTypes.GEOMETRY,
                     allowNull: false,
                     comment: "School can have multiple campus\n",
                 },

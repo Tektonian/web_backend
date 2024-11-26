@@ -20,7 +20,8 @@ export interface requestofcorporationAttributes {
     provide_trans_exp?: any;
     prep_material?: object;
     created_at?: Date;
-    status?: number;
+    request_status?: number;
+    corp_status?: string;
     start_time?: string;
     end_time?: string;
     corp_id: number;
@@ -47,7 +48,8 @@ export type requestofcorporationOptionalAttributes =
     | "provide_trans_exp"
     | "prep_material"
     | "created_at"
-    | "status"
+    | "request_status"
+    | "corp_status"
     | "start_time"
     | "end_time"
     | "corp_id"
@@ -78,15 +80,15 @@ export class requestofcorporation
     content!: string;
     are_needed?: object;
     are_required?: object;
-    start_date?: string;
-    end_date?: string;
+    date?: string;
     address?: string;
     address_coordinate?: any;
     provide_food?: any;
     provide_trans_exp?: any;
     prep_material?: object;
     created_at?: Date;
-    status?: number;
+    request_status?: number;
+    corp_status?: string;
     start_time?: string;
     end_time?: string;
     corp_id!: number;
@@ -157,7 +159,7 @@ export class requestofcorporation
                     allowNull: true,
                 },
                 address_coordinate: {
-                    type: DataTypes.GEOGRAPHY,
+                    type: DataTypes.GEOMETRY,
                     allowNull: true,
                 },
                 provide_food: {
@@ -172,11 +174,15 @@ export class requestofcorporation
                     type: DataTypes.JSON,
                     allowNull: true,
                 },
-                status: {
+                request_status: {
                     type: DataTypes.TINYINT,
                     allowNull: true,
                     comment:
-                        "There could be various statuses of a request.\n\nFor example\n\nPosted: consumer wrote a request but not paid\nPaid: consumer paid for a request\nOutdated: No provider(s) contracted with a consumer\nContracted: provider(s) contracted with a consumer\nFinished: work has been done!\nFailed: Contraction didn’t work properly\n",
+                        "There could be various request_statuses of a request.\n\nFor example\n\nPosted: consumer wrote a request but not paid\nPaid: consumer paid for a request\nOutdated: No provider(s) contracted with a consumer\nContracted: provider(s) contracted with a consumer\nFinished: work has been done!\nFailed: Contraction didn’t work properly\n",
+                },
+                corp_status: {
+                    type: DataTypes.STRING(255),
+                    allowNull: true,
                 },
                 start_time: {
                     type: DataTypes.TIME,

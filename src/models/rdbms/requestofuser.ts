@@ -76,8 +76,7 @@ export class requestofuser
     content!: string;
     are_needed?: object;
     are_required?: object;
-    start_date?: string;
-    end_date?: string;
+    date?: string;
     address?: string;
     address_coordinate?: any;
     provide_food?: any;
@@ -172,7 +171,7 @@ export class requestofuser
                     allowNull: true,
                 },
                 address_coordinate: {
-                    type: DataTypes.GEOGRAPHY,
+                    type: DataTypes.GEOMETRY,
                     allowNull: true,
                 },
                 provide_food: {

@@ -6,7 +6,7 @@ import type {
     VerificationToken,
 } from "@auth/core/adapters";
 import { Sequelize, Model } from "sequelize";
-import { models } from "../models";
+import { models } from "../models/rdbms";
 import { VerificationTokenTypes } from "../models/roles/VerificationToken.types";
 import sequelize from "sequelize";
 

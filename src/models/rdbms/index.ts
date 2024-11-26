@@ -5,7 +5,7 @@ dotenv.config({ path: ".env.local" });
 
 const config = {
     development: {
-        username: "test_user",
+        username: "root",
         password: null,
         database: "tektonian",
         host: "127.0.0.1",
@@ -27,12 +27,13 @@ const config = {
     },
 };
 
-const sequelize = new Sequelize(
-    process.env.MYSQL_DATABASE,
-    process.env.MYSQL_USER,
-    process.env.MYSQL_PASSWORD,
+export const sequelize = new Sequelize(
+    process.env.MYSQL_DATABASE!,
+    process.env.MYSQL_USER!,
+    process.env.MYSQL_PASSWORD!,
     {
         dialect: "mysql",
     },
 );
+
 export const models = initModels(sequelize);
