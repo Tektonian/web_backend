@@ -15,7 +15,11 @@ export interface StudentAttributes {
     emergency_contact: string;
     gender: string;
     image?: string;
+<<<<<<< HEAD
     has_car?: boolean;
+=======
+    has_car?: any;
+>>>>>>> 4d60a37db45cf3b757fc200f7b889469306e65b3
     keyword_list?: object;
     created_at?: Date;
     updated_at?: Date;
@@ -50,7 +54,11 @@ export class Student
     emergency_contact!: string;
     gender!: string;
     image?: string;
+<<<<<<< HEAD
     has_car?: boolean;
+=======
+    has_car?: any;
+>>>>>>> 4d60a37db45cf3b757fc200f7b889469306e65b3
     keyword_list?: object;
     created_at?: Date;
     updated_at?: Date;
@@ -179,7 +187,11 @@ export class Student
                     allowNull: true,
                 },
                 has_car: {
+<<<<<<< HEAD
                     type: DataTypes.SMALLINT,
+=======
+                    type: DataTypes.BLOB,
+>>>>>>> 4d60a37db45cf3b757fc200f7b889469306e65b3
                     allowNull: true,
                 },
                 keyword_list: {

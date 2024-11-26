@@ -229,7 +229,7 @@ export class requestofcorporation
             {
                 sequelize,
                 tableName: "requestofcorporation",
-                timestamps: true,
+                timestamps: false,
             },
         );
     }

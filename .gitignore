@@ -31,3 +31,5 @@ yarn-error.log*
 
 /meilisearch
 meilisearch.exe
+
+package-lock.json
