@@ -140,6 +140,9 @@ module.exports = {
 
             requests.map(async (val) => {
                 const model = val.dataValues;
+                const coordinate = JSON.parse(
+                    JSON.stringify(model.address_coordinate),
+                ).coordinates;
                 const document = {
                     id: model.request_id,
                     consumer_id: model.consumer_id,
@@ -147,7 +150,7 @@ module.exports = {
                     reward_price: model.reward_price,
                     currency: model.currency,
                     content: model.content,
-                    _geo: JSON.parse(JSON.stringify(model.address_coordinate)),
+                    _geo: { lat: coordinate[0], lng: coordinate[1] },
                 };
                 // console.log(document);
                 let ret = await index.addDocuments([document], {
