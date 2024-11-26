@@ -10,7 +10,7 @@ ChatRouter.post("/unread", async (req, res) => {
     const sessionUser = res.session.user;
     if (sessionUser === undefined) res.json("No session");
 
-    const ret = await getUnreadCountOfUser(sessionUser.user_id);
+    const ret = await getUnreadCountOfUser(sessionUser.id);
 
     res.json({ unreadCount: ret });
 });

@@ -19,6 +19,7 @@ import RecommendRouter from "./routes/recommend/recommend";
 import ChatRouter from "./routes/chat/chatRouter";
 import SSEAlarmRouter from "./routes/chat/sseRouter";
 import initChat from "./routes/chat/webSocketRouter";
+import { chatTest } from "./dummyChatData";
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -38,8 +39,15 @@ sequelize
         console.error("Database connection failed:", err);
     });
 
+/**
+ * User Signin / Login
+ */
+// Authenticate
 app.use("/api/auth/*", ExpressAuth(authConfig));
-app.use("/api/sse", SSEAlarmRouter);
+
+/**
+ * For GET and POST of Request / Profile / Review
+ */
 app.use("/api/requests", RequestRouter);
 app.use("/api/students", StudentRouter);
 app.use("/api/schools", SchoolRouter);
@@ -49,12 +57,25 @@ app.use("/api/academic-histories", AcademicHistoryRouter);
 app.use("/api/exam-histories", ExamHistoryRouter);
 app.use("/api/corporations", CorporationRouter);
 app.use("/api/corporation-reviews", CorporationReviewRouter);
+
+/**
+ * Recommendation server of meilisearch
+ */
 app.use("/api/recommend", RecommendRouter);
 
+/**
+ * For chatting
+ */
+// Init dummy chat data
+chatTest();
+// Alarm and Chat data
+app.use("/api/sse", SSEAlarmRouter);
 app.use("/api/message", ChatRouter);
 const httpServer = createServer(app);
-
+// Init socket.io server
 const io = initChat(httpServer);
+
+// Listen server
 httpServer.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
