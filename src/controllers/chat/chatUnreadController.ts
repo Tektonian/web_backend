@@ -29,6 +29,23 @@ export const getUnreadSequences = async (chatRoom: mongoose.Types.ObjectId) => {
     return unreadSequences;
 };
 
+export const getUnreadCountOfUser = async (uuid: mongoose.Types.UUID) => {
+    const userUnreads = await Unread.find({ user_id: uuid });
+    const chatRoomIds = userUnreads.map((unread) => unread.chatroom);
+    const chatRooms = await ChatRoom.find({ _id: { $in: chatRoomIds } });
+
+    let ret = 0;
+
+    chatRooms.forEach((chatRoom) => {
+        const found = userUnreads.find(
+            (unread) => unread.chatroom._id === chatRoom._id,
+        );
+        ret += chatRoom.message_seq - (found?.last_read_seq ?? 0);
+    });
+
+    return ret;
+};
+
 export const whetherSendAlarm = async (
     chatRoom: HydratedDocument<IChatroom>,
     message: HydratedDocument<IChatContent>,
