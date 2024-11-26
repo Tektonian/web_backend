@@ -103,7 +103,7 @@ module.exports = {
         const MeiliSearch = require("meilisearch").MeiliSearch;
         const client = new MeiliSearch({
             host: "http://127.0.0.1:7700",
-            apiKey: "1zBmtAMDjgWPGLcTPAhEy-kRZv44BzxywQ1UHPkIYE0",
+            apiKey: "3c8f293c82e4352eed1bef7a87613bcd663130104a189e9d1ac76e05c0fcba04",
         });
 
         const db = require("../models");
@@ -132,7 +132,7 @@ module.exports = {
                 let ret = await index.addDocuments([document], {
                     primaryKey: "id",
                 });
-                // console.log("Meilisearch school", ret);
+                console.log("Meilisearch school", ret);
             });
         });
         Request.addHook("beforeBulkCreate", async (requests, option) => {
@@ -152,11 +152,11 @@ module.exports = {
                     content: model.content,
                     _geo: { lat: coordinate[0], lng: coordinate[1] },
                 };
-                // console.log(document);
+                console.log(document);
                 let ret = await index.addDocuments([document], {
                     primaryKey: "id",
                 });
-                // console.log("Meailisearch", ret);
+                console.log("Meailisearch", ret);
             });
         });
 
@@ -175,77 +175,99 @@ module.exports = {
                 type: "Point",
                 coordinates: [Number(lat), Number(lng)],
             };
-            // console.log("School ", row);
-            await School.bulkCreate([
-                {
-                    school_id: i,
-                    school_name: jp,
-                    school_name_glb: JSON.stringify({ kr: kr, jp: jp, en: en }),
-                    country_code: "jp",
-                    address: address,
-                    coordinate: coordinate,
-                    /*queryInterface.sequelize.fn(
+            console.log("School ", row);
+            try {
+                await School.bulkCreate([
+                    {
+                        school_id: i,
+                        school_name: jp,
+                        school_name_glb: JSON.stringify({
+                            kr: kr,
+                            jp: jp,
+                            en: en,
+                        }),
+                        country_code: "jp",
+                        address: address,
+                        coordinate: coordinate,
+                        /*queryInterface.sequelize.fn(
                         "ST_GeomFromText",
                         `POINT(${lng} ${lat})`,
                     ),
                     */
-                },
-            ]);
+                    },
+                ]);
+            } catch (error) {
+                console.log(
+                    "Validation Error in School.bulkcreate",
+                    error.errors,
+                );
+            }
         }
 
-        await Corporation.bulkCreate([
-            {
-                corp_id: 1,
-                corp_name: "SaSUNG",
-                nationality: "kr",
-                corp_num: 123,
-            },
-            {
-                corp_id: 2,
-                corp_name: "Onasonic",
-                nationality: "jp",
-                corp_num: 54,
-            },
-            {
-                corp_id: 3,
-                corp_name: "Nonedai",
-                nationality: "kr",
-                corp_num: 928,
-            },
-            {
-                corp_id: 4,
-                corp_name: "Yuyota",
-                nationality: "jp",
-                corp_num: 83,
-            },
-        ]);
+        try {
+            await Corporation.bulkCreate([
+                {
+                    corp_id: 1,
+                    corp_name: "SaSUNG",
+                    nationality: "kr",
+                    corp_num: 123,
+                },
+                {
+                    corp_id: 2,
+                    corp_name: "Onasonic",
+                    nationality: "jp",
+                    corp_num: 54,
+                },
+                {
+                    corp_id: 3,
+                    corp_name: "Nonedai",
+                    nationality: "kr",
+                    corp_num: 928,
+                },
+                {
+                    corp_id: 4,
+                    corp_name: "Yuyota",
+                    nationality: "jp",
+                    corp_num: 83,
+                },
+            ]);
+        } catch (error) {
+            console.log(
+                "Validation Error in Corporation.bulkCreate",
+                error.errors,
+            );
+        }
 
-        await Organization.bulkCreate([
-            {
-                orgn_id: 1,
-                orgn_code: 123,
-                nationality: "kr",
-                full_name: "Ilgong",
-            },
-            {
-                orgn_id: 2,
-                orgn_code: 523,
-                nationality: "jp",
-                full_name: "Japan emb",
-            },
-            {
-                orgn_id: 3,
-                orgn_code: 928,
-                nationality: "kr",
-                full_name: "Hankook Kyouone",
-            },
-            {
-                orgn_id: 4,
-                orgn_code: 99,
-                nationality: "jp",
-                full_name: "Ilbon Kyouone",
-            },
-        ]);
+        try {
+            await Organization.bulkCreate([
+                {
+                    orgn_id: 1,
+                    orgn_code: 123,
+                    nationality: "kr",
+                    full_name: "Ilgong",
+                },
+                {
+                    orgn_id: 2,
+                    orgn_code: 523,
+                    nationality: "jp",
+                    full_name: "Japan emb",
+                },
+                {
+                    orgn_id: 3,
+                    orgn_code: 928,
+                    nationality: "kr",
+                    full_name: "Hankook Kyouone",
+                },
+                {
+                    orgn_id: 4,
+                    orgn_code: 99,
+                    nationality: "jp",
+                    full_name: "Ilbon Kyouone",
+                },
+            ]);
+        } catch (error) {
+            console.log("Validation Error in Org.BulkCreate", error.errors);
+        }
 
         const test0User = await User.create({
             username: "test0",

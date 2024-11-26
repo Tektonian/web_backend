@@ -7,6 +7,8 @@ import type {
 } from "@auth/core/adapters";
 import { Sequelize, Model } from "sequelize";
 import { models } from "../models/rdbms";
+import { VerificationTokenTypes } from "../models/roles/VerificationToken.types";
+import sequelize from "sequelize";
 
 export default function SequelizeAdapter(client: Sequelize): Adapter {
     const { User, Account, VerificationToken, Consumer } = models;

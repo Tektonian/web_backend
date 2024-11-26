@@ -64,8 +64,13 @@ export class fullstudentprofile
                 student_id: {
                     type: DataTypes.INTEGER,
                     allowNull: false,
+<<<<<<< HEAD
+                    defaultValue: 0,
+                    primaryKey: true,
+=======
                     primaryKey: true,
                     defaultValue: 0,
+>>>>>>> 4d60a37db45cf3b757fc200f7b889469306e65b3
                 },
                 user_id: {
                     type: DataTypes.BLOB,

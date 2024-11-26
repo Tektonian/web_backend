@@ -8,41 +8,12 @@ import type {
     resMessage,
     resSomeoneSent,
 } from "./webSocketRouter.types";
-import { ResChatRoom } from "../../types/chat/chatRes.types";
 import type {
     IChatUser,
     IChatContent,
     IChatroom,
 } from "../../types/chat/chatSchema.types";
 import { ISessionUser } from "../../config/auth.types";
-
-const ResChatRoomFactory = async (
-    chatRoom: IChatroom,
-): Promise<ResChatRoom> => {
-    const consumer = await chatController.chatUserController.getUserByUUID(
-        chatRoom.consumer_id,
-    );
-    const participants = await chatController.chatUserController.getUsersByUUID(
-        chatRoom.participant_ids,
-    );
-    const lastMessage =
-        await chatController.chatContentController.getChatRoomLastMessage(
-            chatRoom,
-        );
-    const consumerName = consumer?.username;
-    const participantNames = new Set(participants.map((part) => part.username));
-    const resChatroom: ResChatRoom = {
-        chatRoomId: chatRoom._id.toString(),
-        messageSeq: chatRoom.message_seq,
-        consumerName: consumerName,
-        providerNames: Array.from(participantNames),
-        lastSender: "",
-        lastMessage: lastMessage?.content,
-        lastSentTime: lastMessage?.created_at,
-    };
-    console.log("Participants", chatRoom, consumer);
-    return resChatroom;
-};
 
 const ResMessageRactory = (
     message: HydratedDocument<IChatContent>,
@@ -138,12 +109,9 @@ async function userTryUnJoinHandler(globalArgs) {
     const chatUser = socket.data.chatUser;
     if (chatRoom !== null) {
         console.log("User leave room: ", chatRoom);
-        userSentEvent.off(
-            `${socket.data.chatUser._id.toString()}:${socket.data.chatRoom._id.toString()}`,
-            userSentEventHandler,
-        );
         socket.leave(chatRoom._id);
     }
+    socket.data.chatRoom = null;
 }
 
 async function socketDisconnectHandler(globalArgs, reason) {
@@ -184,37 +152,20 @@ async function userSentEventHandler(
             ),
         );
     const respondUserIds = responses.map((res) => res.id);
-
-    await Promise.all(
-        responses.map(async (res) => {
-            return chatUnreadController.updateUserUnread(
-                res.id,
-                chatRoom,
-                res.lastReadSeq,
-            );
-        }),
-    );
-
-    const lastReadSequences =
-        await chatUnreadController.getUnreadSequences(chatRoom);
-
-    io.in(chatRoom._id.toString()).emit("updateUnread", lastReadSequences);
-    // 3. user response that I have read a message so update last read
-    // If no response then don't update last read
-    console.log("SomeoneSent responses: ", socket.id, responses);
-    console.log("SomeoneSent returnvale: ", jobId, " ", returnvalue);
-
-    await chatUnreadController.whetherSendAlarm(
+    chatUnreadController.whetherSendAlarm(
         chatRoom,
         JSON.parse(returnvalue),
         participant_ids,
         respondUserIds,
     );
+    // 3. user response that I have read a message so update last read
+    // If no response then don't update last read
+    console.log("SomeoneSent responses: ", socket.id, responses);
+    console.log("SomeoneSent returnvale: ", jobId, " ", returnvalue);
 }
 
 async function userTryJoinHandler(globalArgs, req: reqTryJoinProps) {
     const {
-        io,
         socket,
         chatRoomController,
         chatUser,
@@ -236,7 +187,6 @@ async function userTryJoinHandler(globalArgs, req: reqTryJoinProps) {
         throw new Error(`Room not exist: ${chatRoomId}`);
     }
     if (!chatRoom.participant_ids.includes(chatUser.user_id)) {
-        return;
         throw new Error("User have no perssion to access a room");
     }
 
@@ -261,19 +211,19 @@ async function userTryJoinHandler(globalArgs, req: reqTryJoinProps) {
         // console.log("Unread, ", unreadMessages);
     }
     // get last read sequences
-    const lastReadSequences = await chatUnreadController.getUnreadSequences(
+    const lastReadSeqences = await chatUnreadController.getUnreadSequences(
         chatRoom._id,
     );
 
     const resMessages = ResMessagesFactory(
         messages,
         chatUser,
-        lastReadSequences as number[],
+        lastReadSeqences as number[],
     );
 
     const res = JSON.stringify({
         messages: resMessages,
-        lastReadSequences: lastReadSequences,
+        lastReadSequences: lastReadSeqences,
     });
 
     try {
@@ -283,7 +233,6 @@ async function userTryJoinHandler(globalArgs, req: reqTryJoinProps) {
         // join user after acknowledgement
         console.log("User joined: ", chatRoomId, " status: ", response);
         socket.join(chatRoomId);
-        io.in(chatRoom._id.toString()).emit("updateUnread", lastReadSequences);
     } catch (e) {
         // should now reach here
         throw new Error("User couldn't join the room");
@@ -400,20 +349,9 @@ export default function initChat(httpServer) {
 
         // then send user ObjectId to a client, so we can identify user
         try {
-            const chatRooms = await chatRoomController.getAllChatRoomsByUser({
-                user_id: chatUser.user_id,
-            });
-
-            const resChatRooms = await Promise.all(
-                chatRooms.map(async (chatRoom) => ResChatRoomFactory(chatRoom)),
-            );
-
             const is_connected = await socket
                 .timeout(500)
-                .emitWithAck("connected", {
-                    id: chatUser._id,
-                    chatRooms: resChatRooms,
-                });
+                .emitWithAck("connected", { id: chatUser._id });
             console.log("User connected: ", is_connected);
         } catch (e) {
             // if no response, disconnect
@@ -465,7 +403,7 @@ export default function initChat(httpServer) {
                                 "After user joined a chatroom, the `socket.data.chatRoom` should be set so we will evaluate eventName later",
                             eventTarget: "userSentEvent",
                             eventName: () =>
-                                `${socket.data.chatUser._id.toString()}:${socket.data.chatRoom._id.toString()}`,
+                                `${socket.data.chatRoom._id.toString()}:${socket.data.chatUser._id.toString()}`,
                             handler: userSentEventHandler,
                         },
                     ],
@@ -476,8 +414,6 @@ export default function initChat(httpServer) {
                     eventTarget: "socket",
                     eventName: "userTryUnjoin",
                     handler: userTryUnJoinHandler,
-                    /*
-                    Wrong code
                     chains: [
                         {
                             description:
@@ -488,7 +424,6 @@ export default function initChat(httpServer) {
                                 `${socket.data.chatUser._id.toString()}:${socket.data.chatRoom._id.toString()}`,
                         },
                     ],
-                    */
                 },
                 {
                     eventTarget: "socket",

@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import * as ChatModels from "../../models/chat";
-import type { UserAttributes } from "../../models/rdbms/User";
+import type { UserAttributes } from "../../models/User";
 import { pushMessageQueue } from "./messageQueue";
 
 const { ChatUser, ChatContent } = ChatModels;

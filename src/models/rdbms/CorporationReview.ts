@@ -6,15 +6,22 @@ export interface CorporationReviewAttributes {
     consumer_id: number;
     student_id: number;
     corp_id: number;
+<<<<<<< HEAD
+    request_id: number;
+=======
     reqeust_id: number;
+>>>>>>> 4d60a37db45cf3b757fc200f7b889469306e65b3
     request_url: string;
     review_text?: string;
     prep_requirement?: string;
     work_atmosphere?: string;
     sense_of_achive?: number;
+<<<<<<< HEAD
+=======
     work_intensity?: number;
     pay_satisfaction?: number;
     CorporationReviewcol?: string;
+>>>>>>> 4d60a37db45cf3b757fc200f7b889469306e65b3
     created_at?: Date;
     updated_at?: Date;
 }
@@ -27,9 +34,12 @@ export type CorporationReviewOptionalAttributes =
     | "prep_requirement"
     | "work_atmosphere"
     | "sense_of_achive"
+<<<<<<< HEAD
+=======
     | "work_intensity"
     | "pay_satisfaction"
     | "CorporationReviewcol"
+>>>>>>> 4d60a37db45cf3b757fc200f7b889469306e65b3
     | "created_at"
     | "updated_at";
 export type CorporationReviewCreationAttributes = Optional<
@@ -48,15 +58,22 @@ export class CorporationReview
     consumer_id!: number;
     student_id!: number;
     corp_id!: number;
+<<<<<<< HEAD
+    request_id!: number;
+=======
     reqeust_id!: number;
+>>>>>>> 4d60a37db45cf3b757fc200f7b889469306e65b3
     request_url!: string;
     review_text?: string;
     prep_requirement?: string;
     work_atmosphere?: string;
     sense_of_achive?: number;
+<<<<<<< HEAD
+=======
     work_intensity?: number;
     pay_satisfaction?: number;
     CorporationReviewcol?: string;
+>>>>>>> 4d60a37db45cf3b757fc200f7b889469306e65b3
     created_at?: Date;
     updated_at?: Date;
 
@@ -81,7 +98,11 @@ export class CorporationReview
                     type: DataTypes.INTEGER,
                     allowNull: false,
                 },
+<<<<<<< HEAD
+                request_id: {
+=======
                 reqeust_id: {
+>>>>>>> 4d60a37db45cf3b757fc200f7b889469306e65b3
                     type: DataTypes.INTEGER,
                     allowNull: false,
                 },
@@ -105,6 +126,8 @@ export class CorporationReview
                     type: DataTypes.TINYINT,
                     allowNull: true,
                 },
+<<<<<<< HEAD
+=======
                 work_intensity: {
                     type: DataTypes.TINYINT,
                     allowNull: true,
@@ -117,6 +140,7 @@ export class CorporationReview
                     type: DataTypes.STRING(45),
                     allowNull: true,
                 },
+>>>>>>> 4d60a37db45cf3b757fc200f7b889469306e65b3
             },
             {
                 sequelize,

@@ -10,10 +10,10 @@ export interface IChatContent {
 }
 
 export interface IChatroom {
-    request_id: number;
+    request_id: Number;
     consumer_id: Types.UUID;
     participant_ids: [Types.UUID];
-    message_seq: number;
+    message_seq: Number;
 }
 
 export interface IChatUser {
@@ -30,5 +30,5 @@ export interface IUnread {
     user_id: Types.UUID;
     send_alarm: boolean;
     last_read_at: Date;
-    last_read_seq: number;
+    last_read_seq: Number;
 }

@@ -20,7 +20,7 @@ export interface RequestAttributes {
     provide_food?: any;
     provide_trans_exp?: any;
     prep_material?: object;
-    status?: number;
+    request_status?: number;
     start_time?: string;
     end_time?: string;
     created_at?: Date;
@@ -44,7 +44,7 @@ export type RequestOptionalAttributes =
     | "provide_food"
     | "provide_trans_exp"
     | "prep_material"
-    | "status"
+    | "request_status"
     | "start_time"
     | "end_time"
     | "created_at"
@@ -77,7 +77,7 @@ export class Request
     provide_food?: any;
     provide_trans_exp?: any;
     prep_material?: object;
-    status?: number;
+    request_status?: number;
     start_time?: string;
     end_time?: string;
     created_at?: Date;
@@ -153,7 +153,7 @@ export class Request
                     allowNull: true,
                 },
                 address_coordinate: {
-                    type: DataTypes.GEOGRAPHY,
+                    type: DataTypes.GEOMETRY,
                     allowNull: true,
                 },
                 provide_food: {
@@ -168,7 +168,7 @@ export class Request
                     type: DataTypes.JSON,
                     allowNull: true,
                 },
-                status: {
+                request_status: {
                     type: DataTypes.TINYINT,
                     allowNull: true,
                     comment:
