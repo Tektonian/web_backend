@@ -4,13 +4,17 @@ import Google from "@auth/express/providers/google";
 import Nodemailer from "@auth/express/providers/nodemailer";
 import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
-import { models } from "../models/rdbms";
 import SequelizeAdapter from "./auth.adapter-sequelize";
 dotenv.config({ path: ".env.local" });
 
-const sequelize = new Sequelize("tektonian", "root", "", {
-    dialect: "mysql",
-});
+const sequelize = new Sequelize(
+    process.env.MYSQL_DATABASE,
+    process.env.MYSQL_USER,
+    process.env.MYSQL_PASSWORD,
+    {
+        dialect: "mysql",
+    },
+);
 
 // Most of the codes are from https://github.com/nextauthjs/next-auth/blob/main/packages/core/src/lib/actions/callback/handle-login.ts#L26
 // Since there is no proper handler for credential Login or Signin(Register)
@@ -20,7 +24,6 @@ const sequelize = new Sequelize("tektonian", "root", "", {
 
 import { createTransport } from "nodemailer";
 import Credentials from "@auth/core/providers/credentials";
-import { Theme } from "@auth/core/types";
 
 export async function customSendVerificationRequest(params) {
     console.log(params);
@@ -142,23 +145,10 @@ export const authConfig: ExpressAuthConfig = {
                 email: {},
             },
             authorize: async (credentials) => {
-                try {
-                    const test = await sequelize.authenticate();
-                    console.log("123", test);
-                } catch (e) {
-                    console.log("tlznjf tlqkf", e);
-                }
-                const { User } = models;
-                const test = await sequelize.query(
-                    "select * from user where user.email='test0@test.com'",
-                );
-                const userInstance = test[0][0];
-                /*
                 const adapter = SequelizeAdapter(sequelize);
                 const userInstance = await adapter.getUserByEmail(
                     credentials.email,
                 );
-                */
                 console.log("User instance: ", userInstance);
                 return userInstance;
             },
@@ -191,12 +181,8 @@ export const authConfig: ExpressAuthConfig = {
                 trigger === "signIn" &&
                 account?.provider === "credentials"
             ) {
-                const { User } = models;
-                const test = await sequelize.query(
-                    "select * from user where user.email='test0@test.com'",
-                );
-                const userInstance = test[0][0];
-
+                const adapter = SequelizeAdapter(sequelize);
+                const userInstance = await adapter.getUserByEmail(user.email);
                 token.id = userInstance?.id;
                 token.email = userInstance?.email;
                 token.name = userInstance.username;
