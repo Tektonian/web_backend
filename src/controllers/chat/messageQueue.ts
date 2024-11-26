@@ -45,13 +45,18 @@ export type sendAlarmDataType = messageQueueDataTypes;
 export const pushSendAlarm = async (
     chatRoom: IChatroom,
     message: IChatContent,
+    unreadTotalCount: number,
     userUUID: mongoose.Types.UUID,
 ) => {
     console.log("push alaram", userUUID.toString("hex"));
     sendAlarmProducer.publishEvent({
         eventName: userUUID.toString("hex"),
         jobId: "",
-        returnvalue: JSON.stringify(message),
+        returnvalue: JSON.stringify({
+            chatRoom: chatRoom,
+            message: message,
+            unreadTotalCount: unreadTotalCount,
+        }),
     });
 };
 
@@ -78,7 +83,7 @@ export const pushMessageQueue = async (
         message: message,
         sender: sender,
     };
-    const jobName = `${chatRoom._id.toString()}:${sender._id.toString()}`;
+    const jobName = `${sender._id.toString()}:${chatRoom._id.toString()}`;
     await sentMessageQueue.add(jobName, data);
 };
 

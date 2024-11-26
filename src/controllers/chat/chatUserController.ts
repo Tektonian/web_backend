@@ -1,6 +1,6 @@
 import mongoose, { Types } from "mongoose";
 import * as ChatModels from "../../models/chat";
-import type { UserAttributes } from "../../models/User";
+import type { UserAttributes } from "../../models/rdbms/User";
 import { IChatUser } from "../../types/chat/chatSchema.types";
 const { ChatUser } = ChatModels;
 
@@ -17,6 +17,10 @@ export const createUser = async (user: UserAttributes) => {
 
 export const delUserById = async (objectId: Types.ObjectId) => {
     return await ChatUser.findByIdAndDelete(objectId);
+};
+
+export const delUsersByUUID = async (uuid: Types.UUID) => {
+    await ChatUser.deleteMany({ user_id: uuid });
 };
 
 export const getUser = async (user: UserAttributes) => {
