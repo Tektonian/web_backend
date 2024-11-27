@@ -71,6 +71,7 @@ VerificationRouter.get("/callback/identity-verify", async (req, res, next) => {
         (
             await models.VerificationToken.findOne({
                 where: { identifier: verifyEmail },
+                order: [["expires", "DESC"]],
             })
         ).get({ plain: true }).token ?? null;
 
@@ -107,7 +108,7 @@ VerificationRouter.get("/callback/identity-verify", async (req, res, next) => {
             phone_number: "",
         });
     }
-
+    console.log("Verification", userInstance);
     if (userInstance.roles === null) {
         userInstance.roles = [type];
     } else {
@@ -136,6 +137,7 @@ VerificationRouter.post("/identity-verify", async (req, res, next) => {
 
     if (userInstance === null || userInstance?.email_verified === null) {
         res.json("Verify first");
+        return;
     }
 
     const token = crypto.randomUUID();
