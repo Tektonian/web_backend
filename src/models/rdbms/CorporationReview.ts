@@ -48,7 +48,7 @@ export class CorporationReview
     consumer_id!: number;
     student_id!: number;
     corp_id!: number;
-    reqeust_id!: number;
+    request_id!: number;
     request_url!: string;
     review_text?: string;
     prep_requirement?: string;
@@ -81,7 +81,7 @@ export class CorporationReview
                     type: DataTypes.INTEGER,
                     allowNull: false,
                 },
-                reqeust_id: {
+                request_id: {
                     type: DataTypes.INTEGER,
                     allowNull: false,
                 },
