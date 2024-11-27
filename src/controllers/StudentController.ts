@@ -33,9 +33,9 @@ export const createStudent = async (req: Request, res: Response) => {
 
         const createdStudent = await Student.create(
             {
-                user_id: Buffer.from(student.user_id, "base64"),
                 name_glb: student.name_glb,
                 nationality: student.nationality,
+                user_id: res.session.user.id,
                 age: student.age,
                 email_verified: student.email_verified,
                 phone_number: student.phone_number,
