@@ -10,10 +10,10 @@ export interface IChatContent {
 }
 
 export interface IChatroom {
-    request_id: Number;
+    request_id: number;
     consumer_id: Types.UUID;
     participant_ids: [Types.UUID];
-    message_seq: Number;
+    message_seq: number;
 }
 
 export interface IChatUser {
@@ -22,13 +22,13 @@ export interface IChatUser {
     nationality: string;
     multilingual: [string];
     user_name_glb: Map<string, string>;
-    email: String;
-    image_url: String;
+    email: string;
+    image_url: string;
 }
 export interface IUnread {
     chatroom: Types.ObjectId;
     user_id: Types.UUID;
     send_alarm: boolean;
     last_read_at: Date;
-    last_read_seq: Number;
+    last_read_seq: number;
 }

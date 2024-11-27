@@ -12,10 +12,39 @@ const server = {
         user: process.env.EMAIL_SERVER_USER,
         pass: process.env.EMAIL_SERVER_PASSWORD,
     },
+    from: process.env.EMAIL_FROM,
 };
-const verificationRouter = express.Router();
+const VerificationRouter = express.Router();
 
-verificationRouter.get("/callback/identity-verify", async (req, res, next) => {
+// TODO: implement later
+VerificationRouter.post("/corporation", async (req, res) => {
+    const { b_no, p_nm, p_nm2, start_dt } = req.body;
+
+    const requestUrl =
+        process.env.BIZ_API_BASE_URL + "/" + process.env.BIZ_API_VALIDATE_URL;
+    const corpVerification = await fetch(requestUrl, {
+        method: "POST",
+        headers: {
+            "content-type": "application/json",
+        },
+        body: JSON.stringify({
+            businesses: [
+                {
+                    b_no: b_no,
+                    p_nm: p_nm,
+                    p_nm2: p_nm2 ?? "",
+                    b_nm: "",
+                    corp_no: "",
+                    b_sector: "",
+                    b_type: "",
+                    start_dt: start_dt,
+                },
+            ],
+        }),
+    });
+});
+
+VerificationRouter.get("/callback/identity-verify", async (req, res, next) => {
     const { token, email, verifyEmail, type } = req.query;
 
     if (
@@ -47,6 +76,7 @@ verificationRouter.get("/callback/identity-verify", async (req, res, next) => {
 
     if (writtenToken === null || writtenToken !== token) {
         res.json("Wrong identification");
+        return;
     }
 
     if (type === "student") {
@@ -81,7 +111,7 @@ verificationRouter.get("/callback/identity-verify", async (req, res, next) => {
     if (userInstance.roles === null) {
         userInstance.roles = [type];
     } else {
-        userInstance.roles = [...userInstance.roles, type];
+        userInstance.roles = [...JSON.parse(userInstance.roles), type];
     }
 
     await models.User.update(userInstance, { where: { email: email } });
@@ -89,7 +119,7 @@ verificationRouter.get("/callback/identity-verify", async (req, res, next) => {
     res.json({ response: "ok" });
 });
 
-verificationRouter.post("/identity-verify", async (req, res, next) => {
+VerificationRouter.post("/identity-verify", async (req, res, next) => {
     const { verifyEmail, type } = req.body;
     const user = res.session?.user ?? null;
 
@@ -121,14 +151,14 @@ verificationRouter.post("/identity-verify", async (req, res, next) => {
         token_type: type,
     });
 
-    const url = `http://localhost:8080/verification/callback/identity-verify?token=${token}&email=${user.email}&verifyEmail=${verifyEmail}&type=${type}`;
+    const url = `http://localhost:8080/api/verification/callback/identity-verify?token=${token}&email=${user.email}&verifyEmail=${verifyEmail}&type=${type}`;
     const { host } = new URL(url);
     // NOTE: You are not required to use `nodemailer`, use whatever you want.
     const transport = createTransport(server);
     const theme = null;
     const result = await transport.sendMail({
         to: verifyEmail,
-        from: server.auth.user,
+        from: server.from,
         subject: `Sign in to ${host}`,
         text: text({ url, host }),
         html: html({ url, host, theme, token }),
@@ -202,4 +232,4 @@ function text({ url, host }: { url: string; host: string }) {
     return `Sign in to ${host}\n${url}\n\n`;
 }
 
-export default verificationRouter;
+export default VerificationRouter;
