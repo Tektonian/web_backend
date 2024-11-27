@@ -6,15 +6,12 @@ export interface CorporationReviewAttributes {
     consumer_id: number;
     student_id: number;
     corp_id: number;
-    reqeust_id: number;
+    request_id: number;
     request_url: string;
     review_text?: string;
     prep_requirement?: string;
     work_atmosphere?: string;
     sense_of_achive?: number;
-    work_intensity?: number;
-    pay_satisfaction?: number;
-    CorporationReviewcol?: string;
     created_at?: Date;
     updated_at?: Date;
 }
@@ -27,9 +24,6 @@ export type CorporationReviewOptionalAttributes =
     | "prep_requirement"
     | "work_atmosphere"
     | "sense_of_achive"
-    | "work_intensity"
-    | "pay_satisfaction"
-    | "CorporationReviewcol"
     | "created_at"
     | "updated_at";
 export type CorporationReviewCreationAttributes = Optional<
@@ -54,9 +48,6 @@ export class CorporationReview
     prep_requirement?: string;
     work_atmosphere?: string;
     sense_of_achive?: number;
-    work_intensity?: number;
-    pay_satisfaction?: number;
-    CorporationReviewcol?: string;
     created_at?: Date;
     updated_at?: Date;
 
@@ -103,18 +94,6 @@ export class CorporationReview
                 },
                 sense_of_achive: {
                     type: DataTypes.TINYINT,
-                    allowNull: true,
-                },
-                work_intensity: {
-                    type: DataTypes.TINYINT,
-                    allowNull: true,
-                },
-                pay_satisfaction: {
-                    type: DataTypes.TINYINT,
-                    allowNull: true,
-                },
-                CorporationReviewcol: {
-                    type: DataTypes.STRING(45),
                     allowNull: true,
                 },
             },
