@@ -458,7 +458,8 @@ module.exports = {
                 JSON.stringify(model.coordinate),
             ).coordinates;
             const document = {
-                id: model.school_id,
+                id: model.id,
+                student_id: model.student_id,
                 name_glb: model.name_glb,
                 nationality: model.nationality,
                 age: model.age,
@@ -466,6 +467,7 @@ module.exports = {
                 gender: model.gender,
                 degree: model.degree,
                 faculty: model.faculty,
+                school_id: model.school_id,
                 school_country_code: model.country_code,
                 school_name: model.school_name,
                 school_name_glb: model.school_name_glb,
