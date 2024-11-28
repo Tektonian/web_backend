@@ -16,7 +16,7 @@ import ExamHistoryRouter from "./routes/LanguageHistory";
 import CorporationRouter from "./routes/CorporationRouter";
 import CorporationReviewRouter from "./routes/CorporationReviewRouter";
 import RecommendRouter from "./routes/recommend/recommend";
-import VerificationRouter from "./routes/vefiricationRouter";
+import VerificationRouter from "./routes/verificationRouter";
 import ChatRouter from "./routes/chat/chatRouter";
 import SSEAlarmRouter from "./routes/chat/sseRouter";
 import initChat from "./routes/chat/webSocketRouter";
