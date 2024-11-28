@@ -1,35 +1,34 @@
 import { Request, Response } from "express";
 import { Student } from "../models/rdbms/Student";
+import { StudentReview } from "../models/rdbms/StudentReview";
 import { fullstudentprofile } from "../models/rdbms/fullstudentprofile";
 import { Buffer } from "buffer";
 import { sequelize } from "../models/rdbms";
 import { AcademicHistory } from "../models/rdbms/AcademicHistory";
 import { ExamHistory } from "../models/rdbms/ExamHistory";
 
-export const getStudentById = async (req: Request, res: Response) => {
-    try {
-        const student_id = req.params.student_id;
+export const getStudentByStudentId = async (student_id: number) => {
+    const studentProfile = await fullstudentprofile.findOne({
+        where: { student_id: student_id },
+    });
 
-        const studentProfile = await fullstudentprofile.findOne({
-            where: { student_id: student_id },
-        });
-
-        if (studentProfile) {
-            res.json(studentProfile.dataValues);
-        } else {
-            res.status(404).json({ message: "Student not found" });
-        }
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Internal Server Error" });
-    }
+    return studentProfile;
 };
 
-export const createStudent = async (req: Request, res: Response) => {
+export const getInstReviewOfStudentByStudentId = async (student_id: number) => {
+    const reviews = await StudentReview.findAll({
+        where: { student_id: student_id },
+    });
+
+    return reviews;
+};
+
+// TODO: Add type later
+export const createStudentIdentity = async (data) => {
     const transaction = await sequelize.transaction();
 
     try {
-        const { userType, academicHistory, examHistory, ...student } = req.body;
+        const { userType, academicHistory, examHistory, ...student } = data;
 
         const createdStudent = await Student.create(
             {
@@ -81,13 +80,10 @@ export const createStudent = async (req: Request, res: Response) => {
 
         await transaction.commit();
 
-        res.status(201).json({
-            message: "Student profile created successfully",
-            student: createdStudent,
-        });
+        return createdStudent;
     } catch (error) {
         await transaction.rollback();
         console.error("Transaction failed:", error);
-        res.status(500).json({ message: "Internal Server Error", error });
+        return null;
     }
 };
