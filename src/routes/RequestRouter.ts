@@ -1,51 +1,44 @@
 import express, { Request, Response } from "express";
 import { Request as RequestModel } from "../models/rdbms/Request";
+import {
+    createRequestBody,
+    getRequestByRequestId,
+} from "../controllers/RequestController";
 
 const RequestRouter = express.Router();
 
-RequestRouter.get("/:request_id", async (req: Request, res: Response) => {
-    try {
-        const request_id = req.params.request_id;
-        const rq = await RequestModel.findOne({ where: { request_id } });
-        res.json(rq);
-    } catch (err) {
-        console.error(err);
+RequestRouter.post("/", async (req: Request, res: Response) => {
+    const ret = await createRequestBody(req.body);
+    if (ret === null) {
+        res.status(500).json({ message: "Internal Server Error" });
+    } else {
+        res.status(201).json({
+            message: "Request Body created successfully",
+            request: ret,
+        });
     }
 });
 
-RequestRouter.post("/", async (req: Request, res: Response) => {
-    try {
-        const requests = await RequestModel.create({
-            request_id: req.body.request_id,
-            consumer_id: req.body.consumer_id,
-            title: req.body.title,
-            subtitle: req.body.subtitle,
-            head_count: req.body.head_count,
-            reward_price: req.body.reward_price,
-            currency: req.body.currency,
-            content: req.body.content,
-            are_needed: req.body.are_needed,
-            are_required: req.body.are_required,
-            start_date: req.body.start_date,
-            end_date: req.body.start_date,
-            address: req.body.address,
-            address_coordinate: req.body.address_coordinate,
-            provide_food: req.body.provide_food,
-            provide_trans_exp: req.body.provide_trans_exp,
-            prep_material: req.body.prep_material,
-            status: req.body.status,
-            start_time: req.body.start_time,
-            end_time: req.body.end_time,
-            created_at: req.body.created_at,
-            updated_at: req.body.updated_at,
-            corp_id: req.body.corp_id,
-            orgn_id: req.body.orgn_id,
-        });
-        console.log(requests);
-        res.status(201).json(requests);
-    } catch (err) {
-        console.error(err);
+RequestRouter.get("/:request_id", async (req: Request, res: Response) => {
+    const request_id = req.params.request_id;
+    const user = res.session?.user ?? null;
+    const roles: string[] | null = JSON.parse(user?.roles ?? null);
+    // TODO: response edit button for corporation
+    const ret = {
+        body: "",
+        stickybutton_type: "",
+    };
+    const requestBody = await getRequestByRequestId(Number(request_id));
+
+    ret.body = requestBody?.get({ plain: true });
+
+    if (roles !== null && roles !== null && roles.includes("student")) {
+        ret.stickybutton_type = "register";
+    } else {
+        ret.stickybutton_type = "";
     }
+
+    res.json(ret);
 });
 
 export default RequestRouter;
