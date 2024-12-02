@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { getRecommendedStudentByRequest } from "../../controllers/wiip/StudentInfoController";
+import { getRecommendedStudentByRequest } from "../../controllers/wiip/StudentController";
 import { getRecommendedRequestByStudent } from "../../controllers/wiip/RequestController";
 
 const RecommendRouter = express.Router();
