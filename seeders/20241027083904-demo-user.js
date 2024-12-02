@@ -273,19 +273,19 @@ module.exports = {
             username: "test0",
             email: "test0@test.com",
             email_verified: new Date(),
-            roles: '["admin"]',
+            roles: ["admin"],
         });
         const test1User = await User.create({
             username: "test1",
             email: "test1@test.com",
             email_verified: new Date(),
-            roles: '["admin"]',
+            roles: ["admin"],
         });
         const kangUser = await User.create({
             username: "kang",
             email: "kang@gmail.com",
             email_verified: new Date(),
-            roles: '["student"]',
+            roles: ["student"],
         });
         const bulkStudents = [];
         for (let i = 0; i < 100; i++) {
@@ -293,7 +293,7 @@ module.exports = {
                 username: `student_${i}`,
                 email: `student${i}@test.com`,
                 email_verified: new Date(),
-                roles: '["student"]',
+                roles: ["student"],
             });
         }
         await User.bulkCreate(bulkStudents);
@@ -301,20 +301,20 @@ module.exports = {
             username: "student_1_corp",
             email: "student@test.com",
             email_verified: new Date(),
-            roles: '["student"]',
+            roles: ["student"],
         });
 
         await User.create({
             username: "corp_1_user",
             email: "corp@gmail.com",
             email_verified: new Date(),
-            roles: '["corp"]',
+            roles: ["corp"],
         });
         await User.create({
             username: "orgn_1_user",
             email: "orgn@gmail.com",
             email_verified: new Date(),
-            roles: '["orgn"]',
+            roles: ["orgn"],
         });
         const corpUser = await User.findOne({
             where: { email: "corp@gmail.com" },
