@@ -2,13 +2,13 @@ import express, { Request, Response } from "express";
 import { StudentReview } from "../models/rdbms/StudentReview";
 import { Request as RequestModel } from "../models/rdbms/Request";
 import { Consumer } from "../models/rdbms/Consumer";
-import { Corporation } from "../models/rdbms/Corporation";
 
 const StudentReviewRouter = express.Router();
 
-StudentReviewRouter.all("/:student_id", async (req: Request, res: Response) => {
+StudentReviewRouter.get("/:student_id", async (req: Request, res: Response) => {
     try {
-        const student_id = req.params.student_id;
+        const student_id = req.params.consumer_id;
+
         const studentReviews = await StudentReview.findAll({
             where: { student_id },
         });
@@ -29,38 +29,40 @@ StudentReviewRouter.all("/:student_id", async (req: Request, res: Response) => {
                     ],
                 });
 
-                const consumer = await Consumer.findOne({
-                    where: { consumer_id: reviewValues.consumer_id },
-                    attributes: ["corp_id"],
-                });
-
-                const corporation = consumer
-                    ? await Corporation.findOne({
-                          where: { corp_id: consumer.dataValues.corp_id },
-                          attributes: ["logo_image"],
-                      })
-                    : null;
-
-                const requestCard = request
-                    ? {
-                          ...request.dataValues,
-                          logo_image: corporation
-                              ? corporation.dataValues.logo_image
-                              : null,
-                      }
-                    : null;
-
                 return {
                     ...reviewValues,
-                    request_card: requestCard,
+                    request_card: request ? request.dataValues : null,
                 };
             }),
         );
 
         res.json(reviewData);
-        console.log(reviewData);
-    } catch (err) {
-        console.error(err);
+    } catch (error) {
+        console.error("Error fetching student reviews:", error);
+        res.status(500).json({ error: "Failed to fetch student reviews" });
+    }
+});
+
+StudentReviewRouter.post("/", async (req: Request, res: Response) => {
+    try {
+        const { consumer_id, student_id, request_id, ...reviewData } = req.body;
+
+        const request = await RequestModel.findOne({
+            where: { request_id },
+            attributes: ["student_id"],
+        });
+
+        const createdReview = await StudentReview.create({
+            consumer_id,
+            student_id,
+            request_id,
+            ...reviewData,
+        });
+
+        res.status(201).json({ success: true, review: createdReview });
+    } catch (error) {
+        console.error("Error creating student review:", error);
+        res.status(500).json({ error: "Failed to create student review" });
     }
 });
 

@@ -1,8 +1,6 @@
-import { Request, Response } from "express";
 import { Student } from "../models/rdbms/Student";
 import { StudentReview } from "../models/rdbms/StudentReview";
 import { fullstudentprofile } from "../models/rdbms/fullstudentprofile";
-import { Buffer } from "buffer";
 import { sequelize } from "../models/rdbms";
 import { AcademicHistory } from "../models/rdbms/AcademicHistory";
 import { ExamHistory } from "../models/rdbms/ExamHistory";
@@ -11,6 +9,20 @@ export const getStudentByStudentId = async (student_id: number) => {
     const studentProfile = await fullstudentprofile.findOne({
         where: { student_id: student_id },
     });
+
+    return studentProfile;
+};
+
+export const getStudentByUserId = async (user_id: Buffer | null) => {
+    if (!user_id) {
+        console.error("userid is null");
+    }
+
+    const studentProfile = await fullstudentprofile.findOne({
+        where: { user_id: user_id },
+    });
+
+    if (!studentProfile) return null;
 
     return studentProfile;
 };
