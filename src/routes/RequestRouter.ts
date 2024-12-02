@@ -1,20 +1,35 @@
 import express, { Request, Response } from "express";
 import { Request as RequestModel } from "../models/rdbms/Request";
 import {
-    createRequestBody,
+    createRequest,
     getRequestByRequestId,
-} from "../controllers/RequestController";
+} from "../controllers/wiip/RequestController";
 
 const RequestRouter = express.Router();
 
 RequestRouter.post("/", async (req: Request, res: Response) => {
-    const ret = await createRequestBody(req.body);
-    if (ret === null) {
+    const user = res.session?.user ?? undefined;
+
+    const role = req.body.role;
+    const data = req.body.data;
+
+    if (user === undefined) {
+        res.json("Login first");
+        return;
+    }
+    if (!user.roles.includes(role)) {
+        res.json("Incorrect role");
+        return;
+    }
+
+    const request_id = await createRequest(user.id, role, data);
+
+    if (request_id === undefined) {
         res.status(500).json({ message: "Internal Server Error" });
     } else {
         res.status(201).json({
             message: "Request Body created successfully",
-            request: ret,
+            request_id: request_id,
         });
     }
 });
@@ -22,7 +37,7 @@ RequestRouter.post("/", async (req: Request, res: Response) => {
 RequestRouter.get("/:request_id", async (req: Request, res: Response) => {
     const request_id = req.params.request_id;
     const user = res.session?.user ?? null;
-    const roles: string[] | null = JSON.parse(user?.roles ?? null);
+    const roles: string[] = user?.roles ?? null;
     // TODO: response edit button for corporation
     const ret = {
         body: "",
