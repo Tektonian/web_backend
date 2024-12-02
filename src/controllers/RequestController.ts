@@ -1,6 +1,4 @@
-import { Request, Response } from "express";
 import { Request as RequestData } from "../models/rdbms/Request";
-import type { RequestAttributes } from "../models/rdbms/Request";
 
 export const getRequestByRequestId = async (request_id: number) => {
     const requestBody = await RequestData.findOne({
@@ -11,5 +9,6 @@ export const getRequestByRequestId = async (request_id: number) => {
 
 export const createRequestBody = async (data) => {
     const createRequest = await RequestData.create({ ...data });
+    console.log(createRequest);
     return createRequest;
 };
