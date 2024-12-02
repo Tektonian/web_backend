@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
-import { getRecommendedStudentByRequest } from "../../controllers/wiip/studentInfoController";
-import { getRecommendedRequestByStudent } from "../../controllers/wiip/requestController";
+import { getRecommendedStudentByRequest } from "../../controllers/wiip/StudentInfoController";
+import { getRecommendedRequestByStudent } from "../../controllers/wiip/RequestController";
 
 const RecommendRouter = express.Router();
 
@@ -13,7 +13,10 @@ RecommendRouter.post("/students", async (req: Request, res: Response) => {
 });
 
 RecommendRouter.post("/requests", async (req: Request, res: Response) => {
-    const ret = await getRecommendedRequestByStudent(888);
+    if (req.body.request_id === undefined) {
+        res.json("");
+    }
+    const ret = await getRecommendedRequestByStudent(req.body.request_id);
 
     res.json(ret);
 });

@@ -16,7 +16,8 @@ export const getRecommendedStudentByRequest = async (request_id: number) => {
         })
     )?.get({ plain: true });
 
-    console.log("Request", request);
+    if (request === undefined) return null;
+
     const coordi = JSON.parse(
         JSON.stringify(request?.address_coordinate),
     ).coordinates;
@@ -24,7 +25,7 @@ export const getRecommendedStudentByRequest = async (request_id: number) => {
     const searchRet = await client
         .index("studentwithcurrentschool")
         .search("", {
-            filter: [`_geoRadius(${coordi[0]}, ${coordi[1]}, 100000)`],
+            filter: [`_geoRadius(${coordi[0]}, ${coordi[1]}, 1000000000000)`],
         });
 
     return searchRet;
