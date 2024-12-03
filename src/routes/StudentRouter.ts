@@ -3,12 +3,19 @@ import {
     getStudentByStudentId,
     getInstReviewOfStudentByStudentId,
     createStudentIdentity,
-} from "../controllers/StudentController";
+} from "../controllers/wiip/StudentController";
 
 const StudentRouter = express.Router();
 
 StudentRouter.post("/", async (req: Request, res: Response) => {
-    const ret = await createStudentIdentity(req.body);
+    const sessionUser = res.session?.user ?? undefined;
+
+    if (sessionUser === undefined) {
+        res.json("Login first");
+        return;
+    }
+
+    const ret = await createStudentIdentity(sessionUser.id, req.body);
 
     if (ret === null) {
         res.status(500).json({ message: "Internal Server Error" });

@@ -8,7 +8,7 @@ import {
     getAllCorpReviewByCsmId,
 } from "../controllers/CorporationReveiwController";
 import { getRequestByCsmId } from "../controllers/ConsumerController";
-import { getStudentByUserId } from "../controllers/StudentController";
+import { getStudentByUserId } from "../controllers/wiip/StudentController";
 import { getUserByName } from "../controllers/UserController";
 
 const CorporationReviewRouter = express.Router();
