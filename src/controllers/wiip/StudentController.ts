@@ -73,7 +73,7 @@ export const getInstReviewOfStudentByStudentId = async (student_id: number) => {
 };
 
 // TODO: Add type later
-export const createStudentIdentity = async (
+export const createUnVerifiedStudentIdentity = async (
     uuid: typeof DataTypes.UUID,
     data,
 ) => {
@@ -87,7 +87,6 @@ export const createStudentIdentity = async (
                     nationality: student.nationality,
                     user_id: uuid,
                     age: student.age,
-                    email_verified: student.email_verified,
                     phone_number: student.phone_number,
                     emergency_contact: student.emergency_contact,
                     gender: student.gender,
