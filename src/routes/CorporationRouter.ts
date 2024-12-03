@@ -5,9 +5,9 @@ import * as CorpController from "../global/corpInfo/kr/CorpInfoController";
 
 const CorporationRouter = express.Router();
 
-CorporationRouter.get("/:consumer_id", async (req: Request, res: Response) => {
+CorporationRouter.get("/", async (req: Request, res: Response) => {
     try {
-        const consumer_id = req.params.consumer_id;
+        const consumer_id = req.query.consumer_id;
         const consumer = await Consumer.findOne({
             where: { consumer_id },
             attributes: ["corp_id"],
@@ -27,14 +27,16 @@ CorporationRouter.get("/:consumer_id", async (req: Request, res: Response) => {
 });
 
 CorporationRouter.get("/corpProfile", async (req: Request, res: Response) => {
-    const corpNum = req.params.corpNum;
+    const corpNum = req.query.corpNum;
 
-    const storedCorpProfile =
-        await CorpController.findCorpProfileByCorpNum(corpNum);
+    const storedCorpProfile = await CorpController.findCorpProfileByCorpNum(
+        Number(corpNum),
+    );
 
     if (storedCorpProfile === undefined) {
-        const externCorpProfile =
-            await CorpController.externReqCorpProfile(corpNum);
+        const externCorpProfile = await CorpController.externReqCorpProfile(
+            Number(corpNum),
+        );
 
         res.json({ status: "not exist", profile: externCorpProfile });
     } else {
