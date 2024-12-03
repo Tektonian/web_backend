@@ -118,48 +118,6 @@ module.exports = {
         const StudentWithCurrentSchool =
             db.sequelize.models.studentwithcurrentschool;
 
-        School.addHook("beforeBulkCreate", async (schools, option) => {
-            const index = client.index("school");
-            schools.map(async (val) => {
-                const model = val.dataValues;
-                const document = {
-                    id: model.school_id,
-                    school_name: model.school_name,
-                    school_name_glb: model.school_name_glb,
-                    country_code: model.country_code,
-                    _geo: JSON.parse(JSON.stringify(model.coordinate)),
-                };
-                let ret = await index.addDocuments([document], {
-                    primaryKey: "id",
-                });
-                console.log("Meilisearch school", ret);
-            });
-        });
-        Request.addHook("beforeBulkCreate", async (requests, option) => {
-            const index = client.index("request");
-
-            requests.map(async (val) => {
-                const model = val.dataValues;
-                const coordinate = JSON.parse(
-                    JSON.stringify(model.address_coordinate),
-                ).coordinates;
-                const document = {
-                    id: model.request_id,
-                    consumer_id: model.consumer_id,
-                    title: model.title,
-                    reward_price: model.reward_price,
-                    currency: model.currency,
-                    content: model.content,
-                    _geo: { lat: coordinate[0], lng: coordinate[1] },
-                };
-                console.log(document);
-                let ret = await index.addDocuments([document], {
-                    primaryKey: "id",
-                });
-                console.log("Meailisearch", ret);
-            });
-        });
-
         for (let i = 0; i < rows.length; i++) {
             if (i === 0) {
                 continue;
@@ -232,10 +190,7 @@ module.exports = {
                 },
             ]);
         } catch (error) {
-            console.log(
-                "Validation Error in Corporation.bulkCreate",
-                error.errors,
-            );
+            console.log("Validation Error in Corporation.bulkCreate", error);
         }
 
         try {
@@ -357,48 +312,6 @@ module.exports = {
             consumer_verified: new Date(),
         });
 
-        await Request.bulkCreate([
-            {
-                request_id: 1,
-                consumer_id: corpConsumer.consumer_id,
-                title: "오사카 통역 알바",
-                reward_price: 21400,
-                currency: "yen",
-                content: "알바구함",
-                address: "오사카 요도야바시 역",
-                address_coordinate: {
-                    type: "Point",
-                    coordinates: [34.6967451, 135.5011539],
-                },
-            },
-            {
-                request_id: 2,
-                consumer_id: orgnConsumer.consumer_id,
-                title: "도쿄 통역 알바",
-                reward_price: 19400,
-                currency: "yen",
-                content: "알바구함",
-                address: "신주쿠 워싱턴 호텔",
-                address_coordinate: {
-                    type: "Point",
-                    coordinates: [35.6896103, 139.6991946],
-                },
-            },
-            {
-                request_id: 3,
-                consumer_id: corpConsumer.consumer_id,
-                title: "한국 서울 통역 알바",
-                reward_price: 20000,
-                currency: "won",
-                content: "알바구함",
-                address: `서울 코엑스`,
-                address_coordinate: {
-                    type: "Point",
-                    coordinates: [37.5116828, 127.059151],
-                },
-            },
-        ]);
-
         const schools = await School.findAll();
 
         const studentProfiles = await Promise.all(
@@ -502,7 +415,6 @@ module.exports = {
         client.deleteIndex("school");
         client.deleteIndex("request");
         client.deleteIndex("studentwithcurrentschool");
-        await queryInterface.bulkDelete("Request", null, {});
         await queryInterface.bulkDelete("Consumer", null, {});
         await queryInterface.bulkDelete("AcademicHistory", null, {});
         await queryInterface.bulkDelete("Student", null, {});
