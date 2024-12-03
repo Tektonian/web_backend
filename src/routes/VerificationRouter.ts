@@ -1,6 +1,7 @@
 import { createTransport } from "nodemailer";
 import express, { Request, Response } from "express";
 import { models } from "../models/rdbms";
+import { connUserWithCorpProfile } from "../global/corpInfo/kr/CorpInfoController";
 import dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local" });
@@ -16,86 +17,61 @@ const server = {
 };
 const VerificationRouter = express.Router();
 
-// TODO: implement later
-VerificationRouter.post("/corporation", async (req, res) => {
-    const { b_no, p_nm, p_nm2, start_dt } = req.body;
+VerificationRouter.post("/callback/identity-verify", async (req, res, next) => {
+    const { token, verifyEmail, phoneNumber, profileId, type } = req.body;
 
-    const requestUrl =
-        process.env.BIZ_API_BASE_URL + "/" + process.env.BIZ_API_VALIDATE_URL;
-    const corpVerification = await fetch(requestUrl, {
-        method: "POST",
-        headers: {
-            "content-type": "application/json",
-        },
-        body: JSON.stringify({
-            businesses: [
-                {
-                    b_no: b_no,
-                    p_nm: p_nm,
-                    p_nm2: p_nm2 ?? "",
-                    b_nm: "",
-                    corp_no: "",
-                    b_sector: "",
-                    b_type: "",
-                    start_dt: start_dt,
-                },
-            ],
-        }),
-    });
-});
-
-VerificationRouter.get("/callback/identity-verify", async (req, res, next) => {
-    const { token, email, verifyEmail, type } = req.query;
+    const user = res.session?.user ?? null;
 
     if (
         (type !== undefined && !["student", "corp", "orgn"].includes(type)) ||
-        email === undefined ||
         verifyEmail === undefined ||
-        token === undefined
+        phoneNumber === undefined ||
+        token === undefined ||
+        (profileId === undefined && ["corp", "orgn"].includes(type))
     ) {
         res.json("Wrong request");
+    }
+
+    if (user === null) {
+        res.json("Login first");
     }
 
     const userInstance =
         (
             await models.User.findOne({
-                where: { email: email },
+                where: { email: user.email },
             })
         )?.get({ plain: true }) ?? null;
 
-    if (userInstance === null) {
-        res.json("Wrong user");
+    if (userInstance === null || userInstance?.email_verified === null) {
+        res.json("Verify first");
+        return;
     }
 
-    const writtenToken =
-        (
-            await models.VerificationToken.findOne({
-                where: { identifier: verifyEmail },
-                order: [["expires", "DESC"]],
-            })
-        ).get({ plain: true }).token ?? null;
+    const verificationToken = await models.VerificationToken.findOne({
+        where: { identifier: verifyEmail },
+        order: [["expires", "DESC"]],
+    });
 
-    if (writtenToken === null || writtenToken !== token) {
+    if (
+        verificationToken === null ||
+        verificationToken.dataValues.token !== token
+    ) {
         res.json("Wrong identification");
         return;
     }
 
     if (type === "student") {
-        await models.Student.create({
-            user_id: userInstance.user_id,
-            name_glb: {},
-            nationality: "kr",
-            age: "",
-            phone_number: "",
-            emergency_contact: "",
-            gender: "",
-            email_verified: new Date(),
-        });
+        await models.Student.update(
+            { email_verified: new Date() },
+            { where: { student_id: profileId } },
+        );
     } else if (type === "corp") {
         await models.Consumer.create({
             user_id: userInstance.user_id,
             consumer_email: verifyEmail,
             consumer_verified: new Date(),
+            corp_id: profileId,
             consumer_type: "corp",
             phone_number: "",
         });
@@ -104,6 +80,7 @@ VerificationRouter.get("/callback/identity-verify", async (req, res, next) => {
             user_id: userInstance.user_id,
             consumer_email: verifyEmail,
             consumer_verified: new Date(),
+            orgn_id: profileId,
             consumer_type: "orgn",
             phone_number: "",
         });
@@ -140,7 +117,8 @@ VerificationRouter.post("/identity-verify", async (req, res, next) => {
         return;
     }
 
-    const token = crypto.randomUUID();
+    // random string
+    const randomStr = crypto.randomUUID().split("-").at(0) as string;
 
     await models.VerificationToken.destroy({
         where: { identifier: user.email },
@@ -148,12 +126,12 @@ VerificationRouter.post("/identity-verify", async (req, res, next) => {
 
     const createdToken = await models.VerificationToken.create({
         identifier: verifyEmail,
-        token: token,
+        token: randomStr,
         expires: new Date(Date.now() + 3600 * 1000),
         token_type: type,
     });
 
-    const url = `http://localhost:8080/api/verification/callback/identity-verify?token=${token}&email=${user.email}&verifyEmail=${verifyEmail}&type=${type}`;
+    const url = `http://localhost:8080/api/verification/callback/identity-verify?token=${randomStr}&email=${user.email}&verifyEmail=${verifyEmail}&type=${type}`;
     const { host } = new URL(url);
     // NOTE: You are not required to use `nodemailer`, use whatever you want.
     const transport = createTransport(server);
@@ -163,7 +141,7 @@ VerificationRouter.post("/identity-verify", async (req, res, next) => {
         from: server.from,
         subject: `Sign in to ${host}`,
         text: text({ url, host }),
-        html: html({ url, host, theme, token }),
+        html: html({ url, host, theme, randomStr }),
     });
     const failed = result.rejected.concat(result.pending).filter(Boolean);
     if (failed.length) {
@@ -210,11 +188,6 @@ function html(params: {
                 style="padding: 10px 0px; font-size: 22px; font-family: Helvetica, Arial, sans-serif; color: ${color.text};">
                 Input <strong>${token}</strong>
             </td>            
-            <td align="center" style="border-radius: 5px;" bgcolor="${color.buttonBackground}"><a href="${url}"
-                target="_blank"
-                style="font-size: 18px; font-family: Helvetica, Arial, sans-serif; color: ${color.buttonText}; text-decoration: none; border-radius: 5px; padding: 10px 20px; border: 1px solid ${color.buttonBorder}; display: inline-block; font-weight: bold;">Sign
-                in</a></td>
-          </tr>
         </table>
       </td>
     </tr>

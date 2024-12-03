@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import {
     getStudentByStudentId,
     getInstReviewOfStudentByStudentId,
-    createStudentIdentity,
+    createUnVerifiedStudentIdentity,
 } from "../controllers/wiip/StudentController";
 
 const StudentRouter = express.Router();
@@ -15,7 +15,7 @@ StudentRouter.post("/", async (req: Request, res: Response) => {
         return;
     }
 
-    const ret = await createStudentIdentity(sessionUser.id, req.body);
+    const ret = await createUnVerifiedStudentIdentity(sessionUser.id, req.body);
 
     if (ret === null) {
         res.status(500).json({ message: "Internal Server Error" });
