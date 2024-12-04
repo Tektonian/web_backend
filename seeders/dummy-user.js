@@ -209,6 +209,10 @@ module.exports = {
         await queryInterface.bulkDelete("Organization", null, {});
         await queryInterface.bulkDelete("School", null, {});
         await queryInterface.bulkDelete("Corporation", null, {});
+
+        // Reset useless data
+        await queryInterface.bulkDelete("VerificationToken", null, {});
+        await queryInterface.bulkDelete("Account", null, {});
         /**
          * Add commands to revert seed here.
          *
