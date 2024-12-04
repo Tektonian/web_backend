@@ -109,11 +109,6 @@ module.exports = {
         const db = require("../models");
         const School = db.sequelize.models.School;
         const User = db.sequelize.models.User;
-        const Student = db.sequelize.models.Student;
-        const Consumer = db.sequelize.models.Consumer;
-        const AcademicHistory = db.sequelize.models.AcademicHistory;
-        const StudentWithCurrentSchool =
-            db.sequelize.models.studentwithcurrentschool;
 
         for (let i = 0; i < rows.length; i++) {
             if (i === 0) {
@@ -158,141 +153,48 @@ module.exports = {
             }
         }
 
-        const test0User = await User.create({
-            username: "test0",
-            email: "test0@test.com",
-            email_verified: new Date(),
-            roles: ["admin"],
-        });
-        const test1User = await User.create({
-            username: "test1",
-            email: "test1@test.com",
-            email_verified: new Date(),
-            roles: ["admin"],
-        });
-        const kangUser = await User.create({
-            username: "kang",
-            email: "kang@gmail.com",
-            email_verified: new Date(),
-            roles: ["student"],
-        });
-        const bulkStudents = [];
+        const userData = [
+            {
+                username: "test0",
+                email: "test0@test.com",
+                email_verified: new Date(),
+                roles: ["admin", "normal"],
+            },
+            {
+                username: "test1",
+                email: "test1@test.com",
+                email_verified: new Date(),
+                roles: ["admin", "normal"],
+            },
+            {
+                username: "kang",
+                email: "kang@test.com",
+                email_verified: new Date(),
+                roles: ["student", "normal"],
+            },
+            {
+                username: "corp_1_user",
+                email: "corp@test.com",
+                email_verified: new Date(),
+                roles: ["corp", "normal"],
+            },
+            {
+                username: "orgn_1_user",
+                email: "orgn@test.com",
+                email_verified: new Date(),
+                roles: ["orgn", "normal"],
+            },
+        ];
+
         for (let i = 0; i < 100; i++) {
-            bulkStudents.push({
+            userData.push({
                 username: `student_${i}`,
                 email: `student${i}@test.com`,
                 email_verified: new Date(),
                 roles: ["student"],
             });
         }
-        await User.bulkCreate(bulkStudents);
-        await User.create({
-            username: "student_1_corp",
-            email: "student@test.com",
-            email_verified: new Date(),
-            roles: ["student"],
-        });
-
-        await User.create({
-            username: "corp_1_user",
-            email: "corp@gmail.com",
-            email_verified: new Date(),
-            roles: ["corp"],
-        });
-        await User.create({
-            username: "orgn_1_user",
-            email: "orgn@gmail.com",
-            email_verified: new Date(),
-            roles: ["orgn"],
-        });
-        const corpUser = await User.findOne({
-            where: { email: "corp@gmail.com" },
-        });
-        const studentUsers = await User.findAll();
-
-        const orgnUser = await User.findOne({
-            where: { email: "orgn@gmail.com" },
-        });
-
-        const users = await queryInterface.sequelize.query(
-            "select user_id, username, email from User;",
-        );
-
-        // Create normal consumer first
-        const consumers = users[0].map((val, idx) => {
-            return {
-                user_id: val.user_id,
-                consumer_type: "normal",
-                consumer_email: val.email,
-                phone_number: "",
-            };
-        });
-
-        const orgnConsumer = await Consumer.create({
-            user_id: orgnUser.user_id,
-            orgn_id: 1,
-            consumer_type: "orgn",
-            consumer_email: orgnUser.email,
-            phone_number: "01033333333",
-            consumer_verified: new Date(),
-        });
-
-        const corpConsumer = await Consumer.create({
-            user_id: corpUser.user_id,
-            corp_id: 1,
-            consumer_type: "corp",
-            consumer_email: corpUser.email,
-            phone_number: "01011111111",
-            consumer_verified: new Date(),
-        });
-
-        const schools = await School.findAll();
-
-        const studentProfiles = await Promise.all(
-            studentUsers.map(async (user, idx) => {
-                return await Student.create({
-                    user_id: user.user_id,
-                    name_glb: { kr: user.username },
-                    nationality: "kr",
-                    age: 32,
-                    email_verified: new Date(),
-                    phone_number: "01022222222",
-                    emergency_contact: "01044444444",
-                    gender: "male",
-                    image: "",
-                    has_car: 0,
-                });
-            }),
-        );
-
-        const studentDatas = await Student.findAll();
-
-        await Promise.all(
-            studentDatas.map(async (student, idx) => {
-                await AcademicHistory.create({
-                    school_id: schools[idx].school_id,
-                    student_id: student.student_id,
-                    degree: ["학사", "석사", "박사"].at(
-                        Math.floor(Math.random() * 3),
-                    ),
-                    start_date: new Date(),
-                    end_date: new Date(),
-                    status: [
-                        "재학중",
-                        "휴학",
-                        "중퇴",
-                        "자퇴",
-                        "수료",
-                        "졸업",
-                    ].at(Math.floor(Math.random() * 6)),
-                    faculty: department_list.at(
-                        Math.floor(Math.random() * department_list.length),
-                    ),
-                    school_email: `email_of_${idx}th_school@email.com`,
-                    is_attending: true,
-                });
-            }),
-        );
+        await User.bulkCreate(userData);
 
         return;
     },
