@@ -110,7 +110,7 @@ export class Corporation
                     allowNull: true,
                 },
                 corp_num: {
-                    type: DataTypes.INTEGER.UNSIGNED,
+                    type: DataTypes.BIGINT.UNSIGNED,
                     allowNull: false,
                 },
                 biz_num: {
