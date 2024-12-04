@@ -147,53 +147,119 @@ const Task = [
 '인천 오라클피부과(구월점) 국제협력팀 러시아어 코디네이터 구인',
 ]
 
+const TaskStatus = new Map([
+    ["Posted", 0], //consumer wrote a request but not paid
+    ["Paid", 1], //consumer paid for a request
+    ["Outdated", 2], // No provider(s) contracted with a consumer
+    ["Contracted", 3], // provider(s) contracted with a consumer
+    ["Finished", 4], // work has been done!
+    ["Failed", 5], // Contraction didn’t work properly
+]);
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
         const db = require("../models");
         const Request = db.sequelize.models.Request;
+        const Consumer = db.sequelize.models.Consumer;
 
-        await Request.bulkCreate([
-            {
-                request_id: 1,
-                consumer_id: corpConsumer.consumer_id,
-                title: "오사카 통역 알바",
-                reward_price: 21400,
-                currency: "yen",
-                content: "알바구함",
-                address: "오사카 요도야바시 역",
+        const corpConsumer = (
+            await Consumer.findOne({ where: { consumer_type: "corp" } })
+        ).get({ plain: true });
+        const orgnConsumer = (
+            await Consumer.findOne({ where: { consumer_type: "orgn" } })
+        ).get({ plain: true });
+
+        const dummyRequests = [];
+
+        for (let i = 0; i < 10; i++) {
+            const taskIdx = Math.floor(Math.random() * Task.length);
+            const krAddressIdx = Math.floor(
+                Math.random() * KoreaFamousPlace.length,
+            );
+            const jpAddressIdx = Math.floor(
+                Math.random() * JapanFamousPlacd.length,
+            );
+
+            const ONE_HOUR = 3600 * 1000;
+            const ONE_DAY = ONE_HOUR * 24;
+
+            let requestStatus = {};
+
+            switch (i % 5) {
+                // On preceeding requests
+                case 0:
+                case 1:
+                case 3:
+                    requestStatus.request_status = i;
+                    requestStatus.start_date = new Date(
+                        Date.now() + ONE_DAY * 30,
+                    ).toISOString(); // format: "2011-10-05T14:48:00.000Z"
+                    requestStatus.end_date = new Date(
+                        Date.now() + ONE_DAY * 30,
+                    ).toISOString(); // format: "2011-10-05T14:48:00.000Z"
+                    requestStatus.start_time = new Date(
+                        Date.now(),
+                    ).toLocaleTimeString("it-IT"); // format: 01:15:30
+                    requestStatus.end_time = new Date(
+                        Date.now() + ONE_HOUR * 5,
+                    ).toLocaleTimeString("it-IT"); // format: 01:15:30
+                    break;
+                // Done requests
+                case 2:
+                case 4:
+                case 5:
+                    requestStatus.request_status = i;
+                    requestStatus.start_date = new Date(
+                        Date.now() - ONE_DAY * 30,
+                    ).toISOString(); // format: 12/12/2024
+                    requestStatus.end_date = new Date(
+                        Date.now() - ONE_DAY * 30,
+                    ).toISOString(); // format: 12/12/2024
+                    requestStatus.start_time = new Date(
+                        Date.now(),
+                    ).toLocaleTimeString("it-IT"); // format: 01:15:30
+                    requestStatus.end_time = new Date(
+                        Date.now() + ONE_HOUR * 5,
+                    ).toLocaleTimeString("it-IT"); // format: 01:15:30
+                    break;
+                default:
+                    break;
+            }
+
+            dummyRequests.push({
+                request_id: i,
+                consumer_id:
+                    i % 2 === 0
+                        ? corpConsumer.consumer_id
+                        : orgnConsumer.consumer_id,
+                corp_id: i % 2 === 0 ? corpConsumer.corp_id : null,
+                orgn_id: i % 2 === 0 ? null : orgnConsumer.orgn_id,
+                title: Task[taskIdx],
+                reward_price: Math.floor(Math.random() * 2000 + 20000),
+                currency: i % 2 === 0 ? "yen" : "won",
+                content: Task[taskIdx],
+                address:
+                    i % 2 === 0
+                        ? JapanFamousPlacd[jpAddressIdx].name
+                        : KoreaFamousPlace[krAddressIdx].name,
                 address_coordinate: {
                     type: "Point",
-                    coordinates: [34.6967451, 135.5011539],
+                    coordinates:
+                        i % 2 === 0
+                            ? JapanFamousPlacd[jpAddressIdx].coordinate
+                            : KoreaFamousPlace[krAddressIdx].coordinate,
                 },
-            },
-            {
-                request_id: 2,
-                consumer_id: orgnConsumer.consumer_id,
-                title: "도쿄 통역 알바",
-                reward_price: 19400,
-                currency: "yen",
-                content: "알바구함",
-                address: "신주쿠 워싱턴 호텔",
-                address_coordinate: {
-                    type: "Point",
-                    coordinates: [35.6896103, 139.6991946],
-                },
-            },
-            {
-                request_id: 3,
-                consumer_id: corpConsumer.consumer_id,
-                title: "한국 서울 통역 알바",
-                reward_price: 20000,
-                currency: "won",
-                content: "알바구함",
-                address: `서울 코엑스`,
-                address_coordinate: {
-                    type: "Point",
-                    coordinates: [37.5116828, 127.059151],
-                },
-            },
-        ]);
+                head_count: 1,
+                are_needed: ["you", "body", "head"],
+                are_required: ["inner", "peace"],
+                provide_food: 1,
+                prep_material: ["shose", "bike", "car"],
+                ...requestStatus,
+            });
+        }
+
+        await Request.bulkCreate(dummyRequests);
 
         return;
     },

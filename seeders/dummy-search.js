@@ -48,23 +48,23 @@ const createDummyStudent = async (StudentWithCurrentSchool, studentIndex) => {
         const student = studentModel.get({ plain: true });
 
         const coordinate = student.coordinate.coordinates;
-
         const document = {
-            id: model.id,
-            student_id: model.student_id,
-            name_glb: model.name_glb,
-            nationality: model.nationality,
-            age: model.age,
-            student_phone_number: model.student_phone_number,
-            gender: model.gender,
-            degree: model.degree,
-            faculty: model.faculty,
-            school_id: model.school_id,
-            school_country_code: model.country_code,
-            school_name: model.school_name,
-            school_name_glb: model.school_name_glb,
-            school_address: model.address,
-            country_code: model.country_code,
+            id: student.id,
+            student_id: student.student_id,
+            name: student.name_glb[student.nationality] ?? "S",
+            name_glb: student.name_glb,
+            nationality: student.nationality,
+            age: student.age,
+            student_phone_number: student.student_phone_number,
+            gender: student.gender,
+            degree: student.degree,
+            faculty: student.faculty,
+            school_id: student.school_id,
+            school_country_code: student.country_code,
+            school_name: student.school_name,
+            school_name_glb: student.school_name_glb,
+            school_address: student.address,
+            country_code: student.country_code,
             _geo: { lat: coordinate[0], lng: coordinate[1] },
         };
 
@@ -97,9 +97,15 @@ module.exports = {
         const schoolIndex = client.index("school");
         const studentIndex = client.index("studentwithcurrentschool");
 
+        // filterable
         requestIndex.updateFilterableAttributes(["_geo"]);
         schoolIndex.updateFilterableAttributes(["_geo"]);
         studentIndex.updateFilterableAttributes(["_geo"]);
+
+        // sortable
+        requestIndex.updateSortableAttributes(["_geo"]);
+        schoolIndex.updateSortableAttributes(["_geo"]);
+        studentIndex.updateSortableAttributes(["_geo"]);
 
         await createDummyRequest(Request, requestIndex);
         await createDummySchool(School, schoolIndex);

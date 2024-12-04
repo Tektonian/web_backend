@@ -108,11 +108,8 @@ module.exports = {
 
         const db = require("../models");
         const School = db.sequelize.models.School;
-        const Request = db.sequelize.models.Request;
         const User = db.sequelize.models.User;
         const Student = db.sequelize.models.Student;
-        const Corporation = db.sequelize.models.Corporation;
-        const Organization = db.sequelize.models.Organization;
         const Consumer = db.sequelize.models.Consumer;
         const AcademicHistory = db.sequelize.models.AcademicHistory;
         const StudentWithCurrentSchool =
@@ -133,17 +130,16 @@ module.exports = {
                 type: "Point",
                 coordinates: [Number(lat), Number(lng)],
             };
-            console.log("School ", row);
             try {
                 await School.bulkCreate([
                     {
                         school_id: i,
                         school_name: jp,
-                        school_name_glb: JSON.stringify({
+                        school_name_glb: {
                             kr: kr,
                             jp: jp,
                             en: en,
-                        }),
+                        },
                         country_code: "jp",
                         address: address,
                         coordinate: coordinate,
@@ -160,68 +156,6 @@ module.exports = {
                     error.errors,
                 );
             }
-        }
-
-        try {
-            await Corporation.bulkCreate([
-                {
-                    corp_id: 1,
-                    corp_name: "SaSUNG",
-                    nationality: "kr",
-                    corp_num: 123,
-                },
-                {
-                    corp_id: 2,
-                    corp_name: "Onasonic",
-                    nationality: "jp",
-                    corp_num: 54,
-                },
-                {
-                    corp_id: 3,
-                    corp_name: "Nonedai",
-                    nationality: "kr",
-                    corp_num: 928,
-                },
-                {
-                    corp_id: 4,
-                    corp_name: "Yuyota",
-                    nationality: "jp",
-                    corp_num: 83,
-                },
-            ]);
-        } catch (error) {
-            console.log("Validation Error in Corporation.bulkCreate", error);
-        }
-
-        try {
-            await Organization.bulkCreate([
-                {
-                    orgn_id: 1,
-                    orgn_code: 123,
-                    nationality: "kr",
-                    full_name: "Ilgong",
-                },
-                {
-                    orgn_id: 2,
-                    orgn_code: 523,
-                    nationality: "jp",
-                    full_name: "Japan emb",
-                },
-                {
-                    orgn_id: 3,
-                    orgn_code: 928,
-                    nationality: "kr",
-                    full_name: "Hankook Kyouone",
-                },
-                {
-                    orgn_id: 4,
-                    orgn_code: 99,
-                    nationality: "jp",
-                    full_name: "Ilbon Kyouone",
-                },
-            ]);
-        } catch (error) {
-            console.log("Validation Error in Org.BulkCreate", error.errors);
         }
 
         const test0User = await User.create({
@@ -318,7 +252,7 @@ module.exports = {
             studentUsers.map(async (user, idx) => {
                 return await Student.create({
                     user_id: user.user_id,
-                    name_glb: `{"kr": ${user.username}}`,
+                    name_glb: { kr: user.username },
                     nationality: "kr",
                     age: 32,
                     email_verified: new Date(),
@@ -335,7 +269,6 @@ module.exports = {
 
         await Promise.all(
             studentDatas.map(async (student, idx) => {
-                console.log(student);
                 await AcademicHistory.create({
                     school_id: schools[idx].school_id,
                     student_id: student.student_id,
@@ -361,65 +294,16 @@ module.exports = {
             }),
         );
 
-        const studentAll = await StudentWithCurrentSchool.findAll();
-        console.log("A::", studentAll);
-
-        studentAll.map(async (student) => {
-            const index = client.index("studentwithcurrentschool");
-            const model = student.get({ plain: true });
-            const coordinate = JSON.parse(
-                JSON.stringify(model.coordinate),
-            ).coordinates;
-            const document = {
-                id: model.id,
-                student_id: model.student_id,
-                name_glb: model.name_glb,
-                nationality: model.nationality,
-                age: model.age,
-                student_phone_number: model.student_phone_number,
-                gender: model.gender,
-                degree: model.degree,
-                faculty: model.faculty,
-                school_id: model.school_id,
-                school_country_code: model.country_code,
-                school_name: model.school_name,
-                school_name_glb: model.school_name_glb,
-                school_address: model.address,
-                country_code: model.country_code,
-                _geo: { lat: coordinate[0], lng: coordinate[1] },
-            };
-            let ret = await index.addDocuments([document], {
-                primaryKey: "id",
-            });
-        });
-
-        await client
-            .index("studentwithcurrentschool")
-            .updateFilterableAttributes(["_geo"]);
-
-        const sleep = (ms) => {
-            return new Promise((resolve) => {
-                setTimeout(resolve, ms);
-            });
-        };
-        await sleep(5000);
         return;
     },
 
     async down(queryInterface, Sequelize) {
-        const MeiliSearch = require("meilisearch").MeiliSearch;
-        const client = new MeiliSearch({
-            host: "http://127.0.0.1:7700",
-            apiKey: "1zBmtAMDjgWPGLcTPAhEy-kRZv44BzxywQ1UHPkIYE0",
-        });
-        client.deleteIndex("school");
-        client.deleteIndex("request");
-        client.deleteIndex("studentwithcurrentschool");
-        await queryInterface.bulkDelete("Consumer", null, {});
         await queryInterface.bulkDelete("AcademicHistory", null, {});
+        await queryInterface.bulkDelete("Request", null, {});
         await queryInterface.bulkDelete("Student", null, {});
-        await queryInterface.bulkDelete("AcademicHistory", null, {});
+        await queryInterface.bulkDelete("Consumer", null, {});
         await queryInterface.bulkDelete("User", null, {});
+        await queryInterface.bulkDelete("AcademicHistory", null, {});
         await queryInterface.bulkDelete("Organization", null, {});
         await queryInterface.bulkDelete("School", null, {});
         await queryInterface.bulkDelete("Corporation", null, {});
