@@ -60,6 +60,7 @@ const fitExternDataFormat = (item: IExternItem | undefined) => {
     const ret = {
         corp_name: item.corpNm,
         biz_num: item.bzno,
+        corp_num: item.crno,
         corp_name_glb: { en: item.corpEnsnNm },
         nationality: "kr",
         ceo_name: item.enpRprFnm,
