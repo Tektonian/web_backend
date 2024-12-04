@@ -10,6 +10,7 @@ const client = new MeiliSearch({
 
 const requestSearch = client.index("request");
 requestSearch.updateFilterableAttributes(["_geo"]);
+requestSearch.updateSortableAttributes(["_geo"]);
 
 const StudentWithCurrentSchool = models.studentwithcurrentschool;
 const RequestModel = models.Request;
@@ -27,6 +28,7 @@ export const getRecommendedRequestByStudent = async (student_id: number) => {
 
     const searchRet = await requestSearch.search("", {
         filter: [`_geoRadius(${coordi[0]}, ${coordi[1]}, 1000000000000)`],
+        sort: [`_geoPoint(${coordi[0]}, ${coordi[1]}):asc`],
     });
 
     return searchRet;
