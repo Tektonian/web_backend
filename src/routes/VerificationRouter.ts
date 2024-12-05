@@ -89,10 +89,10 @@ VerificationRouter.post("/callback/identity-verify", async (req, res, next) => {
     if (userInstance.roles === null) {
         userInstance.roles = [type];
     } else {
-        userInstance.roles = [...JSON.parse(userInstance.roles), type];
+        userInstance.roles = new Set([...userInstance.roles, type]);
     }
 
-    await models.User.update(userInstance, { where: { email: email } });
+    await models.User.update(userInstance, { where: { email: verifyEmail } });
 
     res.json({ response: "ok" });
 });
@@ -119,6 +119,7 @@ VerificationRouter.post("/identity-verify", async (req, res, next) => {
 
     // random string
     const randomStr = crypto.randomUUID().split("-").at(0) as string;
+    console.log(randomStr);
 
     await models.VerificationToken.destroy({
         where: { identifier: user.email },
@@ -133,6 +134,7 @@ VerificationRouter.post("/identity-verify", async (req, res, next) => {
 
     const url = `http://localhost:8080/api/verification/callback/identity-verify?token=${randomStr}&email=${user.email}&verifyEmail=${verifyEmail}&type=${type}`;
     const { host } = new URL(url);
+    const token = randomStr;
     // NOTE: You are not required to use `nodemailer`, use whatever you want.
     const transport = createTransport(server);
     const theme = null;
@@ -141,7 +143,7 @@ VerificationRouter.post("/identity-verify", async (req, res, next) => {
         from: server.from,
         subject: `Sign in to ${host}`,
         text: text({ url, host }),
-        html: html({ url, host, theme, randomStr }),
+        html: html({ url, host, theme, token }),
     });
     const failed = result.rejected.concat(result.pending).filter(Boolean);
     if (failed.length) {
