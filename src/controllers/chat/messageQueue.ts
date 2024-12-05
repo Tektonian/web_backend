@@ -78,7 +78,7 @@ export const pushMessageQueue = async (
         message: message,
         sender: sender,
     };
-    const jobName = `${chatRoom._id.toString()}:${sender._id.toString()}`;
+    const jobName = `${sender._id.toString()}:${chatRoom._id.toString()}`;
     await sentMessageQueue.add(jobName, data);
 };
 
@@ -94,6 +94,7 @@ const userSentWorker = new Worker(
         if (!(data.sender.user_id instanceof Buffer)) {
             data.sender.user_id = Buffer.from(data.sender.user_id);
         }
+        console.log("Data", data);
         const ret = await ChatContent.create({
             sender_id: data.sender.user_id,
             content: data.message,
