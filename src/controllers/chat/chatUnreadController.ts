@@ -21,6 +21,9 @@ export const updateUserUnread = async (
     seq: number,
 ) => {
     const chatUser = await ChatUser.findById(chatUserId);
+    if (chatUser === null) {
+        return;
+    }
 
     await Unread.findOneAndUpdate(
         { chatroom: chatRoomId, user_id: chatUser.user_id },

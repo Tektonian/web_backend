@@ -3,6 +3,7 @@ import { HydratedDocument } from "mongoose";
 import { Server } from "socket.io";
 import { currentSession } from "../../middleware/auth.middleware";
 import { chatController } from "../../controllers/chat";
+import { ChatContent } from "../../models/chat";
 import type {
     reqTryJoinProps,
     resMessage,
@@ -44,36 +45,38 @@ const ResChatRoomFactory = async (
     return resChatroom;
 };
 
-const ResMessageRactory = (
-    message: IChatContent,
-    sender: HydratedDocument<IChatUser>,
+const ResMessageFactory = (
+    message: HydratedDocument<IChatContent>,
+    direction: "outgoing" | "inbound",
 ): resMessage => {
     let ret: resMessage;
-
-    sender = sender.toJSON();
-    console.log(message, sender);
     ret = {
         _id: message._id,
         seq: message.seq,
-        chatRoomId: message.chatroom,
+        chatRoomId: message.chatroom._id.toString(),
         contentType: "text",
         content: message.content,
-        senderName: sender.username ?? "",
+        direction: direction,
         createdAt: new Date(),
         updatedAt: new Date(),
     };
-    console.log("Processing", ret);
+    console.log("Processing", message, ret);
     return ret;
 };
 
 const ResMessagesFactory = (
-    messages: IChatContent[],
-    sender: HydratedDocument<IChatUser>,
+    messages: HydratedDocument<IChatContent>[],
+    chatUser: HydratedDocument<IChatUser>,
 ): resMessage[] => {
     // TODO: bit wise operation later
     let ret: resMessage[] = [];
     for (let message of messages) {
-        ret.push(ResMessageRactory(message, sender));
+        const dir =
+            message.sender_id.toString("hex") ===
+            chatUser.user_id.toString("hex")
+                ? "outgoing"
+                : "inbound";
+        ret.push(ResMessageFactory(message, dir));
     }
     console.log("RET: ", messages);
     return ret;
@@ -169,16 +172,28 @@ async function userSentEventHandler(
     const participant_ids = chatRoom.participant_ids;
     // 2. emit user "otherSent"
     // and server waits for users' "updateLastRead"
-    console.log("User Sent", jobId, returnvalue);
-    const responses: resSomeoneSent[] = await io
+    console.log("User Sent", jobId, JSON.parse(returnvalue));
+    const returnObject = JSON.parse(returnvalue);
+    const objectDocument = new ChatContent({
+        ...returnObject,
+        sender_id: Buffer.from(returnObject.sender_id.data),
+    });
+
+    const othersRes: Promise<resSomeoneSent[]> = socket
         .in(chatRoom._id.toString())
         .timeout(500)
         .emitWithAck(
             "someoneSent",
-            JSON.stringify(
-                ResMessageRactory(JSON.parse(returnvalue), chatUser),
-            ),
+            JSON.stringify(ResMessageFactory(objectDocument, "inbound")),
         );
+
+    const senderRes: Promise<resSomeoneSent> = socket.emitWithAck(
+        "someoneSent",
+        JSON.stringify(ResMessageFactory(objectDocument, "outgoing")),
+    );
+
+    const responses = [...(await othersRes), await senderRes];
+
     const respondUserIds = responses.map((res) => res.id);
 
     await Promise.all(
@@ -238,7 +253,7 @@ async function userTryJoinHandler(globalArgs, req: reqTryJoinProps) {
 
     // received unread messages and update unread schema
     const currChatRoomSeq = chatRoom.message_seq;
-    const messages = [] as IChatContent[];
+    const messages = [] as HydratedDocument<IChatContent>[];
     console.log("SEqs: ", currChatRoomSeq, deviceLastSeq);
     if (currChatRoomSeq - deviceLastSeq > 0) {
         // get unread messages
