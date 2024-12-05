@@ -19,7 +19,7 @@ const unreadSchema = new Schema<IUnread>(
         send_alarm: { type: Schema.Types.Boolean, default: true },
         // last_read_message_seq is for calculating unread messages
         last_read_at: { type: Date },
-        last_read_seq: { type: Number, required: true, default: 0 },
+        last_read_seq: { type: Number, required: true, default: -1 },
     },
     {
         collection: "unreads",
