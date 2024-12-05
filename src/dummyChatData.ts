@@ -1,5 +1,6 @@
 import { models } from "./models/rdbms";
 import { chatController } from "./controllers/chat";
+import { ChatUser } from "./models/chat";
 export const chatTest = async () => {
     const userModel = models.User;
     const { chatRoomController, chatContentController, chatUserController } =
@@ -69,5 +70,6 @@ export const chatTest = async () => {
     await chatUserController.delUserById(test0Chat._id);
     await chatUserController.delUserById(test1Chat._id);
 
+    await ChatUser.deleteMany();
     //console.log("get by seq", lastSeqMessage);
 };
