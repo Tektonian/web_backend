@@ -5,6 +5,7 @@ import { Consumer } from "../models/rdbms/Consumer";
 import { Corporation } from "../models/rdbms/Corporation";
 import {
     createCorporationReview,
+    getAllCorpReviewByCorpId,
     getAllCorpReviewByCsmId,
 } from "../controllers/CorporationReveiwController";
 import { getRequestByCsmId } from "../controllers/ConsumerController";
@@ -13,11 +14,13 @@ import { getUserByName } from "../controllers/UserController";
 
 const CorporationReviewRouter = express.Router();
 
-CorporationReviewRouter.all(
-    "/:consumer_id",
+CorporationReviewRouter.get(
+    "/:corp_id",
     async (req: Request, res: Response) => {
-        const consumer_id = req.params.consumer_id;
-        const ret = getAllCorpReviewByCsmId(Number(consumer_id));
+        const corp_id = req.params.corp_id;
+        const ret = await getAllCorpReviewByCorpId(Number(corp_id));
+
+        console.log(ret);
 
         res.json(ret);
     },
