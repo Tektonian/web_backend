@@ -3,7 +3,9 @@ import { HydratedDocument } from "mongoose";
 import { Server } from "socket.io";
 import { currentSession } from "../../middleware/auth.middleware";
 import { chatController } from "../../controllers/chat";
+import * as UserController from "../../controllers/UserController";
 import { ChatContent } from "../../models/chat";
+import { createHash } from "crypto";
 import type {
     reqTryJoinProps,
     resMessage,
@@ -20,16 +22,39 @@ import { ISessionUser } from "../../config/auth.types";
 const ResChatRoomFactory = async (
     chatRoom: HydratedDocument<IChatroom>,
 ): Promise<ResChatRoom> => {
-    const consumer = await chatController.chatUserController.getUserByUUID(
-        chatRoom.consumer_id,
+    console.log("ResChatRoomFactory", chatRoom.toJSON());
+
+    const chatRoomJSON = chatRoom.toJSON();
+
+    const consumer = (
+        await UserController.getUserById(Buffer.from(chatRoomJSON.consumer_id))
+    )?.get({ plain: true });
+
+    const usersUUIDs = chatRoomJSON.participant_ids.map((id) =>
+        Buffer.from(id),
     );
-    const participants = await chatController.chatUserController.getUsersByUUID(
-        chatRoom.participant_ids,
+    const participantsInst = await UserController.getUsersById(usersUUIDs);
+
+    const participants = participantsInst.map((inst) =>
+        inst.get({ plain: true }),
     );
     const lastMessage =
         await chatController.chatContentController.getChatRoomLastMessage(
             chatRoom._id,
         );
+
+    const participantsRes = participants.map((part) => {
+        return {
+            // IMPORTANT
+            // _id: "" <- user's chat id should not respond
+            username: part.username,
+            user_id: createHash("sha256")
+                .update(part.user_id.toString("hex"))
+                .digest("hex"),
+            email: part.email,
+            image_url: part.image,
+        };
+    });
     const consumerName = consumer?.username;
     const participantNames = new Set(participants.map((part) => part.username));
     const resChatroom: ResChatRoom = {
@@ -37,11 +62,12 @@ const ResChatRoomFactory = async (
         messageSeq: chatRoom.message_seq,
         consumerName: consumerName,
         providerNames: Array.from(participantNames),
+        participants: participantsRes,
         lastSender: "",
         lastMessage: lastMessage?.content,
         lastSentTime: lastMessage?.created_at,
     };
-    console.log("Participants", chatRoom, consumer);
+    console.log("Participants", chatRoom, " - ", participants, " / ");
     return resChatroom;
 };
 
@@ -50,12 +76,18 @@ const ResMessageFactory = (
     direction: "outgoing" | "inbound",
 ): resMessage => {
     let ret: resMessage;
+    const senderJSON = message.toJSON().sender_id;
+    const senderId = createHash("sha256")
+        .update(Buffer.from(senderJSON).toString("hex"))
+        .digest("hex");
+
     ret = {
         _id: message._id,
         seq: message.seq,
         chatRoomId: message.chatroom._id.toString(),
         contentType: "text",
         content: message.content,
+        senderId: senderId,
         direction: direction,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -108,6 +140,12 @@ async function sendMessageHandler(globalArgs, recv) {
     const chatUser = socket.data.chatUser;
     console.log("chatRoom: ", chatRoom, chatUser);
 
+    // Check sender's temporary id is same as chatUser id
+    if (req.senderId !== chatUser._id.toString()) {
+        // TODO: add throw error
+        return;
+    }
+
     await chatContentController.sendMessage(
         chatRoom._id,
         chatUser,
@@ -156,7 +194,7 @@ async function socketDisconnectHandler(globalArgs, reason) {
         reason,
     );
 
-    await chatUserController.delUserById(chatUser._id);
+    await chatUserController.delChatUserById(chatUser._id);
 }
 
 async function userSentEventHandler(
@@ -232,8 +270,7 @@ async function userTryJoinHandler(globalArgs, req: reqTryJoinProps) {
         chatContentController,
         chatUnreadController,
     } = globalArgs;
-    // Is he ok to join?
-    const { chatRoomId, deviceLastSeq } = req;
+    const { chatRoomId, deviceLastSeq, id } = req;
     const chatRoom: HydratedDocument<IChatroom> | null =
         await chatRoomController.getChatRoomById(chatRoomId);
     console.log("messages", req);
@@ -246,9 +283,15 @@ async function userTryJoinHandler(globalArgs, req: reqTryJoinProps) {
         return;
         throw new Error(`Room not exist: ${chatRoomId}`);
     }
+    // Is he ok to join?
     if (!chatRoom.participant_ids.includes(chatUser.user_id)) {
         return;
         throw new Error("User have no perssion to access a room");
+    }
+    // Check users temporary id
+    if (id !== chatUser._id.toString()) {
+        console.log("Error ", id, chatUser);
+        return;
     }
 
     // received unread messages and update unread schema
@@ -394,10 +437,10 @@ export default function initChat(httpServer) {
         // TODO: 기기별 1개로 재한 필요함
         // 지금은 채팅 페이지에서 유저가 요청하는데로 생성하고 있음
         let chatUser: HydratedDocument<IChatUser> | null =
-            await chatUserController.getUserByUUID(sessionUser.id);
+            await chatUserController.getChatUserByUUID(sessionUser.id);
 
         if (chatUser === null) {
-            chatUser = await chatUserController.createUser({
+            chatUser = await chatUserController.createChatUser({
                 user_id: sessionUser.id,
                 email: sessionUser.email,
                 username: sessionUser.name,
@@ -430,7 +473,7 @@ export default function initChat(httpServer) {
         } catch (e) {
             // if no response, disconnect
             socket.disconnect(true);
-            await chatUserController.delUserById(chatUser._id);
+            await chatUserController.delChatUserById(chatUser._id);
             console.log("User failed to connect", e);
             return;
         }

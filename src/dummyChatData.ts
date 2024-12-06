@@ -11,7 +11,7 @@ export const chatTest = async () => {
     });
     await Promise.all(
         users.map(async (user) => {
-            return chatUserController.createUser(user.dataValues);
+            return chatUserController.createChatUser(user.dataValues);
         }),
     );
 
@@ -56,8 +56,8 @@ export const chatTest = async () => {
         );
     }
 
-    chatUserController.delUserById(test0Chat._id);
-    chatUserController.delUserById(test1Chat._id);
+    chatUserController.delChatUserById(test0Chat._id);
+    chatUserController.delChatUserById(test1Chat._id);
 
     const getChatRoomMessages = await chatContentController.getChatRoomMessages(
         chatRoom._id,
@@ -67,8 +67,8 @@ export const chatTest = async () => {
         10,
     );
 
-    await chatUserController.delUserById(test0Chat._id);
-    await chatUserController.delUserById(test1Chat._id);
+    await chatUserController.delChatUserById(test0Chat._id);
+    await chatUserController.delChatUserById(test1Chat._id);
 
     await ChatUser.deleteMany();
     //console.log("get by seq", lastSeqMessage);
