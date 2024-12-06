@@ -89,10 +89,10 @@ VerificationRouter.post("/callback/identity-verify", async (req, res, next) => {
     if (userInstance.roles === null) {
         userInstance.roles = [type];
     } else {
-        userInstance.roles = new Set([...userInstance.roles, type]);
+        userInstance.roles = [...userInstance.roles, type];
     }
 
-    await models.User.update(userInstance, { where: { email: verifyEmail } });
+    await models.User.update(userInstance, { where: { email: user.email } });
 
     res.json({ response: "ok" });
 });
