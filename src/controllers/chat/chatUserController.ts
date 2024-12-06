@@ -1,10 +1,12 @@
 import mongoose, { Types } from "mongoose";
 import * as ChatModels from "../../models/chat";
+import * as RDBMSModels from "../../models/rdbms";
 import type { UserAttributes } from "../../models/User";
 import { IChatUser } from "../../types/chat/chatSchema.types";
 const { ChatUser } = ChatModels;
+const { User } = RDBMSModels;
 
-export const createUser = async (user: UserAttributes) => {
+export const createChatUser = async (user: UserAttributes) => {
     console.log("Create", user);
     return await ChatUser.create({
         user_id: user.user_id,
@@ -15,15 +17,15 @@ export const createUser = async (user: UserAttributes) => {
     });
 };
 
-export const delUserById = async (objectId: Types.ObjectId) => {
+export const delChatUserById = async (objectId: Types.ObjectId) => {
     return await ChatUser.findByIdAndDelete(objectId);
 };
 
-export const getUser = async (user: UserAttributes) => {
+export const getChatUser = async (user: UserAttributes) => {
     return await ChatUser.findOne({ user_id: user.user_id });
 };
 
-export const getUserByUUID = async (uuid: mongoose.Types.UUID) => {
+export const getChatUserByUUID = async (uuid: mongoose.Types.UUID) => {
     return await ChatUser.findOne({ user_id: uuid });
 };
 
@@ -35,6 +37,7 @@ export const getUsers = async (users: UserAttributes[]) => {
 
 export const getUsersByUUID = async (uuids: mongoose.Types.UUID[]) => {
     const ret = await ChatUser.find({ user_id: { $in: uuids } });
+    console.log("getUsersByUUID: ", uuids, ret);
 
     return ret;
 };

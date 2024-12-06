@@ -3,6 +3,9 @@ import { HydratedDocument } from "mongoose";
 import { Server } from "socket.io";
 import { currentSession } from "../../middleware/auth.middleware";
 import { chatController } from "../../controllers/chat";
+import * as UserController from "../../controllers/UserController";
+import { ChatContent } from "../../models/chat";
+import { createHash } from "crypto";
 import type {
     reqTryJoinProps,
     resMessage,
@@ -17,18 +20,41 @@ import type {
 import { ISessionUser } from "../../config/auth.types";
 
 const ResChatRoomFactory = async (
-    chatRoom: IChatroom,
+    chatRoom: HydratedDocument<IChatroom>,
 ): Promise<ResChatRoom> => {
-    const consumer = await chatController.chatUserController.getUserByUUID(
-        chatRoom.consumer_id,
+    console.log("ResChatRoomFactory", chatRoom.toJSON());
+
+    const chatRoomJSON = chatRoom.toJSON();
+
+    const consumer = (
+        await UserController.getUserById(Buffer.from(chatRoomJSON.consumer_id))
+    )?.get({ plain: true });
+
+    const usersUUIDs = chatRoomJSON.participant_ids.map((id) =>
+        Buffer.from(id),
     );
-    const participants = await chatController.chatUserController.getUsersByUUID(
-        chatRoom.participant_ids,
+    const participantsInst = await UserController.getUsersById(usersUUIDs);
+
+    const participants = participantsInst.map((inst) =>
+        inst.get({ plain: true }),
     );
     const lastMessage =
         await chatController.chatContentController.getChatRoomLastMessage(
-            chatRoom,
+            chatRoom._id,
         );
+
+    const participantsRes = participants.map((part) => {
+        return {
+            // IMPORTANT
+            // _id: "" <- user's chat id should not respond
+            username: part.username,
+            user_id: createHash("sha256")
+                .update(part.user_id.toString("hex"))
+                .digest("hex"),
+            email: part.email,
+            image_url: part.image,
+        };
+    });
     const consumerName = consumer?.username;
     const participantNames = new Set(participants.map((part) => part.username));
     const resChatroom: ResChatRoom = {
@@ -36,54 +62,55 @@ const ResChatRoomFactory = async (
         messageSeq: chatRoom.message_seq,
         consumerName: consumerName,
         providerNames: Array.from(participantNames),
+        participants: participantsRes,
         lastSender: "",
         lastMessage: lastMessage?.content,
         lastSentTime: lastMessage?.created_at,
     };
-    console.log("Participants", chatRoom, consumer);
+    console.log("Participants", chatRoom, " - ", participants, " / ");
     return resChatroom;
 };
 
-const ResMessageRactory = (
+const ResMessageFactory = (
     message: HydratedDocument<IChatContent>,
-    sender: HydratedDocument<IChatUser>,
-    lastReadSequences: number[],
+    direction: "outgoing" | "inbound",
 ): resMessage => {
     let ret: resMessage;
-    let cnt = 0;
-    for (let seq of lastReadSequences) {
-        if (seq < message.seq) {
-            cnt += 1;
-        }
-    }
-    sender = sender.toJSON();
-    console.log(message, sender);
+    const senderJSON = message.toJSON().sender_id;
+    const senderId = createHash("sha256")
+        .update(Buffer.from(senderJSON).toString("hex"))
+        .digest("hex");
+
     ret = {
         _id: message._id,
         seq: message.seq,
-        chatRoomId: message.chatroom,
-        unreadCount: cnt,
+        chatRoomId: message.chatroom._id.toString(),
         contentType: "text",
         content: message.content,
-        senderName: sender.username ?? "",
+        senderId: senderId,
+        direction: direction,
         createdAt: new Date(),
         updatedAt: new Date(),
     };
-    console.log("Processing", ret);
+    console.log("Processing", message, ret);
     return ret;
 };
 
 const ResMessagesFactory = (
     messages: HydratedDocument<IChatContent>[],
-    sender: HydratedDocument<IChatUser>,
-    lastReadSequences: number[],
+    chatUser: HydratedDocument<IChatUser>,
 ): resMessage[] => {
     // TODO: bit wise operation later
     let ret: resMessage[] = [];
     for (let message of messages) {
-        ret.push(ResMessageRactory(message, sender, lastReadSequences));
+        const dir =
+            message.sender_id.toString("hex") ===
+            chatUser.user_id.toString("hex")
+                ? "outgoing"
+                : "inbound";
+        ret.push(ResMessageFactory(message, dir));
     }
-    // console.log("RET: ", messages);
+    console.log("RET: ", messages);
     return ret;
 };
 
@@ -113,6 +140,12 @@ async function sendMessageHandler(globalArgs, recv) {
     const chatUser = socket.data.chatUser;
     console.log("chatRoom: ", chatRoom, chatUser);
 
+    // Check sender's temporary id is same as chatUser id
+    if (req.senderId !== chatUser._id.toString()) {
+        // TODO: add throw error
+        return;
+    }
+
     await chatContentController.sendMessage(
         chatRoom._id,
         chatUser,
@@ -125,7 +158,11 @@ async function updateLastReadHandler(globalArgs, recv) {
     const { lastSeq } = recv;
     const chatUser = socket.data.chatUser;
     const chatRoom = socket.data.chatRoom;
-    chatUnreadController.updateUserUnread(chatUser._id, chatRoom, lastSeq);
+    chatUnreadController.updateUserUnreadByUUID(
+        chatUser.user_id,
+        chatRoom,
+        lastSeq,
+    );
 }
 
 async function userTryUnJoinHandler(globalArgs) {
@@ -157,7 +194,7 @@ async function socketDisconnectHandler(globalArgs, reason) {
         reason,
     );
 
-    await chatUserController.delUserById(chatUser._id);
+    await chatUserController.delChatUserById(chatUser._id);
 }
 
 async function userSentEventHandler(
@@ -173,16 +210,28 @@ async function userSentEventHandler(
     const participant_ids = chatRoom.participant_ids;
     // 2. emit user "otherSent"
     // and server waits for users' "updateLastRead"
-    console.log("User Sent", jobId, returnvalue);
-    const responses: resSomeoneSent[] = await io
+    console.log("User Sent", jobId, JSON.parse(returnvalue));
+    const returnObject = JSON.parse(returnvalue);
+    const objectDocument = new ChatContent({
+        ...returnObject,
+        sender_id: Buffer.from(returnObject.sender_id.data),
+    });
+
+    const othersRes: Promise<resSomeoneSent[]> = socket
         .in(chatRoom._id.toString())
         .timeout(500)
         .emitWithAck(
             "someoneSent",
-            JSON.stringify(
-                ResMessageRactory(JSON.parse(returnvalue), chatUser, [0]),
-            ),
+            JSON.stringify(ResMessageFactory(objectDocument, "inbound")),
         );
+
+    const senderRes: Promise<resSomeoneSent> = socket.emitWithAck(
+        "someoneSent",
+        JSON.stringify(ResMessageFactory(objectDocument, "outgoing")),
+    );
+
+    const responses = [...(await othersRes), await senderRes];
+
     const respondUserIds = responses.map((res) => res.id);
 
     await Promise.all(
@@ -221,9 +270,8 @@ async function userTryJoinHandler(globalArgs, req: reqTryJoinProps) {
         chatContentController,
         chatUnreadController,
     } = globalArgs;
-    // Is he ok to join?
-    const { chatRoomId, deviceLastSeq } = req;
-    const chatRoom: IChatroom | null =
+    const { chatRoomId, deviceLastSeq, id } = req;
+    const chatRoom: HydratedDocument<IChatroom> | null =
         await chatRoomController.getChatRoomById(chatRoomId);
     console.log("messages", req);
 
@@ -235,14 +283,20 @@ async function userTryJoinHandler(globalArgs, req: reqTryJoinProps) {
         return;
         throw new Error(`Room not exist: ${chatRoomId}`);
     }
+    // Is he ok to join?
     if (!chatRoom.participant_ids.includes(chatUser.user_id)) {
         return;
         throw new Error("User have no perssion to access a room");
     }
+    // Check users temporary id
+    if (id !== chatUser._id.toString()) {
+        console.log("Error ", id, chatUser);
+        return;
+    }
 
     // received unread messages and update unread schema
     const currChatRoomSeq = chatRoom.message_seq;
-    const messages = [] as IChatContent[];
+    const messages = [] as HydratedDocument<IChatContent>[];
     console.log("SEqs: ", currChatRoomSeq, deviceLastSeq);
     if (currChatRoomSeq - deviceLastSeq > 0) {
         // get unread messages
@@ -253,9 +307,9 @@ async function userTryJoinHandler(globalArgs, req: reqTryJoinProps) {
             );
         messages.push(...unreadMessages);
         // update unread schema
-        await chatUnreadController.updateUserUnread(
-            chatUser,
-            chatRoom,
+        await chatUnreadController.updateUserUnreadByUUID(
+            chatUser.user_id,
+            chatRoom._id,
             currChatRoomSeq,
         );
         // console.log("Unread, ", unreadMessages);
@@ -265,11 +319,7 @@ async function userTryJoinHandler(globalArgs, req: reqTryJoinProps) {
         chatRoom._id,
     );
 
-    const resMessages = ResMessagesFactory(
-        messages,
-        chatUser,
-        lastReadSequences as number[],
-    );
+    const resMessages = ResMessagesFactory(messages, chatUser);
 
     const res = JSON.stringify({
         messages: resMessages,
@@ -339,7 +389,7 @@ const eventRegistHelper = async (eventFlow) => {
                     chain.handler.bind(target, globalArgs),
                 );
             } else {
-                await target.on(eventName, async (...args) => {
+                await target.on(eventName, async (...args: any[]) => {
                     await chain.handler.call(target, globalArgs, ...args);
                     await eventRegistHelper(nextEventFlow);
                 });
@@ -386,12 +436,17 @@ export default function initChat(httpServer) {
         // MEANS!!! that you should not use ObjectId of user
         // TODO: 기기별 1개로 재한 필요함
         // 지금은 채팅 페이지에서 유저가 요청하는데로 생성하고 있음
-        const chatUser: IChatUser = await chatUserController.createUser({
-            user_id: sessionUser.id,
-            email: sessionUser.email,
-            username: sessionUser.name,
-            image: "",
-        });
+        let chatUser: HydratedDocument<IChatUser> | null =
+            await chatUserController.getChatUserByUUID(sessionUser.id);
+
+        if (chatUser === null) {
+            chatUser = await chatUserController.createChatUser({
+                user_id: sessionUser.id,
+                email: sessionUser.email,
+                username: sessionUser.name,
+                image: "",
+            });
+        }
 
         if (chatUser === null) {
             return;
@@ -418,7 +473,7 @@ export default function initChat(httpServer) {
         } catch (e) {
             // if no response, disconnect
             socket.disconnect(true);
-            await chatUserController.delUserById(chatUser._id);
+            await chatUserController.delChatUserById(chatUser._id);
             console.log("User failed to connect", e);
             return;
         }
