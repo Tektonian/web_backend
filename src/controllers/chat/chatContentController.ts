@@ -1,9 +1,9 @@
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 import * as ChatModels from "../../models/chat";
 import type { UserAttributes } from "../../models/User";
 import { pushMessageQueue } from "./messageQueue";
 
-const { ChatUser, ChatContent } = ChatModels;
+const { ChatUser, ChatContent, ChatRoom } = ChatModels;
 
 export const sendMessage = async (
     chatRoomId: mongoose.Types.ObjectId,
@@ -41,7 +41,7 @@ export const getChatRoomMessagesBySeq = async (
     chatroom: mongoose.Types.ObjectId,
     last_seq: number,
 ) => {
-    const messages = await ChatContent.find({ chatroom: chatroom }).gt(
+    const messages = await ChatContent.find({ chatroom: chatroom }).gte(
         "seq",
         last_seq,
     );
@@ -49,16 +49,21 @@ export const getChatRoomMessagesBySeq = async (
     return messages;
 };
 
-export const getChatRoomLastMessage = async (
-    chatroom: mongoose.Types.ObjectId,
-) => {
+export const getChatRoomLastMessage = async (chatRoomId: Types.ObjectId) => {
+    const chatRoom = await ChatRoom.findById(chatRoomId);
+
+    if (chatRoom === null) {
+        return "";
+    }
+
     const message = await ChatContent.findOne({
-        $and: [{ chatroom: chatroom }, { seq: chatroom.message_seq - 1 }],
+        $and: [{ chatroom: chatRoom }, { seq: chatRoom.message_seq - 1 }],
     });
 
     return message;
 };
 
+// TODO: deprecated
 export const getChatRoomMessagesBiz = async (
     chatRoomId: mongoose.Types.ObjectId,
     user: UserAttributes,
