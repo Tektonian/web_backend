@@ -5,9 +5,9 @@
     "type": "module",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "node compiled/index.js",
+        "start": "cross-env NODE_ENV=production node compiled/index.js",
         "build": "tsx -p .",
-        "dev": "nodemon --watch \"src/**/*.ts\" --exec \"tsx\" src/index.ts"
+        "dev": "nodemon --watch \"src/**/*.ts\" --exec cross-env NODE_ENV=development \"tsx\" src/index.ts"
     },
     "keywords": [],
     "author": "",
@@ -38,9 +38,12 @@
         "api_spec": "file:../api_spec/api_spec-1.0.0.tgz",
         "better-sse": "^0.14.1",
         "bullmq": "^5.25.3",
+        "cls-rtracer": "^2.6.3",
+        "cross-env": "^7.0.3",
         "meilisearch": "^0.45.0",
         "mongoose": "^8.7.3",
         "morgan": "^1.10.0",
+        "mysql2": "^3.11.5",
         "node": "^22.12.0",
         "nodemailer": "^6.9.16",
         "package.json": "^2.0.1",
@@ -48,6 +51,7 @@
         "sequelize-auto": "^0.8.8",
         "socket.io": "^4.8.1",
         "umzug": "^3.8.2",
-        "winston": "^3.17.0"
+        "winston": "^3.17.0",
+        "winston-daily-rotate-file": "^5.0.0"
     }
 }
