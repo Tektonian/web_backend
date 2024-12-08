@@ -24,6 +24,8 @@ import { chatTest } from "./dummyChatData";
 import { Tspec, TspecDocsMiddleware } from "tspec";
 import * as rTracer from "cls-rtracer";
 
+import logger from "./utils/logger";
+
 import type { TspecAPISpec } from "api_spec";
 export type Doc = TspecAPISpec;
 
@@ -33,7 +35,7 @@ const ErrorMiddleware = (
     res: Response,
     next: NextFunction,
 ) => {
-    console.error(err.stack);
+    logger.error(err.stack);
     res.json();
 };
 
@@ -59,10 +61,10 @@ const initServer = async () => {
     sequelize
         .sync({ force: false })
         .then(() => {
-            console.log("Database connection success");
+            logger.info("Database connection success");
         })
         .catch((err) => {
-            console.error("Database connection failed:", err);
+            logger.error("Database connection failed:", err);
         });
 
     /**
@@ -119,7 +121,7 @@ const initServer = async () => {
 
     // Listen server
     httpServer.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`);
+        logger.info(`Server is running on port ${PORT}`);
     });
 };
 

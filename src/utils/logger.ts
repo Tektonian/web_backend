@@ -20,6 +20,39 @@ interface InformationType extends winston.Logform.TransformableInfo {
     columnNumber?: string;
 }
 
+// See: https://v8.dev/docs/stack-trace-api
+interface CallSite {
+    getThis(): any;
+    getTypeName(): string;
+    getFunctionName(): string;
+    getMethodName(): string;
+    getFileName(): string;
+    getLineNumber(): number;
+    getColumnNumber(): number;
+    getFunction(): Function;
+    getEvalOrigin(): string;
+    isNative(): boolean;
+    isToplevel(): boolean;
+    isEval(): boolean;
+    isConstructor(): boolean;
+}
+
+const DefaultCallSite: CallSite = {
+    getThis: () => "",
+    getTypeName: () => "",
+    getFunctionName: () => "",
+    getMethodName: () => "",
+    getFileName: () => "",
+    getLineNumber: () => -1,
+    getColumnNumber: () => -1,
+    getFunction: () => () => "",
+    getEvalOrigin: () => "",
+    isNative: () => false,
+    isToplevel: () => false,
+    isEval: () => false,
+    isConstructor: () => false,
+};
+
 const printfFormat = (exclude: string[] = []) => {
     return winston.format.printf((info) => {
         return (
@@ -50,16 +83,16 @@ const customFormat = winston.format((info: InformationType) => {
         return stack;
     };
     // golden number: 21!!
-    const errorAt = new Error().stack?.at(21) ?? "";
+    const errorAt = new Error().stack?.at(21) ?? DefaultCallSite;
     Error.prepareStackTrace = priorPrepareStackTrace;
 
     const level = info.level.toUpperCase();
     const traceObj = rTracer.id();
-    const traceId = traceObj.id ?? "";
-    const glbTraceId = traceObj.glbTraceId ?? "";
-    const str = traceObj.userId;
+    const traceId = traceObj?.id ?? "";
+    const glbTraceId = traceObj?.glbTraceId ?? "";
+    const str = traceObj?.userId ?? undefined;
     const userId =
-        str === ""
+        str === undefined
             ? ""
             : `${str.slice(0, 8)}-${str.slice(8, 12)}-${str.slice(12, 16)}-${str.slice(16, 20)}-${str.slice(20)}`;
     const fileName = errorAt.getFileName();

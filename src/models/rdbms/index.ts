@@ -1,5 +1,6 @@
 import { Sequelize } from "sequelize";
 import { initModels } from "./init-models";
+import logger from "../../utils/logger";
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 
@@ -33,6 +34,8 @@ export const sequelize = new Sequelize(
     process.env.MYSQL_PASSWORD!,
     {
         dialect: "mysql",
+        logging: (msg) => logger.debug(msg),
+        logQueryParameters: true,
     },
 );
 
