@@ -9,15 +9,42 @@ interface InformationType extends winston.Logform.TransformableInfo {
     // level: string;
     // message: string;
     errorCode?: string;
-    apiName?: string;
     logBy?: string;
-    traceId?: string;
     depth?: number[];
-    funcArgs?: JSON;
+    userId?: string;
+    traceId?: string;
+    glbTraceId?: string;
+    fileName?: string;
+    functionName?: string;
+    lineNumber?: string;
+    columnNumber?: string;
 }
 
-// a custom format that outputs request id
-const rTracerFormat = winston.format.printf((info: InformationType) => {
+const printfFormat = (exclude: string[] = []) => {
+    return winston.format.printf((info) => {
+        return (
+            Object.keys(info)
+                .reverse()
+                .reduce((acc, key, i) => {
+                    if (
+                        typeof key === "string" &&
+                        !exclude.includes(key) &&
+                        !["message", "level"].includes(key)
+                    ) {
+                        if (i > 0) acc += "\n ";
+                        acc += `"${key}": "${info[key]}"`;
+                    }
+
+                    return acc;
+                }, `${info.level} ${info.message} \n{ `) + "\n}"
+        );
+    });
+};
+// A custom format builder.
+// Register needed field to `info: InformationType`
+const customFormat = winston.format((info: InformationType) => {
+    // To get a caller, callee, line number, etc...
+    // See: https://v8.dev/docs/stack-trace-api
     const priorPrepareStackTrace = Error.prepareStackTrace;
     Error.prepareStackTrace = (err, stack) => {
         return stack;
@@ -25,10 +52,35 @@ const rTracerFormat = winston.format.printf((info: InformationType) => {
     // golden number: 21!!
     const errorAt = new Error().stack?.at(21) ?? "";
     Error.prepareStackTrace = priorPrepareStackTrace;
-    const rid = rTracer.id();
-    return rid
-        ? `${info.timestamp} [request-id:${rid}]: ${errorAt.getEvalOrigin()} ${errorAt.getMethodName()} ${errorAt.getFunctionName()}:${errorAt.getLineNumber()} ${info.message}`
-        : `${info.timestamp}: ${info.message}`;
+
+    const level = info.level.toUpperCase();
+    const traceObj = rTracer.id();
+    const traceId = traceObj.id ?? "";
+    const glbTraceId = traceObj.glbTraceId ?? "";
+    const str = traceObj.userId;
+    const userId =
+        str === ""
+            ? ""
+            : `${str.slice(0, 8)}-${str.slice(8, 12)}-${str.slice(12, 16)}-${str.slice(16, 20)}-${str.slice(20)}`;
+    const fileName = errorAt.getFileName();
+    const functionName =
+        errorAt.getFunctionName() ?? errorAt.getMethodName() ?? "<anonymous>";
+    const lineNumber = errorAt.getLineNumber();
+    const columnNumber = errorAt.getColumnNumber();
+
+    info = {
+        ...info,
+        level,
+        userId,
+        glbTraceId,
+        traceId,
+        fileName,
+        functionName,
+        lineNumber,
+        columnNumber,
+    };
+
+    return info;
 });
 
 let loggerOption: winston.LoggerOptions;
@@ -37,14 +89,8 @@ if (process.env.NODE_ENV === "production") {
     loggerOption = {
         format: winston.format.combine(
             winston.format.timestamp({ format: "YYYY-MM-DD hh:mm:ss.SSS" }),
+            customFormat(),
             winston.format.json(),
-            winston.format.printf((info: InformationType) => {
-                if (info.level) {
-                    info.level = info.level.toUpperCase(); // 로그 레벨을 대문자로
-                }
-
-                return JSON.stringify(info);
-            }),
         ),
         transports: [
             new WinstonDaily({
@@ -78,42 +124,29 @@ if (process.env.NODE_ENV === "production") {
         ],
     };
 } else if (process.env.NODE_ENV === "development" || true) {
+    const combinedFormats = winston.format.combine(
+        winston.format.timestamp({
+            format: "YYYY-MM-DD hh:mm:ss.SSS",
+        }),
+        customFormat(),
+        winston.format.json(),
+        winston.format.colorize(),
+        printfFormat(["lineNumber", "columnNumber"]),
+    );
     loggerOption = {
         transports: [
             new winston.transports.Console({
-                format: winston.format.combine(
-                    winston.format.prettyPrint(),
-                    winston.format.colorize(),
-                    winston.format.errors({ stack: true }),
-                    winston.format.timestamp({
-                        format: "YYYY-MM-DD hh:mm:ss.SSS",
-                    }),
-                    rTracerFormat,
-                ),
+                format: combinedFormats,
             }),
         ],
         exceptionHandlers: [
             new winston.transports.Console({
-                format: winston.format.combine(
-                    winston.format.colorize(),
-                    winston.format.timestamp({
-                        format: "YYYY-MM-DD hh:mm:ss.SSS",
-                    }),
-                    winston.format.metadata(),
-                    winston.format.prettyPrint(),
-                ),
+                format: combinedFormats,
             }),
         ],
         rejectionHandlers: [
             new winston.transports.Console({
-                format: winston.format.combine(
-                    winston.format.colorize(),
-                    winston.format.timestamp({
-                        format: "YYYY-MM-DD hh:mm:ss.SSS",
-                    }),
-                    winston.format.metadata(),
-                    winston.format.prettyPrint(),
-                ),
+                format: combinedFormats,
             }),
         ],
     };

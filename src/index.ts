@@ -1,4 +1,4 @@
-import express from "express";
+import express, { NextFunction, Request, Response } from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import { models, sequelize } from "./models/rdbms";
@@ -21,66 +21,106 @@ import ChatRouter from "./routes/chat/chatRouter";
 import SSEAlarmRouter from "./routes/chat/sseRouter";
 import initChat from "./routes/chat/webSocketRouter";
 import { chatTest } from "./dummyChatData";
+import { Tspec, TspecDocsMiddleware } from "tspec";
+import * as rTracer from "cls-rtracer";
 
-const app = express();
-const PORT = process.env.PORT || 8080;
-process.env.NODE_ENV = "production";
-app.set("port", PORT);
+import type { TspecAPISpec } from "api_spec";
+export type Doc = TspecAPISpec;
 
-app.use(cors({ origin: true, credentials: true }));
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-app.use(currentSession);
-sequelize
-    .sync({ force: false })
-    .then(() => {
-        console.log("Database connection success");
-    })
-    .catch((err) => {
-        console.error("Database connection failed:", err);
+const ErrorMiddleware = (
+    err: Error,
+    req: Request,
+    res: Response,
+    next: NextFunction,
+) => {
+    console.error(err.stack);
+    res.json();
+};
+
+const initServer = async () => {
+    Error.stackTraceLimit = 999;
+    const app = express();
+    const PORT = process.env.PORT || 8080;
+    process.env.NODE_ENV = "production";
+    app.set("port", PORT);
+    app.use(cors({ origin: true, credentials: true }));
+    app.use(bodyParser.urlencoded({ extended: true }));
+    app.use(bodyParser.json());
+    app.use(currentSession);
+    app.use(
+        rTracer.expressMiddleware({
+            requestIdFactory: (req) => ({
+                id: crypto.randomUUID(),
+                glbTraceId: req.headers["X-Global-Trace-Id"] ?? "",
+                userId: req.session?.user?.id.toString("hex") ?? "",
+            }),
+        }),
+    );
+    sequelize
+        .sync({ force: false })
+        .then(() => {
+            console.log("Database connection success");
+        })
+        .catch((err) => {
+            console.error("Database connection failed:", err);
+        });
+
+    /**
+     * User Signin / Login
+     */
+    // Authenticate
+    app.use("/api/auth/*", ExpressAuth(authConfig));
+
+    /**
+     * For GET and POST of Request / Profile / Review
+     */
+    app.use("/api/requests", RequestRouter);
+    app.use("/api/students", StudentRouter);
+    app.use("/api/schools", SchoolRouter);
+    app.use("/api/consumers", ConsumerRouter);
+    app.use("/api/student-reviews", StudentReviewRouter);
+    app.use("/api/academic-histories", AcademicHistoryRouter);
+    app.use("/api/exam-histories", ExamHistoryRouter);
+    app.use("/api/corporations", CorporationRouter);
+    app.use("/api/corporation-reviews", CorporationReviewRouter);
+
+    /**
+     * Verification router
+     */
+    app.use("/api/verification", VerificationRouter);
+    /**
+     * Recommendation server of meilisearch
+     */
+    app.use("/api/recommend", RecommendRouter);
+
+    /**
+     * For chatting
+     */
+    // Init dummy chat data
+    chatTest();
+    // Alarm and Chat data
+    app.use("/api/sse", SSEAlarmRouter);
+    app.use("/api/message", ChatRouter);
+
+    // Tspec document (API document middleware)
+    app.use(
+        "/docs",
+        await TspecDocsMiddleware({
+            debug: true,
+            specPathGlobs: ["./node_modules/api_spec/dist/esm/index.d.ts"],
+        }),
+    );
+
+    app.use(ErrorMiddleware);
+
+    const httpServer = createServer(app);
+    // Init socket.io server
+    const io = initChat(httpServer);
+
+    // Listen server
+    httpServer.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
     });
+};
 
-/**
- * User Signin / Login
- */
-// Authenticate
-app.use("/api/auth/*", ExpressAuth(authConfig));
-
-/**
- * For GET and POST of Request / Profile / Review
- */
-app.use("/api/requests", RequestRouter);
-app.use("/api/students", StudentRouter);
-app.use("/api/schools", SchoolRouter);
-app.use("/api/consumers", ConsumerRouter);
-app.use("/api/student-reviews", StudentReviewRouter);
-app.use("/api/academic-histories", AcademicHistoryRouter);
-app.use("/api/exam-histories", ExamHistoryRouter);
-app.use("/api/corporations", CorporationRouter);
-app.use("/api/corporation-reviews", CorporationReviewRouter);
-
-/**
- * Verification router
- */
-app.use("/api/verification", VerificationRouter);
-/**
- * Recommendation server of meilisearch
- */
-app.use("/api/recommend", RecommendRouter);
-
-/**
- * For chatting
- */
-// Init dummy chat data
-chatTest();
-// Alarm and Chat data
-app.use("/api/sse", SSEAlarmRouter);
-app.use("/api/message", ChatRouter);
-const httpServer = createServer(app);
-// Init socket.io server
-const io = initChat(httpServer);
-
-// Listen server
-httpServer.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+initServer();
