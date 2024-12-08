@@ -17,12 +17,11 @@ ConsumerRouter.get("/:consumer_id", async (req: Request, res: Response) => {
     }
 });
 
-ConsumerRouter.post("/:corp_id", async (req: Request, res: Response) => {
+ConsumerRouter.post("/", async (req: Request, res: Response) => {
     try {
-        const corp_id = Number(req.params.corp_id);
         const consumer = await Consumer.create({
             user_id: req.body.user_id,
-            corp_id: corp_id,
+            corp_id: req.body.corp_id,
             orgn_id: req.body.orgn_id,
             consumer_type: req.body.consumer_type,
             consumer_email: req.body.consumer_email,

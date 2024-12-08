@@ -31,6 +31,8 @@ import { academichistorywithschool as _academichistorywithschool } from "./acade
 import type { academichistorywithschoolAttributes, academichistorywithschoolCreationAttributes } from "./academichistorywithschool";
 import { examhistorywithlanguageexam as _examhistorywithlanguageexam } from "./examhistorywithlanguageexam";
 import type { examhistorywithlanguageexamAttributes, examhistorywithlanguageexamCreationAttributes } from "./examhistorywithlanguageexam";
+import { fullreviewinfoofcorp as _fullreviewinfoofcorp } from "./fullreviewinfoofcorp";
+import type { fullreviewinfoofcorpAttributes, fullreviewinfoofcorpCreationAttributes } from "./fullreviewinfoofcorp";
 import { fullstudentprofile as _fullstudentprofile } from "./fullstudentprofile";
 import type { fullstudentprofileAttributes, fullstudentprofileCreationAttributes } from "./fullstudentprofile";
 import { requestofcorporation as _requestofcorporation } from "./requestofcorporation";
@@ -59,6 +61,7 @@ export {
   _VerificationToken as VerificationToken,
   _academichistorywithschool as academichistorywithschool,
   _examhistorywithlanguageexam as examhistorywithlanguageexam,
+  _fullreviewinfoofcorp as fullreviewinfoofcorp,
   _fullstudentprofile as fullstudentprofile,
   _requestofcorporation as requestofcorporation,
   _requestofuser as requestofuser,
@@ -99,6 +102,8 @@ export type {
   academichistorywithschoolCreationAttributes,
   examhistorywithlanguageexamAttributes,
   examhistorywithlanguageexamCreationAttributes,
+  fullreviewinfoofcorpAttributes,
+  fullreviewinfoofcorpCreationAttributes,
   fullstudentprofileAttributes,
   fullstudentprofileCreationAttributes,
   requestofcorporationAttributes,
@@ -128,6 +133,7 @@ export function initModels(sequelize: Sequelize) {
   const VerificationToken = _VerificationToken.initModel(sequelize);
   const academichistorywithschool = _academichistorywithschool.initModel(sequelize);
   const examhistorywithlanguageexam = _examhistorywithlanguageexam.initModel(sequelize);
+  const fullreviewinfoofcorp = _fullreviewinfoofcorp.initModel(sequelize);
   const fullstudentprofile = _fullstudentprofile.initModel(sequelize);
   const requestofcorporation = _requestofcorporation.initModel(sequelize);
   const requestofuser = _requestofuser.initModel(sequelize);
@@ -172,6 +178,7 @@ export function initModels(sequelize: Sequelize) {
     VerificationToken: VerificationToken,
     academichistorywithschool: academichistorywithschool,
     examhistorywithlanguageexam: examhistorywithlanguageexam,
+    fullreviewinfoofcorp: fullreviewinfoofcorp,
     fullstudentprofile: fullstudentprofile,
     requestofcorporation: requestofcorporation,
     requestofuser: requestofuser,

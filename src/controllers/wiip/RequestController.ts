@@ -23,7 +23,7 @@ export const getRecommendedRequestByStudent = async (student_id: number) => {
         })
     )?.get({ plain: true });
 
-    console.log("Stuent", student);
+    console.log("Student", student);
     const coordi = JSON.parse(JSON.stringify(student?.coordinate)).coordinates;
 
     const searchRet = await requestSearch.search("", {
@@ -38,6 +38,11 @@ export const getRequestByRequestId = async (request_id: number) => {
     const requestBody = await RequestModel.findOne({
         where: { request_id: request_id },
     });
+    return requestBody;
+};
+
+export const getAllRequest = async () => {
+    const requestBody = await RequestModel.findAll({});
     return requestBody;
 };
 

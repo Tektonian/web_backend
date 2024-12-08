@@ -13,11 +13,14 @@ RecommendRouter.post("/students", async (req: Request, res: Response) => {
 });
 
 RecommendRouter.post("/requests", async (req: Request, res: Response) => {
-    if (req.body.request_id === undefined) {
+    if (req.body.student_id === undefined) {
         res.json("");
     }
-    const ret = await getRecommendedRequestByStudent(req.body.request_id);
+    const ret = await getRecommendedRequestByStudent(
+        Number(req.body.student_id),
+    );
 
+    console.log("ret:", ret);
     res.json(ret);
 });
 
