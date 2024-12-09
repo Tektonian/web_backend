@@ -1,7 +1,7 @@
 import { createTransport } from "nodemailer";
 import express, { Request, Response } from "express";
 import { models } from "../models/rdbms";
-import { connUserWithCorpProfile } from "../global/corpInfo/kr/CorpInfoController";
+import logger from "../utils/logger";
 import dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local" });
@@ -85,14 +85,14 @@ VerificationRouter.post("/callback/identity-verify", async (req, res, next) => {
             phone_number: "",
         });
     }
-    console.log("Verification", userInstance);
+    logger.debug(`User email Verified through email: ${userInstance}`);
     if (userInstance.roles === null) {
         userInstance.roles = [type];
     } else {
-        userInstance.roles = [...JSON.parse(userInstance.roles), type];
+        userInstance.roles = Array.from(new Set([userInstance.roles, type]));
     }
 
-    await models.User.update(userInstance, { where: { email: email } });
+    await models.User.update(userInstance, { where: { email: user.email } });
 
     res.json({ response: "ok" });
 });
@@ -118,7 +118,8 @@ VerificationRouter.post("/identity-verify", async (req, res, next) => {
     }
 
     // random string
-    const randomStr = crypto.randomUUID().split("-").at(0) as string;
+    // TODO: 숫자 영어 조합 6개
+    const token = crypto.randomUUID().split("-").at(0) as string;
 
     await models.VerificationToken.destroy({
         where: { identifier: user.email },
@@ -126,7 +127,7 @@ VerificationRouter.post("/identity-verify", async (req, res, next) => {
 
     const createdToken = await models.VerificationToken.create({
         identifier: verifyEmail,
-        token: randomStr,
+        token: token,
         expires: new Date(Date.now() + 3600 * 1000),
         token_type: type,
     });
@@ -141,7 +142,7 @@ VerificationRouter.post("/identity-verify", async (req, res, next) => {
         from: server.from,
         subject: `Sign in to ${host}`,
         text: text({ url, host }),
-        html: html({ url, host, theme, randomStr }),
+        html: html({ url, host, theme, token }),
     });
     const failed = result.rejected.concat(result.pending).filter(Boolean);
     if (failed.length) {

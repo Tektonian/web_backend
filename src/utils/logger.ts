@@ -9,6 +9,7 @@ interface InformationType extends winston.Logform.TransformableInfo {
     // level: string;
     // message: string;
     errorCode?: string;
+    logCode?: string;
     logBy?: string;
     depth?: number[];
     userId?: string;
@@ -83,7 +84,7 @@ const customFormat = winston.format((info: InformationType) => {
         return stack;
     };
     // golden number: 21!!
-    const errorAt = new Error().stack?.at(21) ?? DefaultCallSite;
+    const errorAt = (new Error().stack?.at(21) ?? DefaultCallSite) as CallSite;
     Error.prepareStackTrace = priorPrepareStackTrace;
 
     const level = info.level.toUpperCase();
@@ -109,8 +110,6 @@ const customFormat = winston.format((info: InformationType) => {
         traceId,
         fileName,
         functionName,
-        lineNumber,
-        columnNumber,
     };
 
     return info;
