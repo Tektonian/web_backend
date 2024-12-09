@@ -1,24 +1,22 @@
+import { createHash } from "crypto";
 import { QueueEvents } from "bullmq";
 import { HydratedDocument } from "mongoose";
 import { Server } from "socket.io";
+
 import { currentSession } from "../../middleware/auth.middleware";
 import { chatController } from "../../controllers/chat";
 import * as UserController from "../../controllers/UserController";
 import { ChatContent } from "../../models/chat";
-import { createHash } from "crypto";
+
+import logger from "../../utils/logger";
+import { APIType } from "api_spec";
+
 import type {
     reqTryJoinProps,
     resMessage,
     resSomeoneSent,
 } from "./webSocketRouter.types";
-import { ResChatRoom } from "../../types/chat/chatRes.types";
-import type {
-    IChatUser,
-    IChatContent,
-    IChatroom,
-} from "../../types/chat/chatSchema.types";
 import { ISessionUser } from "../../config/auth.types";
-import logger from "../../utils/logger";
 
 const ResChatRoomFactory = async (
     chatRoom: HydratedDocument<IChatroom>,

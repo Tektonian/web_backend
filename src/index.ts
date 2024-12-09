@@ -1,7 +1,7 @@
 import express, { NextFunction, Request, Response } from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
-import { models, sequelize } from "./models/rdbms";
+import { sequelize } from "./models/rdbms";
 import { createServer } from "http";
 import { ExpressAuth } from "@auth/express";
 import { authConfig } from "./config/auth.config";
@@ -21,13 +21,10 @@ import ChatRouter from "./routes/chat/chatRouter";
 import SSEAlarmRouter from "./routes/chat/sseRouter";
 import initChat from "./routes/chat/webSocketRouter";
 import { chatTest } from "./dummyChatData";
-import { Tspec, TspecDocsMiddleware } from "tspec";
+import { TspecDocsMiddleware } from "tspec";
 import * as rTracer from "cls-rtracer";
 
 import logger from "./utils/logger";
-
-import type { TspecAPISpec } from "api_spec";
-export type Doc = TspecAPISpec;
 
 const ErrorMiddleware = (
     err: Error,
