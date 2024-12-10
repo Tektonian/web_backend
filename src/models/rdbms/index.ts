@@ -1,8 +1,6 @@
 import { Sequelize } from "sequelize";
 import { initModels } from "./init-models";
 import logger from "../../utils/logger";
-import dotenv from "dotenv";
-dotenv.config({ path: ".env.local" });
 
 const config = {
     development: {

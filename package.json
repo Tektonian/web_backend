@@ -4,10 +4,11 @@
     "main": "index.js",
     "type": "module",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
         "start": "cross-env NODE_ENV=production node compiled/index.js",
         "build": "tsx -p .",
-        "dev": "nodemon --watch \"src/**/*.ts\" --exec cross-env NODE_ENV=development \"tsx\" src/index.ts"
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "dev": "cross-env NODE_ENV=development nodemon --watch \"src/**/*.ts\" --exec vite-node \"src/index.ts\" --options.deps.inline=\"dotenv/config dotenv_config_path=./.env.local\"",
+        "production": "cross-env NODE_ENV=production vite-node --options.deps.inline=\"dotenv/config dotenv_config_path=./.env\""
     },
     "keywords": [],
     "author": "",
@@ -51,6 +52,7 @@
         "sequelize-auto": "^0.8.8",
         "socket.io": "^4.8.1",
         "umzug": "^3.8.2",
+        "vite-node": "^2.1.8",
         "winston": "^3.17.0",
         "winston-daily-rotate-file": "^5.0.0"
     }

@@ -11,6 +11,8 @@ import { ChatContent } from "../../models/chat";
 import logger from "../../utils/logger";
 import { APIType } from "api_spec";
 
+import type { Socket } from "socket.io";
+// TODO: remove
 import type {
     reqTryJoinProps,
     resMessage,
@@ -342,7 +344,33 @@ async function userTryJoinHandler(globalArgs, req: reqTryJoinProps) {
     }
 }
 
-const eventRegistHelper = async (eventFlow) => {
+type Objects = Record<keyof Object, Object>;
+
+type EventHandler<Args extends Objects> = (
+    globalArgs: Args,
+    ...args: any[]
+) => void;
+
+interface Ring<Args extends Objects, Target extends Objects> {
+    description: string;
+    eventTarget: keyof Target;
+    eventName: string | (() => string);
+    handler: EventHandler<Args>;
+}
+interface Chain<Args extends Objects, Target extends Objects>
+    extends Ring<Args, Target> {
+    chains: Ring<Args, Target>[];
+}
+
+interface EventFlow<Args extends Objects, Target extends Objects> {
+    globalArgs: Args;
+    eventTargets: Target;
+    chains: Chain<Args, Target>[] | Ring<Args, Target>[];
+}
+
+async function eventRegistHelper<A extends Objects, T extends Objects>(
+    eventFlow: EventFlow<A, T>,
+) {
     // list ([a]) to object {a: 'a'}
     const globalArgs = eventFlow.globalArgs;
     const eventTargets = eventFlow.eventTargets;
@@ -400,7 +428,7 @@ const eventRegistHelper = async (eventFlow) => {
         // If end
     }
     // For end
-};
+}
 
 export default function initChat(httpServer) {
     const {
@@ -417,6 +445,8 @@ export default function initChat(httpServer) {
         },
         path: "/api/chat",
     });
+
+    logger.info("Initialized Socket io");
 
     // set user and chatroom datas on socket instance
     io.use((socket, next) => {
@@ -471,14 +501,14 @@ export default function initChat(httpServer) {
                     id: chatUser._id,
                     chatRooms: resChatRooms,
                 });
-            logger.debug(
-                `User connected: User: ${chatUser}, Result: ${is_connected}`,
+            logger.info(
+                `User try connection: User: ${chatUser}, Result: ${is_connected}`,
             );
         } catch (e) {
             // if no response, disconnect
             socket.disconnect(true);
             await chatUserController.delChatUserById(chatUser._id);
-            logger.debug(`User failed to connect: Error: ${e}`);
+            logger.warn(`User failed to connect: Error: ${e}`);
             return;
         }
         socket.data.chatUser = chatUser;
@@ -495,23 +525,29 @@ export default function initChat(httpServer) {
          *
          * TODO: add error handler later
          */
-        const eventRegisterFlow = {
-            globalArgs: {
-                io,
-                socket,
-                userSentEvent,
-                updateChatRoomEvent,
-                chatUserController,
-                chatRoomController,
-                chatUnreadController,
-                chatContentController,
-                chatUser,
-            },
-            eventTargets: {
-                socket,
-                userSentEvent,
-                updateChatRoomEvent,
-            },
+        const globalArgs = {
+            io,
+            socket,
+            userSentEvent,
+            updateChatRoomEvent,
+            chatUserController,
+            chatRoomController,
+            chatUnreadController,
+            chatContentController,
+            chatUser,
+        };
+        const eventTargets = {
+            socket,
+            userSentEvent,
+            updateChatRoomEvent,
+        };
+
+        const eventRegisterFlow: EventFlow<
+            typeof globalArgs,
+            typeof eventTargets
+        > = {
+            globalArgs,
+            eventTargets,
             chains: [
                 {
                     description: "Events when user try joined",
@@ -550,16 +586,19 @@ export default function initChat(httpServer) {
                     */
                 },
                 {
+                    description: "",
                     eventTarget: "socket",
                     eventName: "updateLastRead",
                     handler: updateLastReadHandler,
                 },
                 {
+                    description: "",
                     eventTarget: "socket",
                     eventName: "sendMessage",
                     handler: sendMessageHandler,
                 },
                 {
+                    description: "",
                     eventTarget: "updateChatRoomEvent",
                     eventName: () => socket.data.chatUser._id.toString(),
                     handler: updateChatRoomHandler,

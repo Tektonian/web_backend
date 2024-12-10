@@ -3,12 +3,9 @@ import { skipCSRFCheck } from "@auth/core";
 import Google from "@auth/express/providers/google";
 import Nodemailer from "@auth/express/providers/nodemailer";
 import { Sequelize } from "sequelize";
-import dotenv from "dotenv";
 import SequelizeAdapter from "./auth.adapter-sequelize";
 
 import logger from "../utils/logger";
-
-dotenv.config({ path: ".env.local" });
 
 const sequelize = new Sequelize(
     process.env.MYSQL_DATABASE,

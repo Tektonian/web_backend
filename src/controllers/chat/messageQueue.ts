@@ -1,6 +1,5 @@
 import * as ChatModels from "../../models/chat";
 import { Queue, Worker, QueueEventsProducer } from "bullmq";
-import dotenv from "dotenv";
 import mongoose from "mongoose";
 import {
     IChatroom,
@@ -8,7 +7,6 @@ import {
     IChatUser,
 } from "../../types/chat/chatSchema.types";
 import logger from "../../utils/logger";
-dotenv.config({ path: ".env.local" });
 
 const { ChatRoom, ChatContent } = ChatModels;
 

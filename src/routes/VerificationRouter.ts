@@ -2,9 +2,6 @@ import { createTransport } from "nodemailer";
 import express, { Request, Response } from "express";
 import { models } from "../models/rdbms";
 import logger from "../utils/logger";
-import dotenv from "dotenv";
-
-dotenv.config({ path: ".env.local" });
 
 const server = {
     host: process.env.EMAIL_SERVER_HOST,

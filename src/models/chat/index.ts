@@ -1,11 +1,9 @@
 import mongoose from "mongoose";
 import ChatUser from "./ChatUser";
 import ChatContent from "./ChatContet";
-import ChatRoom from "./chatRoom";
-import Unread from "./unread";
+import ChatRoom from "./ChatRoom";
+import Unread from "./Unread";
 import logger from "../../utils/logger";
-import dotenv from "dotenv";
-dotenv.config({ path: ".env.local" });
 
 mongoose
     .connect(process.env.MONGODB_URI, {
