@@ -3,6 +3,9 @@ import { sequelize } from "../models/rdbms";
 import { Request } from "../models/rdbms/Request";
 import { getConsumerByReqId, getCorpByCsmId } from "./ConsumerController";
 import { stringify } from "querystring";
+import { findCorpProfileByCorpId } from "../global/corpInfo/kr/CorpInfoController";
+import { fullreviewinfoofcorp } from "../models/rdbms/fullreviewinfoofcorp";
+import { reverse } from "dns";
 
 export const getAllCorpReviewByCsmId = async (consumer_id: number) => {
     try {
@@ -52,6 +55,19 @@ export const getAllCorpReviewByCsmId = async (consumer_id: number) => {
     } catch (error) {
         console.error("Error in getAllCorpReviewByCsmId:", error);
         throw error;
+    }
+};
+
+export const getAllCorpReviewByCorpId = async (corp_id: number) => {
+    try {
+        const fullreviews = await fullreviewinfoofcorp.findOne({
+            where: { corp_id: corp_id },
+            plain: true,
+        });
+
+        return fullreviews?.dataValues;
+    } catch (error) {
+        console.log(error);
     }
 };
 

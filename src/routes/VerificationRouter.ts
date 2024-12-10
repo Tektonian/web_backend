@@ -87,6 +87,7 @@ VerificationRouter.post("/callback/identity-verify", async (req, res, next) => {
         userInstance.roles = [type];
     } else {
         userInstance.roles = Array.from(new Set([userInstance.roles, type]));
+
     }
 
     await models.User.update(userInstance, { where: { email: user.email } });
@@ -116,7 +117,7 @@ VerificationRouter.post("/identity-verify", async (req, res, next) => {
 
     // random string
     // TODO: 숫자 영어 조합 6개
-    const token = crypto.randomUUID().split("-").at(0) as string;
+    const randomStr = crypto.randomUUID().split("-").at(0) as string;
 
     await models.VerificationToken.destroy({
         where: { identifier: user.email },
@@ -131,6 +132,7 @@ VerificationRouter.post("/identity-verify", async (req, res, next) => {
 
     const url = `http://localhost:8080/api/verification/callback/identity-verify?token=${randomStr}&email=${user.email}&verifyEmail=${verifyEmail}&type=${type}`;
     const { host } = new URL(url);
+    const token = randomStr;
     // NOTE: You are not required to use `nodemailer`, use whatever you want.
     const transport = createTransport(server);
     const theme = null;

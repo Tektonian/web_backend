@@ -119,3 +119,11 @@ export const findCorpProfileByCorpNum = async (corpNum: number) => {
 
     return corpProfile;
 };
+
+export const findCorpProfileByCorpId = async (corpId: number) => {
+    const corpProfile = (
+        await Corporation.findOne({ where: { corp_id: corpId } })
+    )?.get({ plain: true });
+
+    return corpProfile;
+};

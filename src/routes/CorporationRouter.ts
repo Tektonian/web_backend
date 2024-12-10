@@ -56,4 +56,13 @@ CorporationRouter.post("/corpProfile", async (req: Request, res: Response) => {
     res.json(createdCorpProfile);
 });
 
+CorporationRouter.get("/:corp_id", async (req: Request, res: Response) => {
+    const corpId = req.params.corp_id;
+
+    const ret = await CorpController.findCorpProfileByCorpId(Number(corpId));
+    console.log(ret);
+
+    res.json(ret);
+});
+
 export default CorporationRouter;

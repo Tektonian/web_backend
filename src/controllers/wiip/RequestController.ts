@@ -41,6 +41,11 @@ export const getRequestByRequestId = async (request_id: number) => {
     return requestBody;
 };
 
+export const getAllRequest = async () => {
+    const requestBody = await RequestModel.findAll({});
+    return requestBody;
+};
+
 export const createRequest = async (
     uuid: typeof DataTypes.UUID,
     role: "corp" | "orgn" | "normal",
