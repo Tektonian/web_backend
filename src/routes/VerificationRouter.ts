@@ -1,5 +1,5 @@
 import { createTransport } from "nodemailer";
-import express, { Request, Response } from "express";
+import express from "express";
 import { models } from "../models/rdbms";
 import logger from "../utils/logger";
 
@@ -87,12 +87,11 @@ VerificationRouter.post("/callback/identity-verify", async (req, res, next) => {
         userInstance.roles = [type];
     } else {
         userInstance.roles = Array.from(new Set([userInstance.roles, type]));
-
     }
 
     await models.User.update(userInstance, { where: { email: user.email } });
 
-    res.json({ response: "ok" });
+    res.json({ status: "ok" });
 });
 
 VerificationRouter.post("/identity-verify", async (req, res, next) => {

@@ -17,7 +17,7 @@ const StudentWithCurrentSchool = models.studentwithcurrentschool;
 const RequestModel = models.Request;
 const ConsumerModel = models.Consumer;
 
-export const getRecommendedRequestByStudent = async (student_id: number) => {
+export const getRecommendedRequestByStudentId = async (student_id: number) => {
     const student = (
         await StudentWithCurrentSchool.findOne({
             where: { student_id: student_id },
@@ -35,15 +35,15 @@ export const getRecommendedRequestByStudent = async (student_id: number) => {
 };
 
 export const getRequestByRequestId = async (request_id: number) => {
-    const requestBody = await RequestModel.findOne({
+    const request = await RequestModel.findOne({
         where: { request_id: request_id },
     });
-    return requestBody;
+    return request;
 };
 
 export const getAllRequest = async () => {
-    const requestBody = await RequestModel.findAll({});
-    return requestBody;
+    const requests = await RequestModel.findAll({});
+    return requests;
 };
 
 export const createRequest = async (

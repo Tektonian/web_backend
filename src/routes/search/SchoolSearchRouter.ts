@@ -21,7 +21,7 @@ SchoolSearchRouter.get("/" satisfies keyof APISpec.SearchSchoolAPISpec, (async (
         const school = await index.getDocuments();
 
         res.json({
-            response: "ok",
+            status: "ok",
             ret: school,
         });
     } catch (error) {

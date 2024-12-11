@@ -1,5 +1,5 @@
-import { getRecommendedRequestByStudent } from "../../controllers/wiip/RequestController";
-import { getRecommendedStudentByRequest } from "../../controllers/wiip/StudentController";
+import { getRecommendedRequestByStudentId } from "../../controllers/wiip/RequestController";
+import { getRecommendedStudentByRequestId } from "../../controllers/wiip/StudentController";
 import express, { Request, Response } from "express";
 import { APISpec } from "api_spec";
 import logger from "../../utils/logger";
@@ -10,7 +10,7 @@ RecommendRouter.post(
     (async (req, res) => {
         logger.info("recommend router of student");
 
-        const result = await getRecommendedStudentByRequest(
+        const result = await getRecommendedStudentByRequestId(
             req.body.request_id,
         );
 
@@ -27,7 +27,7 @@ RecommendRouter.post(
             res.json({});
             return;
         }
-        const ret = await getRecommendedRequestByStudent(req.body.student_id);
+        const ret = await getRecommendedRequestByStudentId(req.body.student_id);
 
         res.json(ret);
         return;
