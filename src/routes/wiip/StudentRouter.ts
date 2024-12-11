@@ -3,7 +3,7 @@ import {
     getStudentByStudentId,
     getInstReviewOfStudentByStudentId,
     createUnVerifiedStudentIdentity,
-} from "../controllers/wiip/StudentController";
+} from "../../controllers/wiip/StudentController";
 
 const StudentRouter = express.Router();
 
@@ -30,12 +30,18 @@ StudentRouter.post("/", async (req: Request, res: Response) => {
 StudentRouter.get("/:student_id", async (req: Request, res: Response) => {
     const student_id = req.params.student_id;
     const user = res.session?.user ?? null;
-    const roles: string[] | null = JSON.parse(user?.roles ?? null);
+    const roles: string[] | null = user?.roles ?? null;
     // TODO: add response type
     const ret = {
         profile: "",
         review: "",
     };
+
+    if (student_id === "") {
+        res.json("");
+        return;
+    }
+
     const studentFullProfile = await getStudentByStudentId(Number(student_id));
 
     ret.profile = studentFullProfile.get({ plain: true });
