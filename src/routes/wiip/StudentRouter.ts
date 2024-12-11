@@ -4,6 +4,7 @@ import {
     getInstReviewOfStudentByStudentId,
     createUnVerifiedStudentIdentity,
 } from "../../controllers/wiip/StudentController";
+import { APISpec } from "api_spec";
 import { fullstudentprofile } from "../../models/rdbms/fullstudentprofile";
 import logger from "../../utils/logger";
 
@@ -29,36 +30,44 @@ StudentRouter.post("/", async (req: Request, res: Response) => {
     }
 });
 
-StudentRouter.get("/:student_id", async (req: Request, res: Response) => {
-    const student_id = req.params.student_id;
-    const user = res.session?.user ?? null;
-    const roles: string[] | null = user?.roles ?? null;
-    // TODO: add response type
-    let ret: { profile: any; review: any } = {
-        profile: undefined,
-        review: undefined,
-    };
+StudentRouter.get(
+    "/:student_id" satisfies keyof APISpec.StudentAPISpec,
+    (async (req, res) => {
+        const { student_id } = req.params;
+        const user = res.session?.user ?? null;
+        const roles: string[] | null = user?.roles ?? null;
+        // TODO: add response type
+        let ret: { profile: any; review: any } = {
+            profile: undefined,
+            review: undefined,
+        };
 
-    if (student_id === "" || student_id === undefined) {
-        res.json("");
-        return;
-    }
+        if (student_id === undefined) {
+            res.json("");
+            return;
+        }
 
-    const studentFullProfile = await getStudentByStudentId(Number(student_id));
-
-    if (studentFullProfile === null) {
-        res.json("");
-        return;
-    }
-
-    ret.profile = studentFullProfile.get({ plain: true });
-    if (roles !== null && (roles.includes("corp") || roles.includes("orgn"))) {
-        ret.review = await getInstReviewOfStudentByStudentId(
+        const studentFullProfile = await getStudentByStudentId(
             Number(student_id),
         );
-    }
 
-    res.json(ret);
-});
+        if (studentFullProfile === null) {
+            res.json("");
+            return;
+        }
+
+        ret.profile = studentFullProfile.get({ plain: true });
+        if (
+            roles !== null &&
+            (roles.includes("corp") || roles.includes("orgn"))
+        ) {
+            ret.review = await getInstReviewOfStudentByStudentId(
+                Number(student_id),
+            );
+        }
+
+        res.json(ret);
+    }) as APISpec.StudentAPISpec["/:student_id"]["get"]["__handler"],
+);
 
 export default StudentRouter;

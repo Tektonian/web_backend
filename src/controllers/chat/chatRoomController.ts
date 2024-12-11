@@ -80,7 +80,9 @@ export const delChatRoomsByRequest = async (request: RequestAttributes) => {
 };
 
 export const delChatRoom = async (chatRoomId: string) => {
-    await ChatRoom.updateOne({ _id: chatRoomId });
+    const chatRoom = await ChatRoom.findOne({ _id: chatRoomId });
+    if (chatRoom === null) {
+    }
 };
 
 export const leaveChatRoom = async (chatRoomId: string, userId: string) => {};

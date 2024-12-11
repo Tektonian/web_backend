@@ -105,4 +105,10 @@ ChatRouter.post("/chatRooms", async (req, res, next) => {
     res.json(resChatRooms);
 });
 
+ChatRouter.delete("/chatroom", (req, res) => {
+    const { chatRoomId, tempId } = req.body;
+
+    const sessionUser = res.session.user;
+});
+
 export default ChatRouter;

@@ -57,6 +57,7 @@ CorporationRouter.post("/corpProfile", async (req: Request, res: Response) => {
 });
 
 CorporationRouter.get("/:corp_id", async (req: Request, res: Response) => {
+    // TODO: add review data later
     const corpId = req.params.corp_id;
 
     const ret = await CorpController.findCorpProfileByCorpId(Number(corpId));

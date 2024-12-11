@@ -1,7 +1,7 @@
 import mongoose, { Types } from "mongoose";
 import * as ChatModels from "../../models/chat";
 import * as RDBMSModels from "../../models/rdbms";
-import type { UserAttributes } from "../../models/User";
+import type { UserAttributes } from "../../models/rdbms/User";
 import { IChatUser } from "../../types/chat/chatSchema.types";
 const { ChatUser } = ChatModels;
 const { User } = RDBMSModels;
