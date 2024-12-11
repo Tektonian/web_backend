@@ -11,7 +11,7 @@ import { model } from "mongoose";
 const ChatRouter = Router();
 
 ChatRouter.post("/unread", async (req, res) => {
-    const sessionUser = res.session.user;
+    const sessionUser = res.session?.user;
     if (sessionUser === undefined) res.json("No session");
 
     const ret = await getUnreadCountOfUser(sessionUser.id);
@@ -21,7 +21,7 @@ ChatRouter.post("/unread", async (req, res) => {
 
 ChatRouter.post("/chatroom", async (req, res) => {
     const { request_id } = req.body;
-    const sessionUser = res.session.user;
+    const sessionUser = res.session?.user;
 
     if (sessionUser === undefined) {
         res.json({ response: "No session" });
@@ -103,6 +103,12 @@ ChatRouter.post("/chatRooms", async (req, res, next) => {
         chatRooms.map((chatRoom) => ResChatRoomFactory(chatRoom)),
     );
     res.json(resChatRooms);
+});
+
+ChatRouter.delete("/chatroom", (req, res) => {
+    const { chatRoomId, tempId } = req.body;
+
+    const sessionUser = res.session.user;
 });
 
 export default ChatRouter;

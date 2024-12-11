@@ -14,18 +14,6 @@ import { getUserByName } from "../../controllers/UserController";
 
 const CorporationReviewRouter = express.Router();
 
-CorporationReviewRouter.get(
-    "/:corp_id",
-    async (req: Request, res: Response) => {
-        const corp_id = req.params.corp_id;
-        const ret = await getAllCorpReviewByCorpId(Number(corp_id));
-
-        console.log(ret);
-
-        res.json(ret);
-    },
-);
-
 CorporationReviewRouter.post("/", async (req: Request, res: Response) => {
     const request_id = req.body.request_id;
     const review_body = req.body;

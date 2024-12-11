@@ -11,8 +11,7 @@ RequestRouter.post("/" satisfies keyof APISpec.RequestAPISpec, (async (
     req,
     res,
 ) => {
-    const user = res.session?.user ?? undefined;
-
+    const user = res.session?.user;
     const { data, role } = req.body;
 
     if (user === undefined) {
@@ -36,17 +35,20 @@ RequestRouter.post("/" satisfies keyof APISpec.RequestAPISpec, (async (
     }
 }) as APISpec.RequestAPISpec["/"]["post"]["__handler"]);
 
-RequestRouter.get("/:request_id", async (req: Request, res: Response) => {
-    const request_id = req.params.request_id;
-    const user = res.session?.user ?? null;
-    const roles: string[] = user?.roles ?? null;
-    // TODO: response edit button for corporation
+RequestRouter.get(
+    "/:request_id" satisfies keyof APISpec.RequestAPISpec,
+    (async (req, res) => {
+        const request_id = req.params.request_id;
+        const roles = res.session?.user.roles;
 
-    const requestBody = await getRequestByRequestId(Number(request_id));
+        const request = (await getRequestByRequestId(Number(request_id)))?.get({
+            plain: true,
+        });
 
-    const ret = requestBody?.get({ plain: true });
+        res.json({ data: request, status: "ok" });
+    }) as APISpec.RequestAPISpec["/:request_id"]["get"]["__handler"],
+);
 
-    res.json(ret);
-});
+RequestRouter.put("/update", async (req, res) => {});
 
 export default RequestRouter;

@@ -1,6 +1,6 @@
 import mongoose, { Types } from "mongoose";
 import * as ChatModels from "../../models/chat";
-import type { UserAttributes } from "../../models/User";
+import type { UserAttributes } from "../../models/rdbms/User";
 import { pushMessageQueue } from "./messageQueue";
 import logger from "../../utils/logger";
 

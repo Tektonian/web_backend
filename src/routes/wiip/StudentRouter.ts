@@ -1,11 +1,14 @@
 import express, { Request, Response } from "express";
 import {
-    getStudentByStudentId,
+    getStudentFullProfileByStudentId,
     getInstReviewOfStudentByStudentId,
     createUnVerifiedStudentIdentity,
 } from "../../controllers/wiip/StudentController";
+import { APISpec } from "api_spec";
 import { fullstudentprofile } from "../../models/rdbms/fullstudentprofile";
 import logger from "../../utils/logger";
+import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
+import { Corporation } from "../../models/rdbms/Corporation";
 
 const StudentRouter = express.Router();
 
@@ -29,36 +32,68 @@ StudentRouter.post("/", async (req: Request, res: Response) => {
     }
 });
 
-StudentRouter.get("/:student_id", async (req: Request, res: Response) => {
-    const student_id = req.params.student_id;
-    const user = res.session?.user ?? null;
-    const roles: string[] | null = user?.roles ?? null;
-    // TODO: add response type
-    let ret: { profile: any; review: any } = {
-        profile: undefined,
-        review: undefined,
-    };
+StudentRouter.get(
+    "/:student_id" satisfies keyof APISpec.StudentAPISpec,
+    (async (req, res) => {
+        const { student_id } = req.params;
+        const roles: string[] | null = res.session?.user?.roles ?? null;
+        // TODO: add response type
+        let ret: { profile: any; review: any } = {
+            profile: undefined,
+            review: [],
+        };
 
-    if (student_id === "" || student_id === undefined) {
-        res.json("");
-        return;
-    }
+        if (student_id === undefined) {
+            res.json(ret);
+            return;
+        }
 
-    const studentFullProfile = await getStudentByStudentId(Number(student_id));
-
-    if (studentFullProfile === null) {
-        res.json("");
-        return;
-    }
-
-    ret.profile = studentFullProfile.get({ plain: true });
-    if (roles !== null && (roles.includes("corp") || roles.includes("orgn"))) {
-        ret.review = await getInstReviewOfStudentByStudentId(
+        const studentFullProfile = await getStudentFullProfileByStudentId(
             Number(student_id),
         );
-    }
 
-    res.json(ret);
-});
+        if (studentFullProfile === null) {
+            res.json(ret);
+            return;
+        }
+
+        ret.profile = studentFullProfile.get({ plain: true });
+        if (
+            roles !== null &&
+            (roles.includes("corp") || roles.includes("orgn"))
+        ) {
+            const reviewModels = await getInstReviewOfStudentByStudentId(
+                Number(student_id),
+            );
+
+            await Promise.all(
+                reviewModels.map(async (model) => {
+                    const review = model.get({ plain: true });
+                    const request = (
+                        await getRequestByRequestId(review.request_id)
+                    )?.get({ plain: true });
+                    let logo_image = "";
+                    if (request?.corp_id !== undefined) {
+                        logo_image =
+                            (
+                                await Corporation.findOne({
+                                    where: {
+                                        corp_id: request.corp_id,
+                                    },
+                                })
+                            )?.get("logo_image", { plain: true }) ?? "";
+                    }
+                    ret.review.push({
+                        ...review,
+                        request: request,
+                        logo_image,
+                    });
+                }),
+            );
+        }
+
+        res.json(ret);
+    }) as APISpec.StudentAPISpec["/:student_id"]["get"]["__handler"],
+);
 
 export default StudentRouter;
