@@ -3,6 +3,7 @@ import { getRecommendedStudentByRequestId } from "../../controllers/wiip/Student
 import express, { Request, Response } from "express";
 import { APISpec } from "api_spec";
 import logger from "../../utils/logger";
+import { Student } from "../../models/rdbms/Student";
 const RecommendRouter = express.Router();
 
 RecommendRouter.post(
@@ -20,14 +21,16 @@ RecommendRouter.post(
     }) as APISpec.RecommendAPISpec["/students"]["post"]["__handler"],
 );
 
+/**
+ * TODO: 센션유저 타입에 따라서 response 달라지게 설정
+ * 비로그인 / 학생 / 기업을 나눠서
+ */
 RecommendRouter.post(
     "/requests" satisfies keyof APISpec.RecommendAPISpec,
     (async (req, res) => {
-        if (req.body.student_id === undefined) {
-            res.json({});
-            return;
-        }
-        const ret = await getRecommendedRequestByStudentId(req.body.student_id);
+        const student = (await Student.findAll())[0].get({ plain: true });
+
+        const ret = await getRecommendedRequestByStudentId(student.student_id);
 
         res.json(ret);
         return;
