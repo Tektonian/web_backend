@@ -12,7 +12,7 @@ StudentReviewRouter.post(
     (async (req, res) => {
         logger.info("Start-Create student review");
         const { consumer_id, student_id, request_id, ...reviewData } = req.body;
-        const sessionUser = res.session.user;
+        const sessionUser = res.session?.user;
 
         if (sessionUser === undefined) {
             res.json("Login first");
