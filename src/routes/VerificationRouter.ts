@@ -129,8 +129,8 @@ VerificationRouter.post("/identity-verify", async (req, res, next) => {
         token_type: type,
     });
 
-    const url = `http://localhost:8080/api/verification/callback/identity-verify?token=${randomStr}&email=${user.email}&verifyEmail=${verifyEmail}&type=${type}`;
-    const { host } = new URL(url);
+    const url = "";
+    const { host } = new URL("");
     // NOTE: You are not required to use `nodemailer`, use whatever you want.
     const transport = createTransport(server);
     const theme = null;
