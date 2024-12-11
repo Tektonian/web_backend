@@ -40,7 +40,7 @@ VerificationRouter.post("/callback/identity-verify", async (req, res, next) => {
             })
         )?.get({ plain: true }) ?? null;
 
-    if (userInstance === null || userInstance?.email_verified === null) {
+    if (userInstance === null) {
         res.json("Verify first");
         return;
     }
@@ -83,10 +83,12 @@ VerificationRouter.post("/callback/identity-verify", async (req, res, next) => {
         });
     }
     logger.debug(`User email Verified through email: ${userInstance}`);
-    if (userInstance.roles === null) {
+    if (userInstance.roles === undefined) {
         userInstance.roles = [type];
     } else {
-        userInstance.roles = Array.from(new Set([userInstance.roles, type]));
+        userInstance.roles = Array.from(
+            new Set([...(userInstance.roles as string[]), type]),
+        );
     }
 
     await models.User.update(userInstance, { where: { email: user.email } });
@@ -130,7 +132,7 @@ VerificationRouter.post("/identity-verify", async (req, res, next) => {
     });
 
     const url = "";
-    const { host } = new URL("");
+    const host = "";
     // NOTE: You are not required to use `nodemailer`, use whatever you want.
     const transport = createTransport(server);
     const theme = null;
