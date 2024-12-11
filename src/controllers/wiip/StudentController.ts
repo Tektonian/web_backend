@@ -6,8 +6,15 @@ import { fullstudentprofile } from "../../models/rdbms/fullstudentprofile";
 import { sequelize } from "../../models/rdbms";
 import { AcademicHistory } from "../../models/rdbms/AcademicHistory";
 import { School } from "../../models/rdbms/School";
+import { Request } from "../../models/rdbms/Request";
 import { ExamHistory } from "../../models/rdbms/ExamHistory";
 import { DataTypes } from "sequelize";
+import { runCatchingAsync } from "../../utils/runCatcher";
+
+import logger from "../../utils/logger";
+import { APIType } from "api_spec";
+import { Corporation } from "../../models/rdbms/Corporation";
+import { Organization } from "../../models/rdbms/Organization";
 
 const client = new MeiliSearch({
     host: "http://127.0.0.1:7700",
@@ -15,36 +22,46 @@ const client = new MeiliSearch({
 });
 
 const studentSearch = client.index("studentwithcurrentschool");
-studentSearch.updateFilterableAttributes(["_geo"]);
-studentSearch.updateSortableAttributes(["_geo"]);
+// studentSearch.updateFilterableAttributes(["_geo"]);
+// studentSearch.updateSortableAttributes(["_geo"]);
 
-const Request = models.Request;
-const StudentWithCurrentSchool = models.studentwithcurrentschool;
+export const getRecommendedStudentByRequestId = async (request_id: number) => {
+    const reqResult = await runCatchingAsync(async () =>
+        (
+            await Request.findOne({
+                where: { request_id: request_id },
+            })
+        )?.get({ plain: true }),
+    );
 
-export const getRecommendedStudentByRequest = async (request_id: number) => {
-    const request = (
-        await Request.findOne({
-            where: { request_id: request_id },
-        })
-    )?.get({ plain: true });
-
-    if (request === undefined) return null;
-
+    const request = reqResult.getOrNull();
+    const elseval = reqResult.getOrElse(() => 2);
     const coordi = JSON.parse(
         JSON.stringify(request?.address_coordinate),
     ).coordinates;
 
-    const searchRet = await studentSearch.search("", {
-        filter: [`_geoRadius(${coordi[0]}, ${coordi[1]}, 1000000000000)`],
-        sort: [`_geoPoint(${coordi[0]}, ${coordi[1]}):asc`],
+    const ret = await runCatchingAsync(async () =>
+        studentSearch.search("", {
+            filter: [`_geoRadius(${coordi[0]}, ${coordi[1]}, 1000000000000)`],
+            sort: [`_geoPoint(${coordi[0]}, ${coordi[1]}):asc`],
+        }),
+    );
+
+    ret.onFailure(() => {
+        logger.info("Student search failed");
     });
 
-    return searchRet;
+    ret.onSuccess(() => {
+        logger.info("Student search success");
+    });
+
+    return ret;
 };
 
-export const getStudentByStudentId = async (student_id: number) => {
+export const getStudentFullProfileByStudentId = async (student_id: number) => {
     const studentProfile = await fullstudentprofile.findOne({
         where: { student_id: student_id },
+        attributes: { exclude: ["user_id"] },
     });
 
     return studentProfile;
@@ -55,11 +72,10 @@ export const getStudentByUserId = async (user_id: Buffer | null) => {
         console.error("userid is null");
     }
 
-    const studentProfile = await fullstudentprofile.findOne({
+    const studentProfile = await Student.findOne({
         where: { user_id: user_id },
+        attributes: { exclude: ["user_id"] },
     });
-
-    if (!studentProfile) return null;
 
     return studentProfile;
 };
@@ -67,12 +83,12 @@ export const getStudentByUserId = async (user_id: Buffer | null) => {
 export const getInstReviewOfStudentByStudentId = async (student_id: number) => {
     const reviews = await StudentReview.findAll({
         where: { student_id: student_id },
+        attributes: { exclude: ["user_id"] },
     });
-
     return reviews;
 };
 
-// TODO: Add type later
+// TODO: Add type laterㅇ
 export const createUnVerifiedStudentIdentity = async (
     uuid: typeof DataTypes.UUID,
     data,

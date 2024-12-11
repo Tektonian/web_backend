@@ -24,10 +24,10 @@ ChatRouter.post("/chatroom", async (req, res) => {
     const sessionUser = res.session?.user;
 
     if (sessionUser === undefined) {
-        res.json({ response: "No session" });
+        res.json({ status: "No session" });
         return;
     } else if (!sessionUser.roles.includes("student")) {
-        res.json({ response: "No student user" });
+        res.json({ status: "No student user" });
         return;
     }
 
@@ -45,7 +45,7 @@ ChatRouter.post("/chatroom", async (req, res) => {
     )?.get({ plain: true });
 
     if (userInstance === undefined || reqeustInstance === undefined) {
-        res.json({ response: "Db error" });
+        res.json({ status: "Db error" });
         return;
     }
 
@@ -54,7 +54,7 @@ ChatRouter.post("/chatroom", async (req, res) => {
     );
 
     if (consumerInstance === undefined) {
-        res.json({ response: "Db error" });
+        res.json({ status: "Db error" });
         return;
     }
 
@@ -63,7 +63,7 @@ ChatRouter.post("/chatroom", async (req, res) => {
         userInstance,
     ]);
 
-    res.json({ response: "ok" });
+    res.json({ status: "ok" });
     return;
 });
 

@@ -22,7 +22,7 @@ SchoolSearchRouter.get("/" satisfies keyof APISpec.SearchSchoolAPISpec, (async (
 
         res.json({
             status: "ok",
-            ret: school,
+            ret: school.results,
         });
     } catch (error) {
         logger.error(`School search failed ${error}`);
