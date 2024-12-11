@@ -12,7 +12,6 @@ export const getUserByName = async (username: string) => {
 
 export const getUserById = async (uuid) => {
     const user = await User.findByPk(uuid);
-    console.log("getUserById ", uuid, user);
     return user;
 };
 
