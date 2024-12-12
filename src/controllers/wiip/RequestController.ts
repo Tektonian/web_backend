@@ -84,12 +84,12 @@ export const createRequest = async (
             const searchRet = await requestSearch.addDocuments(
                 [
                     {
-                        id: createdRequest.request_id,
-                        _geo: { lat: coordinate[0], lng: coordinate[1] },
                         ...createdRequest.dataValues,
+                        request_id: createdRequest.request_id,
+                        _geo: { lat: coordinate[0], lng: coordinate[1] },
                     },
                 ],
-                { primaryKey: "id" },
+                { primaryKey: "request_id" },
             );
 
             const searchTask = await client.waitForTask(searchRet.taskUid);
