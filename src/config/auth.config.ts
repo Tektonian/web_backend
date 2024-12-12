@@ -157,6 +157,15 @@ export const authConfig: ExpressAuthConfig = {
 
     skipCSRFCheck: skipCSRFCheck, // TODO: remove later
     callbacks: {
+        /**
+         *
+         * @param token: token is a value that is only visible at server-side
+         * @param session: session is a value that is exposed to user-side
+         * @param User
+         * @param trigger
+         * @param account
+         * @param profile
+         */
         async jwt({ token, user, trigger, account, profile, session }) {
             /*console.log(
                 "JWT: ",
@@ -172,12 +181,23 @@ export const authConfig: ExpressAuthConfig = {
                 - user sign-in: First time the callback is invoked, user, profile and account will be present.
                 - user sign-up: a user is created for the first time in the database (when AuthConfig.session.strategy is set to "database")
                 - update event: Triggered by the useSession().update method.
+
              */
             if (trigger === "update") {
-                token.name = session.user.name;
+                logger.debug(
+                    `UPDATE: ${JSON.stringify(token)}, ${JSON.stringify(user)}, ${JSON.stringify(trigger)}, ${JSON.stringify(account)}, ${JSON.stringify(profile)}, ${JSON.stringify(session)}`,
+                );
+                const adapter = SequelizeAdapter(sequelize);
+                const userInstance = await adapter.getUserByEmail(token.email);
+
+                token.id = userInstance?.id;
+                token.email = userInstance?.email;
+                token.name = userInstance?.username;
+                token.roles = userInstance?.roles;
             }
             // TOOD: for debugging
             else if (
+                process.env.NODE_ENV === "development" &&
                 trigger === "signIn" &&
                 account?.provider === "credentials"
             ) {
@@ -221,7 +241,9 @@ export const authConfig: ExpressAuthConfig = {
             // Pass JWT token info to session
             // https://authjs.dev/guides/extending-the-session#with-jwt
             // console.log("Session: ", session, token, user);
-
+            logger.debug(
+                `Session: ${JSON.stringify(session)} - ${JSON.stringify(token)} - ${user}`,
+            );
             session.user.id = token.id ?? undefined;
             session.user.email = token.email ?? undefined;
             session.user.name = token.name;
