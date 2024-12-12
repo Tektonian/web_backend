@@ -51,8 +51,8 @@ const initServer = async () => {
         rTracer.expressMiddleware({
             requestIdFactory: (req) => ({
                 id: crypto.randomUUID(),
-                glbTraceId: req.headers["X-Global-Trace-Id"] ?? "",
-                userId: req.session?.user?.id.toString("hex") ?? "",
+                glbTraceId: req.headers["x-global-trace-id"] ?? "",
+                userId: req.id.toString("hex") ?? "",
             }),
         }),
     );

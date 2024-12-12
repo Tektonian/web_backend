@@ -35,6 +35,7 @@ export const currentSession = async (
         session.user.id !== undefined
     ) {
         res.session.user.id = Buffer.from(session.user?.id.data);
+        req.id = res.session?.user.id;
     }
 
     return next();
