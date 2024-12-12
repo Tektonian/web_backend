@@ -9,6 +9,7 @@ import { currentSession } from "./middleware/auth.middleware";
 import RequestRouter from "./routes/wiip/RequestRouter";
 import StudentRouter from "./routes/wiip/StudentRouter";
 import SchoolSearchRouter from "./routes/search/SchoolSearchRouter";
+import ExamSearchRouter from "./routes/search/ExamSearchRouter";
 import StudentReviewRouter from "./routes/wiip/StudentReviewRouter";
 import CorporationRouter from "./routes/wiip/CorporationRouter";
 import CorporationReviewRouter from "./routes/wiip/CorporationReviewRouter";
@@ -78,6 +79,7 @@ const initServer = async () => {
     app.use("/api/requests", RequestRouter);
     app.use("/api/students", StudentRouter);
     app.use("/api/search/schools", SchoolSearchRouter);
+    app.use("/api/search/exams", ExamSearchRouter);
     app.use("/api/student-reviews", StudentReviewRouter);
     app.use("/api/corporations", CorporationRouter);
     app.use("/api/corporation-reviews", CorporationReviewRouter);
