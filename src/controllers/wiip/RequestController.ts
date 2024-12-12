@@ -16,6 +16,7 @@ const requestSearch = client.index("request");
 const StudentWithCurrentSchool = models.studentwithcurrentschool;
 const RequestModel = models.Request;
 const ConsumerModel = models.Consumer;
+const UserModel = models.User;
 
 export const getRecommendedRequestByStudentId = async (student_id: number) => {
     const student = (
@@ -44,6 +45,32 @@ export const getRequestByRequestId = async (request_id: number) => {
 export const getAllRequest = async () => {
     const requests = await RequestModel.findAll({});
     return requests;
+};
+
+export const addProviderIdToRequest = async (
+    userId: Buffer,
+    requestId: number,
+) => {
+    const userInstance = (
+        await UserModel.findOne({ where: { user_id: userId } })
+    )?.get({ plain: true });
+    const request = await getRequestByRequestId(requestId);
+    console.log(userInstance?.user_id);
+    logger.debug(`User: ${userInstance}-${userId}, Request: ${request}`);
+    if (userInstance === undefined || request === null) {
+        console.log(userId);
+        throw new Error("No such data");
+    }
+
+    const userIds = (request.student_ids ?? []) as string[];
+
+    await RequestModel.update(
+        // Buffer type UUID will be stringfied
+        { student_ids: [...userIds, userInstance.user_id] },
+        { where: { request_id: requestId } },
+    );
+
+    return request;
 };
 
 export const createRequest = async (
@@ -84,12 +111,12 @@ export const createRequest = async (
             const searchRet = await requestSearch.addDocuments(
                 [
                     {
-                        id: createdRequest.request_id,
-                        _geo: { lat: coordinate[0], lng: coordinate[1] },
                         ...createdRequest.dataValues,
+                        request_id: createdRequest.request_id,
+                        _geo: { lat: coordinate[0], lng: coordinate[1] },
                     },
                 ],
-                { primaryKey: "id" },
+                { primaryKey: "request_id" },
             );
 
             const searchTask = await client.waitForTask(searchRet.taskUid);

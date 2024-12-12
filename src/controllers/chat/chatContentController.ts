@@ -5,11 +5,17 @@ import { pushMessageQueue } from "./messageQueue";
 import logger from "../../utils/logger";
 
 const { ChatUser, ChatContent, ChatRoom } = ChatModels;
-
+// TODO: deprecated
+interface Message {
+    contentType: "text" | "image";
+    data?: ArrayBuffer;
+    url?: string;
+    content?: string;
+}
 export const sendMessage = async (
     chatRoomId: mongoose.Types.ObjectId,
     sender: mongoose.Types.ObjectId,
-    message: string,
+    message: Message,
 ) => {
     logger.debug(
         `Send message: ChatRoomId: ${chatRoomId}, Sender: ${sender}, Message: ${message}`,

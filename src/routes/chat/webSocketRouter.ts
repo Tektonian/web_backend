@@ -76,10 +76,16 @@ const ResMessageFactory = (
     direction: "outgoing" | "inbound",
 ): resMessage => {
     let ret: resMessage;
-    const senderJSON = message.toJSON().sender_id;
-    const senderId = createHash("sha256")
-        .update(Buffer.from(senderJSON).toString("hex"))
-        .digest("hex");
+
+    let hashedSenderId: string | undefined = "";
+    if (message.toJSON().sender_id === undefined) {
+        hashedSenderId = undefined;
+    } else {
+        const sender_id = message.toJSON().sender_id;
+        hashedSenderId = createHash("sha256")
+            .update(Buffer.from(sender_id).toString("hex"))
+            .digest("hex");
+    }
 
     ret = {
         _id: message._id,
@@ -87,7 +93,7 @@ const ResMessageFactory = (
         chatRoomId: message.chatroom._id.toString(),
         contentType: "text",
         content: message.content,
-        senderId: senderId,
+        senderId: hashedSenderId,
         direction: direction,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -103,14 +109,19 @@ const ResMessagesFactory = (
     // TODO: bit wise operation later
     let ret: resMessage[] = [];
     for (let message of messages) {
-        const dir =
-            message.sender_id.toString("hex") ===
-            chatUser.user_id.toString("hex")
-                ? "outgoing"
-                : "inbound";
+        let dir: "inbound" | "outgoing" = "inbound";
+        // Room message
+        if (message.sender_id === undefined) {
+            dir = "inbound";
+        } else {
+            dir =
+                message.sender_id.toString("hex") ===
+                chatUser.user_id.toString("hex")
+                    ? "outgoing"
+                    : "inbound";
+        }
         ret.push(ResMessageFactory(message, dir));
     }
-    logger.debug(`Message ret: ${ret}`);
     return ret;
 };
 
@@ -133,17 +144,16 @@ async function updateChatRoomHandler(globalArgs, { jobId, returnvalue }) {
 }
 
 async function sendMessageHandler(globalArgs, recv) {
-    logger.debug(`Send message Handler: Received: ${recv}`);
+    logger.debug(`Send message Handler: Received: ${JSON.stringify(recv)}`);
     const { socket, chatContentController } = globalArgs;
-    const req = JSON.parse(recv);
     const chatRoom = socket.data.chatRoom;
     const chatUser = socket.data.chatUser;
     logger.debug(
-        `Send message Handler: chatRoom: ${chatRoom}, chatUser: ${chatUser}`,
+        `Send message Handler: chatRoom: ${chatRoom}, chatUser: ${chatUser}, Message: ${JSON.stringify(recv)}`,
     );
 
     // Check sender's temporary id is same as chatUser id
-    if (req.senderId !== chatUser._id.toString()) {
+    if (recv.senderId !== chatUser._id.toString()) {
         // TODO: add throw error
         return;
     }
@@ -151,7 +161,7 @@ async function sendMessageHandler(globalArgs, recv) {
     await chatContentController.sendMessage(
         chatRoom._id,
         chatUser,
-        req.message.content,
+        recv.content,
     );
 }
 
@@ -487,7 +497,7 @@ export default function initChat(httpServer) {
 
         // then send user ObjectId to a client, so we can identify user
         try {
-            const chatRooms = await chatRoomController.getAllChatRoomsByUser({
+            const chatRooms = await chatRoomController.getAliveChatRoomsByUser({
                 user_id: chatUser.user_id,
             });
 

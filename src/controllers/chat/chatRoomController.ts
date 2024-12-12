@@ -1,17 +1,30 @@
 import * as ChatModels from "../../models/chat";
 import type { UserAttributes } from "../../models/rdbms/User";
-import type { RequestAttributes } from "../../models/rdbms/Request";
-
+import { models as RDBModels } from "../../models/rdbms";
 import logger from "../../utils/logger";
 
 const { ChatRoom, ChatUser, Unread, ChatContent } = ChatModels;
+const { Request, User } = RDBModels;
 
 export const createChatRoom = async (
-    request: RequestAttributes,
-    consumer: UserAttributes,
-    participants: UserAttributes[],
+    requestId: number,
+    consumerId: Buffer,
+    participantIds: Buffer[],
 ) => {
     try {
+        const request = (
+            await Request.findOne({ where: { request_id: requestId } })
+        )?.get({ plain: true });
+
+        const consumer = (
+            await User.findOne({ where: { user_id: consumerId } })
+        )?.get({ plain: true });
+
+        const participants = await User.findAll({
+            where: { user_id: participantIds },
+            raw: true,
+        });
+
         const chatRoomInstance = await ChatRoom.create({
             request_id: request.request_id,
             consumer_id: consumer.user_id,
@@ -32,7 +45,7 @@ export const createChatRoom = async (
             seq: 0,
             content_type: "alert",
             content: "방이 생성되었어요",
-            sender_id: null,
+            sender_id: undefined,
             image_url: "",
         });
         return chatRoomInstance;
@@ -82,7 +95,37 @@ export const delChatRoomsByRequest = async (request: RequestAttributes) => {
 export const delChatRoom = async (chatRoomId: string) => {
     const chatRoom = await ChatRoom.findOne({ _id: chatRoomId });
     if (chatRoom === null) {
+        throw new Error("No such chatroom");
     }
+
+    await Unread.deleteMany({ chatroom_id: chatRoom._id });
+
+    return await ChatRoom.updateOne(
+        { _id: chatRoom._id },
+        { $set: { request_id: -1 * chatRoom.request_id } },
+    );
+};
+
+export const actionCompleteRecruit = async (
+    requestId: number,
+    consumerId: Buffer,
+    providerIds: Buffer[],
+) => {
+    const toDelChatRooms = await ChatRoom.find({
+        $and: [
+            { request_id: requestId },
+            { participant_ids: { $nin: providerIds } },
+        ],
+    });
+    console.log(consumerId, providerIds);
+    logger.debug(`toDelChatRooms: ${JSON.stringify(toDelChatRooms)}`);
+    await Promise.all(
+        toDelChatRooms.map(async (room) => {
+            return await delChatRoom(room._id.toHexString());
+        }),
+    );
+
+    await createChatRoom(requestId, consumerId, [...providerIds, consumerId]);
 };
 
 export const leaveChatRoom = async (chatRoomId: string, userId: string) => {};

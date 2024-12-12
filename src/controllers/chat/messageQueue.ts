@@ -92,14 +92,22 @@ const userSentWorker = new Worker(
         if (!(data.sender.user_id instanceof Buffer)) {
             data.sender.user_id = Buffer.from(data.sender.user_id);
         }
-        logger.debug(`userSentWorker: ${data}`);
-        const ret = await ChatContent.create({
-            sender_id: data.sender.user_id,
-            content: data.message,
-            chatroom: chatRoom,
-            seq: chatRoom?.message_seq,
-        });
-        return JSON.stringify(ret.toJSON());
+        logger.debug(`userSentWorker: ${JSON.stringify(data)}`);
+        if (data.message.contentType === "text") {
+            const ret = await ChatContent.create({
+                sender_id: data.sender.user_id,
+                content: data.message.content,
+                chatroom: chatRoom,
+                seq: chatRoom?.message_seq,
+            });
+            return JSON.stringify(ret.toJSON());
+        }
+        // TODO
+        else if (data.message.contentType === "image") {
+        }
+        // TODO
+        else {
+        }
     },
     {
         connection: {
