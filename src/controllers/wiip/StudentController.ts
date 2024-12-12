@@ -47,8 +47,8 @@ export const getRecommendedStudentByRequestId = async (request_id: number) => {
         }),
     );
 
-    ret.onFailure(() => {
-        logger.info("Student search failed");
+    ret.onFailure((error) => {
+        logger.info(`Student search failed ${error}`);
     });
 
     ret.onSuccess(() => {
