@@ -1,7 +1,7 @@
 import { createHash } from "crypto";
 import { QueueEvents } from "bullmq";
 import { HydratedDocument, InferRawDocType, InferSchemaType } from "mongoose";
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 
 import { currentSession } from "../../middleware/auth.middleware";
 
@@ -344,15 +344,14 @@ async function userTryJoinHandler(
     globalArgs,
     req: APIType.WebSocketType.ReqTryJoin,
 ) {
-    const { io, socket, chatUser } = globalArgs;
+    const { io, socket } = globalArgs;
     const { chatRoomId, deviceLastSeq, id } = req;
-    const chatRoom: HydratedDocument<ChatTypes.ChatRoomType> | null =
-        await chatRoomController.getChatRoomById(chatRoomId);
+    const chatUser = socket.data.chatUser;
+    const chatRoom = await chatRoomController.getChatRoomById(chatRoomId);
     logger.debug(`User Try join: ${JSON.stringify(req)}`);
 
     // set socket.data if user joined a room
     socket.data.chatRoom = chatRoom;
-    socket.data.chatUser = chatUser;
 
     if (chatRoom === null) {
         logger.error(`Room not exist: ${chatRoomId}`);
@@ -509,6 +508,36 @@ async function eventRegistHelper<A extends Objects, T extends Objects>(
     // For end
 }
 
+export function __initChat(io: Server) {
+    io.on("connection", async (socket) => {
+        initSocketEvents(io, socket);
+    });
+}
+
+function initSocketEvents(io: Server, socket: Socket) {
+    socket.on("userTryJoin", async (req, callback) => {
+        await __userTryJoinHandler(io, socket, req, callback);
+        await __userSentEventHandler();
+    });
+
+    socket.on("userTryUnjoin", async (req, callback) => {
+        await __userTryUnJoinHandler(io, socket, req, callback);
+    });
+
+    socket.on("updateLastRead", async (req, callback) => {
+        await __updateLastReadHandler(io, socket, req, callback);
+    });
+
+    socket.on("sendMessage", async (req, callback) => {
+        await __sendMessageHandler(io, socket, req, callback);
+        await __updateChatRoomHandler(io, socket, req, callback);
+    });
+
+    socket.on("disconnecting", async (req, callback) => {
+        await __socketDisconnectHandler(io, socket, req, callback);
+    });
+}
+
 export default function initChat(httpServer) {
     const io = new Server(httpServer, {
         cors: {
@@ -596,7 +625,6 @@ export default function initChat(httpServer) {
             socket,
             userSentEvent,
             updateChatRoomEvent,
-            chatUser,
         };
         const eventTargets = {
             socket,
