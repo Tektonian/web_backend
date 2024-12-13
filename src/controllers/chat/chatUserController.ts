@@ -1,16 +1,18 @@
 import mongoose, { Types } from "mongoose";
-import * as ChatModels from "../../models/chat";
-import * as RDBMSModels from "../../models/rdbms";
+import { User } from "../../models/rdbms/User";
+import { ChatUser } from "../../models/chat";
 import type { UserAttributes } from "../../models/rdbms/User";
-import { IChatUser } from "../../types/chat/chatSchema.types";
-const { ChatUser } = ChatModels;
-const { User } = RDBMSModels;
 
-export const createChatUser = async (user: UserAttributes) => {
+export const createChatUser = async (user_id: Buffer) => {
+    const user = await User.findByPk(user_id, { raw: true });
+    if (user === null) {
+        throw new Error("No such user");
+        return;
+    }
     return await ChatUser.create({
         user_id: user.user_id,
         email: user.email,
-        username: user.username,
+        user_name: user.username,
         user_name_glb: { en: user.username },
         image_url: user.image,
     });

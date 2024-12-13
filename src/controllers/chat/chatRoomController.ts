@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import * as ChatModels from "../../models/chat";
 import type { UserAttributes } from "../../models/rdbms/User";
 import { models as RDBModels } from "../../models/rdbms";
@@ -12,25 +13,33 @@ export const createChatRoom = async (
     participantIds: Buffer[],
 ) => {
     try {
-        const request = (
-            await Request.findOne({ where: { request_id: requestId } })
-        )?.get({ plain: true });
+        const request = await Request.findOne({
+            where: { request_id: requestId },
+            raw: true,
+        });
 
-        const consumer = (
-            await User.findOne({ where: { user_id: consumerId } })
-        )?.get({ plain: true });
+        const consumer = await User.findOne({
+            where: { user_id: consumerId },
+            raw: true,
+        });
 
         const participants = await User.findAll({
             where: { user_id: participantIds },
             raw: true,
         });
 
+        if (!request || !consumer || !participants) {
+            logger.error("No data");
+            return;
+        }
+
         const chatRoomInstance = await ChatRoom.create({
             request_id: request.request_id,
-            consumer_id: consumer.user_id,
-            participant_ids: participants.map((u) => u.user_id),
+            title: request.title,
+            consumer_id: consumerId,
+            participant_ids: participantIds,
         });
-
+        console.log("chatroominstance", chatRoomInstance);
         const res = await Promise.all(
             participants.map(async (parti) => {
                 await Unread.create({
@@ -43,9 +52,9 @@ export const createChatRoom = async (
         const chatContent = await ChatContent.create({
             chatroom: chatRoomInstance,
             seq: 0,
-            content_type: "alert",
+            content_type: "alarm",
             content: "방이 생성되었어요",
-            sender_id: undefined,
+            sender_id: Buffer.from([0]),
             image_url: "",
         });
         return chatRoomInstance;
@@ -57,8 +66,8 @@ export const createChatRoom = async (
     }
 };
 
-export const getChatRoomById = async (objectId: string) => {
-    return await ChatRoom.findById(objectId);
+export const getChatRoomById = async (chatRoomId: Types.ObjectId) => {
+    return await ChatRoom.findById(chatRoomId);
 };
 
 export const getChatRoomsByRequestId = async (requestId: number) => {
@@ -69,18 +78,30 @@ export const getAllChatRoomsByUser = async (user: UserAttributes) => {
     return await ChatRoom.find({ participant_ids: user.user_id });
 };
 
-export const getAliveChatRoomsByUser = async (user: UserAttributes) => {
-    const chatuser = await ChatUser.findOne({ user_id: user.user_id });
+export const getAliveChatRoomsByUser = async (userId: Types.ObjectId) => {
+    const chatUser = await ChatUser.findOne({ user_id: userId });
+
+    if (chatUser === null) {
+        return undefined;
+    }
 
     return await ChatRoom.find({
-        participant_ids: chatuser.user_id,
+        participant_ids: chatUser.user_id,
         // request_id of chat rooms whose requests are not done yet should be bigger than 0
         request_id: { $gte: 0 },
     });
 };
 
-export const delChatRoomsByRequest = async (request: RequestAttributes) => {
+export const delChatRoomsByRequest = async (requestId: number) => {
     // delete unread
+    const request = await Request.findOne({
+        where: { request_id: requestId },
+        raw: true,
+    });
+    if (request === null) {
+        logger.error("No such request");
+        return undefined;
+    }
     const chatRooms = await ChatRoom.find({ request_id: request.request_id });
     const chatRoomIds = chatRooms.map((chatRoom) => chatRoom._id);
     await Unread.deleteMany({ chatroom_id: { $in: chatRoomIds } });
@@ -92,7 +113,7 @@ export const delChatRoomsByRequest = async (request: RequestAttributes) => {
     );
 };
 
-export const delChatRoom = async (chatRoomId: string) => {
+export const delChatRoom = async (chatRoomId: Types.ObjectId) => {
     const chatRoom = await ChatRoom.findOne({ _id: chatRoomId });
     if (chatRoom === null) {
         throw new Error("No such chatroom");
@@ -111,21 +132,45 @@ export const actionCompleteRecruit = async (
     consumerId: Buffer,
     providerIds: Buffer[],
 ) => {
+    // Find chatRooms that need to be deleted
     const toDelChatRooms = await ChatRoom.find({
         $and: [
             { request_id: requestId },
             { participant_ids: { $nin: providerIds } },
         ],
     });
-    console.log(consumerId, providerIds);
-    logger.debug(`toDelChatRooms: ${JSON.stringify(toDelChatRooms)}`);
     await Promise.all(
         toDelChatRooms.map(async (room) => {
-            return await delChatRoom(room._id.toHexString());
+            return await delChatRoom(room._id);
         }),
     );
 
-    await createChatRoom(requestId, consumerId, [...providerIds, consumerId]);
+    // Won't create unnecessary group room
+    if (providerIds.length !== 1) {
+        await createChatRoom(requestId, consumerId, [
+            ...providerIds,
+            consumerId,
+        ]);
+    }
+
+    // TODO: Push Update chatroom request
 };
 
-export const leaveChatRoom = async (chatRoomId: string, userId: string) => {};
+// Needed?
+export const leaveChatRoom = async (
+    chatRoomId: Types.ObjectId,
+    userId: Buffer,
+) => {
+    const chatRoom = await ChatRoom.findById(chatRoomId);
+
+    if (chatRoom === null) {
+        throw new Error("No such room");
+    }
+
+    const newIds = chatRoom.participant_ids.filter((id) => !id.equals(userId));
+
+    return await ChatRoom.updateOne(
+        { _id: chatRoom._id },
+        { participant_ids: newIds },
+    );
+};
