@@ -1,12 +1,18 @@
 import mongoose, { Types, HydratedDocument } from "mongoose";
-import * as ChatModels from "../../models/chat";
-import { IChatContent, IChatroom } from "../../types/chat/chatSchema.types";
+import {
+    Unread,
+    ChatUser,
+    ChatRoom,
+    Types as ChatTypes,
+} from "../../models/chat";
 import { pushSendAlarm, pushUpdateChatRoom } from "./messageQueue";
+import { APIType } from "api_spec";
 import logger from "../../utils/logger";
-const { Unread, ChatUser, ChatRoom } = ChatModels;
+
+type UserSentEventReturn = APIType.WebSocketType.UserSentEventReturn;
 
 export const updateUserUnreadByUUID = async (
-    uuid: Types.UUID,
+    uuid: Buffer,
     chatRoomId: Types.ObjectId,
     seq: number,
 ) => {
@@ -32,21 +38,21 @@ export const updateUserUnread = async (
     );
 };
 
-export const updateUsersUnreads = async (objectIds: ObjectId[]) => {
+export const updateUsersUnreads = async (objectIds: Types.ObjectId[]) => {
     const uuids = await ChatUser.find({ _id: { $in: objectIds } }).get(
         "user_id",
     );
 };
 
-export const getUnreadSequences = async (chatRoom: mongoose.Types.ObjectId) => {
-    const unreadSequences = (await Unread.find({ chatroom: chatRoom })).map(
+export const getUnreadSequences = async (chatRoomId: Types.ObjectId) => {
+    const unreadSequences = (await Unread.find({ chatroom: chatRoomId })).map(
         (val) => val.last_read_seq,
     );
 
     return unreadSequences;
 };
 
-export const getUnreadCountOfUser = async (uuid: mongoose.Types.UUID) => {
+export const getUnreadCountOfUser = async (uuid: Buffer) => {
     const userUnreads = await Unread.find({ user_id: uuid });
     const chatRoomIds = userUnreads.map((unread) => unread.chatroom);
     const chatRooms = await ChatRoom.find({ _id: { $in: chatRoomIds } });
@@ -68,27 +74,27 @@ export const getUnreadCountOfUser = async (uuid: mongoose.Types.UUID) => {
 };
 
 export const whetherSendAlarm = async (
-    chatRoom: HydratedDocument<IChatroom>,
-    message: HydratedDocument<IChatContent>,
-    participant_ids: mongoose.Types.UUID[],
-    chatUsersIds: ObjectId[],
+    chatRoomId: Types.ObjectId,
+    message: UserSentEventReturn,
+    participantIds: Buffer[],
+    chatUsersIds: Types.ObjectId[],
 ) => {
-    participant_ids.map(async (uuid) => {
+    participantIds.map(async (uuid) => {
         const chatUser = await ChatUser.findOne({ user_id: uuid });
         logger.debug(`WhethersendAlarm: ${chatUser}:${message}`);
 
         if (chatUser !== null) {
             const isParticipated = chatUsersIds.find(
-                (userId) => userId === chatUser._id.toString(),
+                (userId) => userId.toString() === chatUser._id.toString(),
             );
 
             logger.debug(`push update chat room:, ${chatUser}`);
             if (isParticipated === undefined) {
-                pushUpdateChatRoom(chatRoom, message, chatUser);
+                pushUpdateChatRoom(message, chatRoomId, chatUser._id);
             }
         } else {
             logger.debug("push alarm");
-            pushSendAlarm(chatRoom, message, uuid);
+            pushSendAlarm(message, uuid);
         }
     });
 };

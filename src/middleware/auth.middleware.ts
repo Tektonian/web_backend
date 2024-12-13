@@ -27,6 +27,7 @@ export const currentSession = async (
     const session = (await getSession(req, authConfig)) ?? undefined;
     res.session = session;
 
+    console.log("currentSession", session);
     // encode JSON.stringfied Buffer to Buffer
     // https://stackoverflow.com/questions/34557889/how-to-deserialize-a-nested-buffer-using-json-parse
     if (
@@ -34,8 +35,8 @@ export const currentSession = async (
         session.user !== undefined &&
         session.user.id !== undefined
     ) {
-        res.session.user.id = Buffer.from(session.user?.id.data);
-        req.id = res.session?.user.id;
+        res.session.user.id = Buffer.from(session.user?.id);
+        req.id = Buffer.from(session.user.id);
     }
 
     return next();
