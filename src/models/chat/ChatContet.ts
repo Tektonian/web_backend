@@ -2,12 +2,30 @@ import mongoose, { Schema, Types } from "mongoose";
 
 const chatContentSchema = new Schema(
     {
+        /**
+         * Validator
+         * @see {@link https://mongoosejs.com/docs/validation.html#built-in-validators}
+         */
         chatroom: { type: Schema.Types.ObjectId, required: true },
         seq: { type: Number, required: true, default: 0 },
-        content_type: { type: String, default: "text" },
-        content: { type: String, default: "" },
-        sender_id: { type: Schema.Types.UUID },
-        image_url: { type: String, default: "" },
+        content_type: {
+            type: String,
+            default: "text",
+            // Validator
+            enum: ["text", "image", "file", "map", "alarm"],
+        },
+        content: {
+            type: String,
+            default: "",
+            trim: true,
+            // Validator and Error message
+            minLength: [1, "Too short message"],
+        },
+        sender_id: {
+            type: Schema.Types.Buffer,
+            get: (uuid) => Buffer.from(uuid),
+        },
+        url: { type: String, default: "" },
     },
     {
         timestamps: {

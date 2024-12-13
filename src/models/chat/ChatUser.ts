@@ -4,8 +4,12 @@ const chatUserSchema = new Schema(
     {
         // Since the ObjectId(=_id) of MongoDB is not reliable
         // We will record user's id in userSchema
-        user_id: { type: mongoose.Types.UUID, required: true },
-        username: { type: String, required: true },
+        user_id: {
+            type: Schema.Types.Buffer,
+            required: true,
+            get: (uuid) => Buffer.from(uuid),
+        },
+        user_name: { type: String, required: true },
         nationality: { type: String, required: false },
         multilingual: { type: [String], required: true, default: [] },
         user_name_glb: { type: Map, required: true },
