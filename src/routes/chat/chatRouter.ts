@@ -164,18 +164,15 @@ ChatRouter.put("/request", async (req, res) => {
         */
         const prevProviderIds = (request.student_ids ?? []) as Buffer[];
 
-        const newProviderIdStr = chatRoom
-            .toObject()
-            .participant_ids.find(
-                (id) =>
-                    !(sessionUser.id as Buffer).equals(
-                        Buffer.from(id.toJSON(), "base64"),
-                    ),
-            );
-        console.log(newProviderIdStr, chatRoom.toJSON());
-        const newProviderId = Buffer.from(newProviderIdStr?.toJSON(), "base64");
+        const newProviderId = chatRoom.participant_ids.find(
+            (id) => !id.equals(sessionUser.id as Buffer),
+        );
 
-        console.log(newProviderId, newProviderIdStr);
+        if (newProviderId === undefined) {
+            res.json("Something wrong");
+            return;
+        }
+
         if (prevProviderIds.length + 1 === request.head_count) {
             await addProviderIdToRequest(newProviderId, request.request_id);
             await actionCompleteRecruit(
@@ -194,6 +191,18 @@ ChatRouter.put("/request", async (req, res) => {
     }
 
     logger.info(`END-Approve request`);
+});
+
+// Upload file or image
+ChatRouter.post("/upload", async (req, res) => {
+    const { tempId, chatRoomId } = req.body;
+
+    const sessionUser = res.session?.user;
+
+    if (sessionUser === undefined) {
+        res.json("Login first");
+        return;
+    }
 });
 
 export default ChatRouter;
