@@ -13,7 +13,7 @@ export const chatTest = async () => {
     });
     await Promise.all(
         users.map(async (user) => {
-            return chatUserController.createChatUser(user.dataValues);
+            return chatUserController.createChatUser(user.dataValues.user_id);
         }),
     );
 
@@ -61,9 +61,9 @@ export const chatTest = async () => {
 
     for (var i = 0; i < 30; i++) {
         await chatContentController.sendMessage(
-            chatRoom,
-            i % 2 === 0 ? test0Chat : test1Chat,
-            `Ah yeah${i}`,
+            chatRoom._id,
+            i % 2 === 0 ? test0Chat._id : test1Chat._id,
+            { content: `Ah yeah${i}`, contentType: "text" },
         );
     }
 
