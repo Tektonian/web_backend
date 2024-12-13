@@ -15,6 +15,13 @@ import { ISessionUser } from "../../config/auth.types";
 
 import logger from "../../utils/logger";
 
+const {
+    chatContentController,
+    chatRoomController,
+    chatUserController,
+    chatUnreadController,
+} = chatController;
+
 type ReqSendMessage = APIType.WebSocketType.ReqSendMessage;
 type ResSomeoneSent = APIType.WebSocketType.ResSomeoneSent;
 
@@ -38,10 +45,9 @@ const ResChatRoomFactory = async (
     const participants = participantsInst.map((inst) =>
         inst.get({ plain: true }),
     );
-    const lastMessage =
-        await chatController.chatContentController.getChatRoomLastMessage(
-            chatRoom._id,
-        );
+    const lastMessage = await chatContentController.getChatRoomLastMessage(
+        chatRoom._id,
+    );
 
     logger.debug(
         `ResChatRoomFactory: ${JSON.stringify(chatRoom)} ${JSON.stringify(lastMessage)}`,
@@ -191,7 +197,7 @@ async function updateChatRoomHandler(globalArgs, { jobId, returnvalue }) {
  */
 async function sendMessageHandler(globalArgs, recv: ReqSendMessage) {
     logger.debug(`Send message Handler: Received: ${JSON.stringify(recv)}`);
-    const { socket, chatContentController } = globalArgs;
+    const { socket } = globalArgs;
     const chatRoom = socket.data.chatRoom;
     const chatUser = socket.data.chatUser;
     logger.debug(
@@ -215,7 +221,7 @@ async function sendMessageHandler(globalArgs, recv: ReqSendMessage) {
 }
 
 async function updateLastReadHandler(globalArgs, recv: ReqUpdateLastRead) {
-    const { socket, chatUnreadController } = globalArgs;
+    const { socket } = globalArgs;
     const { lastSeq } = recv;
     const chatUser = socket.data.chatUser;
     const chatRoom = socket.data.chatRoom;
@@ -247,8 +253,7 @@ async function userTryUnJoinHandler(globalArgs) {
 }
 
 async function socketDisconnectHandler(globalArgs, reason) {
-    const { socket, userSentEvent, updateChatRoomEvent, chatUserController } =
-        globalArgs;
+    const { socket, userSentEvent, updateChatRoomEvent } = globalArgs;
     const chatUser = socket.data.chatUser;
     logger.debug(
         `User disconnected: User: ${socket.data.chatUser} Reason: ${reason}`,
@@ -277,7 +282,7 @@ async function userSentEventHandler(
         returnvalue, // JSON.stringfied IChatContent
     },
 ) {
-    const { io, socket, chatUnreadController } = globalArgs;
+    const { io, socket } = globalArgs;
     const chatRoom = socket.data.chatRoom;
     const chatUser = socket.data.chatUser;
     const participant_ids = chatRoom.participant_ids;
@@ -339,14 +344,7 @@ async function userTryJoinHandler(
     globalArgs,
     req: APIType.WebSocketType.ReqTryJoin,
 ) {
-    const {
-        io,
-        socket,
-        chatRoomController,
-        chatUser,
-        chatContentController,
-        chatUnreadController,
-    } = globalArgs;
+    const { io, socket, chatUser } = globalArgs;
     const { chatRoomId, deviceLastSeq, id } = req;
     const chatRoom: HydratedDocument<ChatTypes.ChatRoomType> | null =
         await chatRoomController.getChatRoomById(chatRoomId);
@@ -512,13 +510,6 @@ async function eventRegistHelper<A extends Objects, T extends Objects>(
 }
 
 export default function initChat(httpServer) {
-    const {
-        chatContentController,
-        chatRoomController,
-        chatUserController,
-        chatUnreadController,
-    } = chatController;
-
     const io = new Server(httpServer, {
         cors: {
             origin: process.env.CORS_ORIGIN,
@@ -605,10 +596,6 @@ export default function initChat(httpServer) {
             socket,
             userSentEvent,
             updateChatRoomEvent,
-            chatUserController,
-            chatRoomController,
-            chatUnreadController,
-            chatContentController,
             chatUser,
         };
         const eventTargets = {
