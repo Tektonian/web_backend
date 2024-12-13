@@ -10,12 +10,12 @@ export const getUserByName = async (username: string) => {
     return userProfile;
 };
 
-export const getUserById = async (uuid) => {
+export const getUserById = async (uuid: Buffer) => {
     const user = await User.findByPk(uuid);
     return user;
 };
 
-export const getUsersById = async (uuids: (typeof DataTypes.UUID)[]) => {
+export const getUsersById = async (uuids: Buffer[]) => {
     const users = await User.findAll({ where: { user_id: uuids } });
 
     return users;
@@ -32,11 +32,9 @@ export const getUserByConsumerId = async (consumerId: number) => {
         return undefined;
     }
 
-    const user = (
-        await User.findOne({
-            where: { user_id: consumer.user_id },
-        })
-    )?.get({ plain: true });
+    const user = await User.findOne({
+        where: { user_id: consumer.user_id },
+    });
 
     return user;
 };
