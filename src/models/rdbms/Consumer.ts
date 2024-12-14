@@ -121,6 +121,21 @@ export class Consumer
                 consumer_type: {
                     type: DataTypes.STRING(255),
                     allowNull: false,
+                    validate: {
+                        isValidType(value: string[]) {
+                            const validTypeSet = new Set([
+                                "corp",
+                                "orgn",
+                                "normal",
+                            ]);
+
+                            const valueSet = new Set(value);
+
+                            if (valueSet.difference(validTypeSet).size !== 0) {
+                                throw new Error("Wrong type input");
+                            }
+                        },
+                    },
                 },
                 consumer_email: {
                     type: DataTypes.STRING(255),
