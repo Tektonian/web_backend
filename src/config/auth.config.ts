@@ -17,11 +17,13 @@ const sequelize = new Sequelize(
     },
 );
 
-// Most of the codes are from https://github.com/nextauthjs/next-auth/blob/main/packages/core/src/lib/actions/callback/handle-login.ts#L26
-// Since there is no proper handler for credential Login or Signin(Register)
-// We need handle Data by ourselves
-// TOOD: Right now we choose to use "JWT" tactic instead of database session
-// See github issue: https://github.com/nextauthjs/next-auth/issues/11088
+/**
+ * Most of the codes are from https://github.com/nextauthjs/next-auth/blob/main/packages/core/src/lib/actions/callback/handle-login.ts#L26
+ * Since there is no proper handler for credential Login or Signin(Register)
+ * We need handle Data by ourselves
+ * TOOD: Right now we choose to use "JWT" tactic instead of database session
+ * @see {@link github issue: https://github.com/nextauthjs/next-auth/issues/1108}
+ */
 
 import { createTransport } from "nodemailer";
 import Credentials from "@auth/core/providers/credentials";
@@ -183,10 +185,10 @@ export const authConfig: ExpressAuthConfig = {
                 - update event: Triggered by the useSession().update method.
 
              */
+            logger.debug(
+                `jwt: ${process.env.NODE_ENV} ${JSON.stringify(token)}, ${JSON.stringify(user)}, ${JSON.stringify(trigger)}, ${JSON.stringify(account)}, ${JSON.stringify(profile)}, ${JSON.stringify(session)}`,
+            );
             if (trigger === "update") {
-                logger.debug(
-                    `UPDATE: ${JSON.stringify(token)}, ${JSON.stringify(user)}, ${JSON.stringify(trigger)}, ${JSON.stringify(account)}, ${JSON.stringify(profile)}, ${JSON.stringify(session)}`,
-                );
                 const adapter = SequelizeAdapter(sequelize);
                 const userInstance = await adapter.getUserByEmail(token.email);
 
@@ -210,8 +212,9 @@ export const authConfig: ExpressAuthConfig = {
             } else if (trigger === "signIn") {
                 token.name = user.username;
                 token.email = user.email ?? null;
-                token.id = user?.user_id ?? null;
-                token.roles = user?.roles ?? null;
+                token.email = user.email ?? "";
+                token.id = Buffer.from(user?.id ?? []);
+                token.roles = user?.roles ?? [];
             }
             return token;
         },
