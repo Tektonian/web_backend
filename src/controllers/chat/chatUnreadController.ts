@@ -59,14 +59,15 @@ export const getUnreadCountOfUser = async (uuid: Buffer) => {
 
     let ret = 0;
     chatRooms.forEach((chatRoom) => {
-        const found = userUnreads.find(
+        const foundUnread = userUnreads.find(
             (unread) =>
                 unread.chatroom._id.toString() === chatRoom._id.toString(),
         );
-        if (found === undefined || found.last_read_seq === -1) {
+        // Chat room newly created and user never participated in a room
+        if (foundUnread === undefined || foundUnread.last_read_seq === -1) {
             ret += chatRoom.message_seq;
         } else {
-            ret += chatRoom.message_seq - found.last_read_seq;
+            ret += chatRoom.message_seq - foundUnread.last_read_seq;
         }
     });
 

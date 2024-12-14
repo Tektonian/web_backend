@@ -7,6 +7,7 @@ import logger from "../../utils/logger";
 const { ChatRoom, ChatUser, Unread, ChatContent } = ChatModels;
 const { Request, User } = RDBModels;
 
+// TODO: should be transactional!! -> Need new MongoDB setting
 export const createChatRoom = async (
     requestId: number,
     consumerId: Buffer,
@@ -38,6 +39,7 @@ export const createChatRoom = async (
             title: request.title,
             consumer_id: consumerId,
             participant_ids: participantIds,
+            message_seq: 1, // Default message will be added below
         });
         console.log("chatroominstance", chatRoomInstance);
         const res = await Promise.all(

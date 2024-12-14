@@ -1,17 +1,14 @@
 import { createHash } from "crypto";
 import { QueueEvents } from "bullmq";
-import { HydratedDocument, InferRawDocType, InferSchemaType } from "mongoose";
-import { Server, Socket } from "socket.io";
-
-import { currentSession } from "../../middleware/auth.middleware";
-
 import { chatController } from "../../controllers/chat";
 import * as UserController from "../../controllers/UserController";
 
-import { ChatContent, ChatUser, Types as ChatTypes } from "../../models/chat";
-
-import { APIType } from "api_spec";
-import { ISessionUser } from "../../config/auth.types";
+import type { HydratedDocument } from "mongoose";
+import type { Server, Socket } from "socket.io";
+import type { Types as ChatTypes } from "../../models/chat";
+import type { APIType } from "api_spec";
+import type { ISessionUser } from "../../config/auth.types";
+import type { UserAttributes } from "../../models/rdbms/User";
 
 import logger from "../../utils/logger";
 
@@ -22,15 +19,8 @@ const {
     chatUnreadController,
 } = chatController;
 
-type ReqSendMessage = APIType.WebSocketType.ReqSendMessage;
 type ResSomeoneSent = APIType.WebSocketType.ResSomeoneSent;
-
-type ReqUpdateLastRead = APIType.WebSocketType.ReqUpdateLastRead;
-
 type ResChatRoom = APIType.ChatRoomType.ResChatRoom;
-
-type UserSentEventReturn = APIType.WebSocketType.UserSentEventReturn;
-type UpdateChatRoomReturn = APIType.WebSocketType.UpdateChatRoomReturn;
 
 const EVENT_NAME_FACTORY = (
     chatUser: HydratedDocument<ChatTypes.ChatUserType>,
@@ -39,11 +29,22 @@ const EVENT_NAME_FACTORY = (
     return `${chatUser._id.toString()}:${chatRoom._id.toString()}`;
 };
 
+const ResUserIdentityFactory = (chatUser: UserAttributes) => {
+    return {
+        user_name: chatUser.username ?? "",
+        user_id: createHash("sha256")
+            .update(chatUser.user_id.toString("hex"))
+            .digest("hex"),
+        email: chatUser.email,
+        image_url: chatUser.image ?? "",
+    };
+};
+
 const ResChatRoomFactory = async (
-    chatRoom: ChatTypes.ChatRoomType,
+    chatRoom: HydratedDocument<ChatTypes.ChatRoomType>,
 ): Promise<ResChatRoom> => {
     const consumer = (
-        await UserController.getUserById(Buffer.from(chatRoom.consumer_id))
+        await UserController.getUserById(chatRoom.consumer_id)
     )?.get({ plain: true });
 
     const usersUUIDs = chatRoom.participant_ids.map((id) => Buffer.from(id));
@@ -52,6 +53,12 @@ const ResChatRoomFactory = async (
     const participants = participantsInst.map((inst) =>
         inst.get({ plain: true }),
     );
+
+    const participantsRes = participants.map((part) => {
+        return ResUserIdentityFactory(part);
+    });
+    const consumerRes = ResUserIdentityFactory(consumer);
+
     const lastMessage = await chatContentController.getChatRoomLastMessage(
         chatRoom._id,
     );
@@ -59,20 +66,7 @@ const ResChatRoomFactory = async (
     logger.debug(
         `ResChatRoomFactory: ${JSON.stringify(chatRoom)} ${JSON.stringify(lastMessage)}`,
     );
-    const participantsRes = participants.map((part) => {
-        return {
-            // IMPORTANT
-            // _id: "" <- user's chat id should not respond
-            user_name: part.username ?? "",
-            user_id: createHash("sha256")
-                .update(part.user_id.toString("hex"))
-                .digest("hex"),
-            email: part.email,
-            image_url: part.image ?? "",
-        };
-    });
-    const consumerName = consumer?.username;
-    const participantNames = new Set(participants.map((part) => part.username));
+
     const resChatroom: ResChatRoom = {
         title: chatRoom.title,
         chatRoomId: chatRoom._id.toString(),
@@ -80,10 +74,10 @@ const ResChatRoomFactory = async (
         lastSenderId: createHash("sha256")
             .update(lastMessage?.sender_id?.toString("hex") ?? "")
             .digest("hex"),
-        consumer: consumer,
+        consumer: consumerRes,
         participants: participantsRes,
-        lastMessage: lastMessage?.content,
-        lastSentTime: lastMessage?.created_at,
+        lastMessage: lastMessage?.content ?? "",
+        lastSentTime: lastMessage?.created_at ?? Date.now().toString(),
     };
     return resChatroom;
 };
@@ -91,9 +85,7 @@ const ResChatRoomFactory = async (
 const ResMessageFactory = (
     message: ChatTypes.ChatContentType,
     direction: "outgoing" | "inbound",
-): resMessage => {
-    let ret: resMessage;
-
+): APIType.WebSocketType.ResMessage => {
     let hashedSenderId: string | undefined = "";
     if (message.sender_id === undefined) {
         hashedSenderId = undefined;
@@ -104,7 +96,9 @@ const ResMessageFactory = (
             .digest("hex");
     }
 
-    ret = {
+    logger.debug(`Processing Message: ${message}`);
+
+    return {
         _id: message._id,
         seq: message.seq,
         chatRoomId: message.chatroom,
@@ -115,16 +109,14 @@ const ResMessageFactory = (
         createdAt: new Date(),
         updatedAt: new Date(),
     };
-    logger.debug(`Processing Message: ${message} ${ret}`);
-    return ret;
 };
 
 const ResMessagesFactory = (
-    messages: HydratedDocument<IChatContent>[],
-    chatUser: HydratedDocument<IChatUser>,
-): resMessage[] => {
+    messages: ChatTypes.ChatContentType[],
+    chatUser: HydratedDocument<ChatTypes.ChatUserType>,
+): APIType.WebSocketType.ResMessage[] => {
     // TODO: bit wise operation later
-    let ret: resMessage[] = [];
+    let ret = [];
     for (let message of messages) {
         let dir: "inbound" | "outgoing" = "inbound";
         // Room message

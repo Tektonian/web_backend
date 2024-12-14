@@ -98,6 +98,11 @@ const userSentWorker = new Worker(
         const chatRoom = await ChatRoom.findByIdAndUpdate(data.chatRoom, {
             $inc: { message_seq: 1 },
         });
+        if (chatRoom === null) {
+            logger.error("DB error");
+            // throw new Error
+            return;
+        }
         // JSON.stringfied Buffer to buffer
         if (!(data.sender.user_id instanceof Buffer)) {
             data.sender.user_id = Buffer.from(data.sender.user_id);
@@ -132,7 +137,7 @@ const userSentWorker = new Worker(
                 sender_id: data.sender.user_id,
                 content: data.message.content,
                 chatroom: chatRoom,
-                seq: chatRoom?.message_seq,
+                seq: chatRoom.message_seq,
             });
             return JSON.stringify(ret.toJSON());
         }
