@@ -2,6 +2,7 @@ import { models, sequelize } from "../../models/rdbms";
 import { MeiliSearch } from "meilisearch";
 import { Op } from "sequelize";
 import { DataTypes } from "sequelize";
+import { APIType } from "api_spec";
 import logger from "../../utils/logger";
 
 const client = new MeiliSearch({
@@ -136,4 +137,24 @@ export const createRequest = async (
         logger.error(`Created Request Error: ${error}`);
         return undefined;
     }
+};
+
+export const updateRequestStatus = async (
+    requestId: number,
+    status: APIType.RequestType.REQUEST_STATUS_ENUM,
+) => {
+    const request = await RequestModel.findOne({
+        where: { request_id: requestId },
+        raw: true,
+    });
+
+    if (request === null) {
+        logger.info("No such request");
+        return undefined;
+    }
+
+    return await RequestModel.update(
+        { request_status: status },
+        { where: { request_id: request.request_id } },
+    );
 };
