@@ -76,7 +76,8 @@ export class requestofuser
     content!: string;
     are_needed?: object;
     are_required?: object;
-    date?: string;
+    start_date?: string;
+    end_date?: string;
     address?: string;
     address_coordinate?: any;
     provide_food?: any;
@@ -204,7 +205,9 @@ export class requestofuser
             {
                 sequelize,
                 tableName: "requestofuser",
-                timestamps: false,
+                timestamps: true,
+                createdAt: "created_at",
+                updatedAt: "updated_at",
             },
         );
     }

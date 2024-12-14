@@ -13,7 +13,7 @@ export interface fullstudentprofileAttributes {
     emergency_contact: string;
     gender: string;
     image?: string;
-    has_car?: any;
+    has_car?: number;
     keyword_list?: object;
     academic?: object;
     language?: object;
@@ -51,7 +51,7 @@ export class fullstudentprofile
     emergency_contact!: string;
     gender!: string;
     image?: string;
-    has_car?: any;
+    has_car?: number;
     keyword_list?: object;
     academic?: object;
     language?: object;
@@ -65,7 +65,6 @@ export class fullstudentprofile
                     type: DataTypes.INTEGER,
                     allowNull: false,
                     defaultValue: 0,
-                    primaryKey: true,
                 },
                 user_id: {
                     type: DataTypes.BLOB,
@@ -106,7 +105,7 @@ export class fullstudentprofile
                     allowNull: true,
                 },
                 has_car: {
-                    type: DataTypes.BLOB,
+                    type: DataTypes.TINYINT,
                     allowNull: true,
                 },
                 keyword_list: {

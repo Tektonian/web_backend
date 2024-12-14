@@ -15,7 +15,7 @@ export interface StudentAttributes {
     emergency_contact: string;
     gender: string;
     image?: string;
-    has_car?: boolean;
+    has_car?: number;
     keyword_list?: object;
     created_at?: Date;
     updated_at?: Date;
@@ -50,7 +50,7 @@ export class Student
     emergency_contact!: string;
     gender!: string;
     image?: string;
-    has_car?: boolean;
+    has_car?: number;
     keyword_list?: object;
     created_at?: Date;
     updated_at?: Date;
@@ -179,7 +179,7 @@ export class Student
                     allowNull: true,
                 },
                 has_car: {
-                    type: DataTypes.SMALLINT,
+                    type: DataTypes.TINYINT,
                     allowNull: true,
                 },
                 keyword_list: {
@@ -190,7 +190,9 @@ export class Student
             {
                 sequelize,
                 tableName: "Student",
-                timestamps: false,
+                timestamps: true,
+                createdAt: "created_at",
+                updatedAt: "updated_at",
                 indexes: [
                     {
                         name: "PRIMARY",

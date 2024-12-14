@@ -10,7 +10,7 @@ export interface studentwithcurrentschoolAttributes {
     emergency_contact: string;
     gender: string;
     image?: string;
-    has_car?: any;
+    has_car?: number;
     keyword_list?: object;
     id: number;
     student_id: number;
@@ -65,7 +65,7 @@ export class studentwithcurrentschool
     emergency_contact!: string;
     gender!: string;
     image?: string;
-    has_car?: any;
+    has_car?: number;
     keyword_list?: object;
     id!: number;
     student_id!: number;
@@ -124,7 +124,7 @@ export class studentwithcurrentschool
                     allowNull: true,
                 },
                 has_car: {
-                    type: DataTypes.BLOB,
+                    type: DataTypes.TINYINT,
                     allowNull: true,
                 },
                 keyword_list: {

@@ -5,6 +5,7 @@ import type { Consumer, ConsumerId } from "./Consumer";
 export interface RequestAttributes {
     request_id: number;
     consumer_id: number;
+    student_ids?: object;
     title: string;
     subtitle?: object;
     head_count?: number;
@@ -33,6 +34,7 @@ export type RequestPk = "request_id";
 export type RequestId = Request[RequestPk];
 export type RequestOptionalAttributes =
     | "request_id"
+    | "student_ids"
     | "subtitle"
     | "head_count"
     | "are_needed"
@@ -62,6 +64,7 @@ export class Request
 {
     request_id!: number;
     consumer_id!: number;
+    student_ids?: object;
     title!: string;
     subtitle?: object;
     head_count?: number;
@@ -107,6 +110,11 @@ export class Request
                         model: "Consumer",
                         key: "consumer_id",
                     },
+                },
+                student_ids: {
+                    type: DataTypes.JSON,
+                    allowNull: true,
+                    comment: "Provider ids of students",
                 },
                 title: {
                     type: DataTypes.STRING(255),
@@ -198,7 +206,9 @@ export class Request
             {
                 sequelize,
                 tableName: "Request",
-                timestamps: false,
+                timestamps: true,
+                createdAt: "created_at",
+                updatedAt: "updated_at",
                 indexes: [
                     {
                         name: "PRIMARY",
