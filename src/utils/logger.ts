@@ -20,8 +20,10 @@ interface InformationType extends winston.Logform.TransformableInfo {
     lineNumber?: string;
     columnNumber?: string;
 }
-
-// See: https://v8.dev/docs/stack-trace-api
+/**
+ * CallSite type definition
+ * @see {@link https://v8.dev/docs/stack-trace-api}
+ */
 interface CallSite {
     getThis(): any;
     getTypeName(): string;
@@ -74,16 +76,22 @@ const printfFormat = (exclude: string[] = []) => {
         );
     });
 };
-// A custom format builder.
-// Register needed field to `info: InformationType`
+
+/**
+ * A custom format builder.
+ * Register needed field to `info: InformationType`
+ */
 const customFormat = winston.format((info: InformationType) => {
-    // To get a caller, callee, line number, etc...
-    // See: https://v8.dev/docs/stack-trace-api
+    /**
+     * To get a caller, callee, line number, etc...
+     * @see {@link https://v8.dev/docs/stack-trace-api}
+     */
     const priorPrepareStackTrace = Error.prepareStackTrace;
     Error.prepareStackTrace = (err, stack) => {
         return stack;
     };
-    // golden number: 21!!
+
+    /** golden number: 21!!. Don't ask me why */
     const errorAt = (new Error().stack?.at(21) ?? DefaultCallSite) as CallSite;
     Error.prepareStackTrace = priorPrepareStackTrace;
 
@@ -155,7 +163,7 @@ if (process.env.NODE_ENV === "production") {
             }),
         ],
     };
-} else if (process.env.NODE_ENV === "development" || true) {
+} else if (process.env.NODE_ENV === "development") {
     const combinedFormats = winston.format.combine(
         winston.format.timestamp({
             format: "YYYY-MM-DD hh:mm:ss.SSS",
@@ -169,6 +177,7 @@ if (process.env.NODE_ENV === "production") {
         transports: [
             new winston.transports.Console({
                 format: combinedFormats,
+                level: "silly",
             }),
             new WinstonDaily({
                 level: "error",

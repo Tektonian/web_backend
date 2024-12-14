@@ -156,10 +156,7 @@ module.exports = {
                     country_code: "jp",
                 });
             } catch (error) {
-                console.log(
-                    "Validation Error in School.bulkcreate",
-                    error.errors,
-                );
+                console.log("Validation Error in School.bulkcreate", error);
             }
         }
 
@@ -201,7 +198,7 @@ module.exports = {
                 username: `student_${i}`,
                 email: `student${i}@test.com`,
                 email_verified: new Date(),
-                roles: ["student"],
+                roles: ["student", "normal"],
             });
         }
         await User.bulkCreate(userData);

@@ -2,6 +2,7 @@ import { models, sequelize } from "../../models/rdbms";
 import { MeiliSearch } from "meilisearch";
 import { Op } from "sequelize";
 import { DataTypes } from "sequelize";
+import { APIType } from "api_spec";
 import logger from "../../utils/logger";
 
 const client = new MeiliSearch({
@@ -16,6 +17,7 @@ const requestSearch = client.index("request");
 const StudentWithCurrentSchool = models.studentwithcurrentschool;
 const RequestModel = models.Request;
 const ConsumerModel = models.Consumer;
+const UserModel = models.User;
 
 export const getRecommendedRequestByStudentId = async (student_id: number) => {
     const student = (
@@ -44,6 +46,32 @@ export const getRequestByRequestId = async (request_id: number) => {
 export const getAllRequest = async () => {
     const requests = await RequestModel.findAll({});
     return requests;
+};
+
+export const addProviderIdToRequest = async (
+    userId: Buffer,
+    requestId: number,
+) => {
+    const userInstance = (
+        await UserModel.findOne({ where: { user_id: userId } })
+    )?.get({ plain: true });
+    const request = await getRequestByRequestId(requestId);
+    console.log(userInstance?.user_id);
+    logger.debug(`User: ${userInstance}-${userId}, Request: ${request}`);
+    if (userInstance === undefined || request === null) {
+        console.log(userId);
+        throw new Error("No such data");
+    }
+
+    const userIds = (request.student_ids ?? []) as string[];
+
+    await RequestModel.update(
+        // Buffer type UUID will be stringfied
+        { student_ids: [...userIds, userInstance.user_id] },
+        { where: { request_id: requestId } },
+    );
+
+    return request;
 };
 
 export const createRequest = async (
@@ -109,4 +137,24 @@ export const createRequest = async (
         logger.error(`Created Request Error: ${error}`);
         return undefined;
     }
+};
+
+export const updateRequestStatus = async (
+    requestId: number,
+    status: APIType.RequestType.REQUEST_STATUS_ENUM,
+) => {
+    const request = await RequestModel.findOne({
+        where: { request_id: requestId },
+        raw: true,
+    });
+
+    if (request === null) {
+        logger.info("No such request");
+        return undefined;
+    }
+
+    return await RequestModel.update(
+        { request_status: status },
+        { where: { request_id: request.request_id } },
+    );
 };

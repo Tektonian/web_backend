@@ -17,11 +17,13 @@ const sequelize = new Sequelize(
     },
 );
 
-// Most of the codes are from https://github.com/nextauthjs/next-auth/blob/main/packages/core/src/lib/actions/callback/handle-login.ts#L26
-// Since there is no proper handler for credential Login or Signin(Register)
-// We need handle Data by ourselves
-// TOOD: Right now we choose to use "JWT" tactic instead of database session
-// See github issue: https://github.com/nextauthjs/next-auth/issues/11088
+/**
+ * Most of the codes are from https://github.com/nextauthjs/next-auth/blob/main/packages/core/src/lib/actions/callback/handle-login.ts#L26
+ * Since there is no proper handler for credential Login or Signin(Register)
+ * We need handle Data by ourselves
+ * TOOD: Right now we choose to use "JWT" tactic instead of database session
+ * @see {@link github issue: https://github.com/nextauthjs/next-auth/issues/1108}
+ */
 
 import { createTransport } from "nodemailer";
 import Credentials from "@auth/core/providers/credentials";
@@ -157,6 +159,15 @@ export const authConfig: ExpressAuthConfig = {
 
     skipCSRFCheck: skipCSRFCheck, // TODO: remove later
     callbacks: {
+        /**
+         *
+         * @param token: token is a value that is only visible at server-side
+         * @param session: session is a value that is exposed to user-side
+         * @param User
+         * @param trigger
+         * @param account
+         * @param profile
+         */
         async jwt({ token, user, trigger, account, profile, session }) {
             /*console.log(
                 "JWT: ",
@@ -172,12 +183,23 @@ export const authConfig: ExpressAuthConfig = {
                 - user sign-in: First time the callback is invoked, user, profile and account will be present.
                 - user sign-up: a user is created for the first time in the database (when AuthConfig.session.strategy is set to "database")
                 - update event: Triggered by the useSession().update method.
+
              */
+            logger.debug(
+                `jwt: ${process.env.NODE_ENV} ${JSON.stringify(token)}, ${JSON.stringify(user)}, ${JSON.stringify(trigger)}, ${JSON.stringify(account)}, ${JSON.stringify(profile)}, ${JSON.stringify(session)}`,
+            );
             if (trigger === "update") {
-                token.name = session.user.name;
+                const adapter = SequelizeAdapter(sequelize);
+                const userInstance = await adapter.getUserByEmail(token.email);
+
+                token.id = userInstance?.id;
+                token.email = userInstance?.email;
+                token.name = userInstance?.username;
+                token.roles = userInstance?.roles;
             }
             // TOOD: for debugging
             else if (
+                process.env.NODE_ENV === "development" &&
                 trigger === "signIn" &&
                 account?.provider === "credentials"
             ) {
@@ -190,8 +212,9 @@ export const authConfig: ExpressAuthConfig = {
             } else if (trigger === "signIn") {
                 token.name = user.username;
                 token.email = user.email ?? null;
-                token.id = user?.user_id ?? null;
-                token.roles = user?.roles ?? null;
+                token.email = user.email ?? "";
+                token.id = Buffer.from(user?.id ?? []);
+                token.roles = user?.roles ?? [];
             }
             return token;
         },
@@ -221,7 +244,9 @@ export const authConfig: ExpressAuthConfig = {
             // Pass JWT token info to session
             // https://authjs.dev/guides/extending-the-session#with-jwt
             // console.log("Session: ", session, token, user);
-
+            logger.debug(
+                `Session: ${JSON.stringify(session)} - ${JSON.stringify(token)} - ${user}`,
+            );
             session.user.id = token.id ?? undefined;
             session.user.email = token.email ?? undefined;
             session.user.name = token.name;

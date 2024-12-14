@@ -82,16 +82,23 @@ VerificationRouter.post("/callback/identity-verify", async (req, res, next) => {
             phone_number: "",
         });
     }
+    // TODO: ERROR
+    // Add student role
     logger.debug(`User email Verified through email: ${userInstance}`);
     if (userInstance.roles === undefined) {
-        userInstance.roles = [type];
+        await models.User.update(
+            { roles: [type] },
+            { where: { email: userInstance.email } },
+        );
     } else {
-        userInstance.roles = Array.from(
+        const newRoles = Array.from(
             new Set([...(userInstance.roles as string[]), type]),
         );
+        await models.User.update(
+            { roles: newRoles },
+            { where: { email: userInstance.email } },
+        );
     }
-
-    await models.User.update(userInstance, { where: { email: user.email } });
 
     res.json({ status: "ok" });
 });

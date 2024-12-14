@@ -13,11 +13,11 @@ export const chatTest = async () => {
     });
     await Promise.all(
         users.map(async (user) => {
-            return chatUserController.createChatUser(user.dataValues);
+            return chatUserController.createChatUser(user.dataValues.user_id);
         }),
     );
 
-    const dataValues = users.map((val) => val.dataValues);
+    const dataValues = users.map((val) => val.get({ plain: true }));
 
     const test0 = dataValues.filter((val) => val.email === "test0@test.com")[0];
     const test1 = dataValues.filter((val) => val.email === "test1@test.com")[0];
@@ -29,29 +29,28 @@ export const chatTest = async () => {
     )[0];
 
     const chatUsers = await chatUserController.getUsers(dataValues);
-    const requests = await Request.findAll();
-
-    await chatRoomController.createChatRoom(
-        requests[0].get({ plain: true }),
-        test0,
-        [test0, test1, student1, student2],
+    const requests = await Request.findAll({ raw: true });
+    await Promise.all(
+        requests.map(async (req) => {
+            return await Request.update(
+                { student_ids: [] },
+                { where: { request_id: req.request_id } },
+            );
+        }),
     );
-    await chatRoomController.createChatRoom(
-        requests[0].get({ plain: true }),
-        test0,
-        [test0, test1, student1],
-    );
-    await chatRoomController.createChatRoom(
-        requests[0].get({ plain: true }),
-        test1,
-        [student1, student2],
-    );
-
-    await chatRoomController.createChatRoom(
-        requests[0].get({ plain: true }),
-        test1,
-        [test0, test1, student1],
-    );
+    const requestId = requests[0].request_id;
+    await chatRoomController.createChatRoom(requestId, test0.user_id, [
+        test0.user_id,
+        test1.user_id,
+    ]);
+    await chatRoomController.createChatRoom(requestId, test0.user_id, [
+        test0.user_id,
+        student1.user_id,
+    ]);
+    await chatRoomController.createChatRoom(requestId, test0.user_id, [
+        test0.user_id,
+        student2.user_id,
+    ]);
 
     const chatRooms = await chatRoomController.getChatRoomsByRequestId(1);
 
@@ -62,9 +61,9 @@ export const chatTest = async () => {
 
     for (var i = 0; i < 30; i++) {
         await chatContentController.sendMessage(
-            chatRoom,
-            i % 2 === 0 ? test0Chat : test1Chat,
-            `Ah yeah${i}`,
+            chatRoom._id,
+            i % 2 === 0 ? test0Chat._id : test1Chat._id,
+            { content: `Ah yeah${i}`, contentType: "text" },
         );
     }
 

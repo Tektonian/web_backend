@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { InferSchemaType } from "mongoose";
 import ChatUser from "./ChatUser";
 import ChatContent from "./ChatContet";
 import ChatRoom from "./ChatRoom";
@@ -21,4 +21,13 @@ mongoose
         logger.error(err);
     });
 
-export { ChatUser, ChatContent, ChatRoom, Unread };
+type ChatUserType = InferSchemaType<(typeof ChatUser)["schema"]>;
+type ChatContentType = InferSchemaType<(typeof ChatContent)["schema"]>;
+type ChatRoomType = InferSchemaType<(typeof ChatRoom)["schema"]>;
+type UnreadType = InferSchemaType<(typeof Unread)["schema"]>;
+
+declare namespace Types {
+    export type { ChatUserType, ChatContentType, ChatRoomType, UnreadType };
+}
+
+export { ChatUser, ChatContent, ChatRoom, Unread, Types };

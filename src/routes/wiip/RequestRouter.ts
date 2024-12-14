@@ -4,6 +4,9 @@ import {
     createRequest,
     getRequestByRequestId,
 } from "../../controllers/wiip/RequestController";
+import { getUserByConsumerId } from "../../controllers/UserController";
+import { updateRequestStatus } from "../../controllers/wiip/RequestController";
+import logger from "../../utils/logger";
 
 const RequestRouter = express.Router();
 
@@ -49,6 +52,55 @@ RequestRouter.get(
     }) as APISpec.RequestAPISpec["/:request_id"]["get"]["__handler"],
 );
 
-RequestRouter.put("/update", async (req, res) => {});
+RequestRouter.put("/update" satisfies keyof APISpec.RequestAPISpec, (async (
+    req,
+    res,
+) => {
+    logger.info("START-Update request status");
+    const sessionUser = res.session?.user;
+    const { request_id, update } = req.body;
+
+    if (sessionUser === undefined) {
+        res.json("Login first");
+        return;
+    }
+
+    try {
+        const request = (await getRequestByRequestId(request_id))?.get({
+            plain: true,
+        });
+
+        if (request === undefined) {
+            res.json("No such request");
+            return;
+        }
+
+        const user = (await getUserByConsumerId(request.consumer_id))?.get({
+            plain: true,
+        });
+
+        if (user === undefined) {
+            res.json("Db error");
+            return;
+        }
+
+        // Session user wrote a request
+        if (!user.user_id.equals(sessionUser.id)) {
+            res.json("No permission");
+            return;
+        }
+
+        const ret = await updateRequestStatus(request.request_id, update);
+        if (ret === undefined) {
+            res.json("Update failed");
+            throw new Error("Update failed");
+        }
+        return;
+    } catch (error) {
+        logger.error(`FAILED-Update request status: ${error}`);
+    }
+
+    logger.info(`END-Update request status`);
+}) as APISpec.RequestAPISpec["/update"]["put"]["__handler"]);
 
 export default RequestRouter;

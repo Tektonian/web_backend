@@ -13,8 +13,15 @@ interface UnreadInfoPerChatroom {
 
 const unreadSchema = new Schema(
     {
-        chatroom: { type: Schema.Types.ObjectId, required: true },
-        user_id: { type: Types.UUID, required: true },
+        chatroom: {
+            type: Schema.Types.ObjectId,
+            required: true,
+        },
+        user_id: {
+            type: Schema.Types.Buffer,
+            required: true,
+            get: (uuid) => Buffer.from(uuid),
+        },
         send_alarm: { type: Schema.Types.Boolean, default: true },
         // last_read_message_seq is for calculating unread messages
         last_read_at: { type: Date },

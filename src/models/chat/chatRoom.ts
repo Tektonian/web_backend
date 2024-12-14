@@ -3,8 +3,16 @@ import mongoose, { Schema, Types } from "mongoose";
 const chatRoomSchema = new Schema(
     {
         request_id: { type: Number, required: true },
-        consumer_id: { type: Schema.Types.UUID, required: true },
-        participant_ids: { type: [Types.UUID], required: true },
+        consumer_id: {
+            type: Schema.Types.Buffer,
+            required: true,
+            get: (uuid) => Buffer.from(uuid),
+        },
+        participant_ids: {
+            type: [Schema.Types.Buffer],
+            required: true,
+            get: (uuids) => uuids.map((uuid) => Buffer.from(uuid)),
+        },
         message_seq: { type: Number, default: 0 },
         title: { type: String, default: "" },
     },

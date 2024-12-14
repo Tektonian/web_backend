@@ -6,6 +6,8 @@ import { createServer } from "http";
 import { ExpressAuth } from "@auth/express";
 import { authConfig } from "./config/auth.config";
 import { currentSession } from "./middleware/auth.middleware";
+import { Server as SocketServer } from "socket.io";
+// Router
 import RequestRouter from "./routes/wiip/RequestRouter";
 import StudentRouter from "./routes/wiip/StudentRouter";
 import SchoolSearchRouter from "./routes/search/SchoolSearchRouter";
@@ -17,13 +19,12 @@ import RecommendRouter from "./routes/recommend/Recommend";
 import VerificationRouter from "./routes/VerificationRouter";
 import ChatRouter from "./routes/chat/chatRouter";
 import SSEAlarmRouter from "./routes/chat/sseRouter";
-import initChat from "./routes/chat/webSocketRouter";
+import __initChat from "./routes/chat/webSocketRouter";
 import { chatTest } from "./dummyChatData";
 import { TspecDocsMiddleware } from "tspec";
 import * as rTracer from "cls-rtracer";
 
 import logger from "./utils/logger";
-
 const ErrorMiddleware = (
     err: Error,
     req: Request,
@@ -38,7 +39,6 @@ const initServer = async () => {
     Error.stackTraceLimit = 999;
     const app = express();
     const PORT = process.env.PORT || 8080;
-    process.env.NODE_ENV = "production";
 
     /**
      * Middlewares
@@ -52,8 +52,8 @@ const initServer = async () => {
         rTracer.expressMiddleware({
             requestIdFactory: (req) => ({
                 id: crypto.randomUUID(),
-                glbTraceId: req.headers["X-Global-Trace-Id"] ?? "",
-                userId: req.session?.user?.id.toString("hex") ?? "",
+                glbTraceId: req.headers["x-global-trace-id"] ?? "",
+                userId: req.id ?? "",
             }),
         }),
     );
@@ -115,7 +115,26 @@ const initServer = async () => {
 
     const httpServer = createServer(app);
     // Init socket.io server
-    const io = initChat(httpServer);
+    const io = new SocketServer(httpServer, {
+        cors: {
+            origin: process.env.CORS_ORIGIN,
+            credentials: true,
+        },
+        path: "/api/chat",
+    });
+
+    logger.info("Initialized Socket io");
+
+    // set user and chatroom datas on socket instance
+    io.use((socket, next) => {
+        // chatRoom will be set 'join' event
+        socket.data.chatRoom = null;
+        // TODO: should add protocol to get session -> change later
+        socket.request.protocol = "ws";
+        currentSession(socket.request, socket.request, next);
+    });
+
+    __initChat(io);
 
     // Listen server
     httpServer.listen(PORT, () => {
