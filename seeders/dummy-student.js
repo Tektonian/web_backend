@@ -103,9 +103,10 @@ module.exports = {
 
         const studentUsers = [];
 
-        allUsers.forEach((user) => {
+        allUsers.forEach((user, idx) => {
             if (user.username.startsWith("student")) {
                 studentUsers.push({
+                    student_id: idx,
                     user_id: user.user_id,
                     name_glb: { kr: user.username },
                     nationality: "kr",
