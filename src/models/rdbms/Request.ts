@@ -8,7 +8,6 @@ export interface RequestAttributes {
     consumer_id: number;
     student_ids?: object;
     title: string;
-    subtitle?: object;
     head_count?: number;
     reward_price: number;
     currency: string;
@@ -36,7 +35,6 @@ export type RequestId = Request[RequestPk];
 export type RequestOptionalAttributes =
     | "request_id"
     | "student_ids"
-    | "subtitle"
     | "head_count"
     | "are_needed"
     | "are_required"
@@ -67,7 +65,6 @@ export class Request
     consumer_id!: number;
     student_ids?: object;
     title!: string;
-    subtitle?: object;
     head_count?: number;
     reward_price!: number;
     currency!: string;
@@ -120,10 +117,6 @@ export class Request
                 title: {
                     type: DataTypes.STRING(255),
                     allowNull: false,
-                },
-                subtitle: {
-                    type: DataTypes.JSON,
-                    allowNull: true,
                 },
                 head_count: {
                     type: DataTypes.TINYINT.UNSIGNED,
@@ -183,7 +176,7 @@ export class Request
                     comment:
                         "There could be various statuses of a request.\n\nFor example\n\nPosted: consumer wrote a request but not paid\nPaid: consumer paid for a request\nOutdated: No provider(s) contracted with a consumer\nContracted: provider(s) contracted with a consumer\nFinished: work has been done!\nFailed: Contraction didn’t work properly\n",
                     validate: {
-                        isIn: [RequestEnum],
+                        isIn: [Object.values(RequestEnum.REQUEST_STATUS_ENUM)],
                     },
                 },
                 start_time: {
