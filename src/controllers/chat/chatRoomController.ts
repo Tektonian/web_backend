@@ -2,6 +2,8 @@ import { Types } from "mongoose";
 import * as ChatModels from "../../models/chat";
 import type { UserAttributes } from "../../models/rdbms/User";
 import { models as RDBModels } from "../../models/rdbms";
+
+import AlarmMessageGlb from "../../global/text/chat/alarm";
 import logger from "../../utils/logger";
 
 const { ChatRoom, ChatUser, Unread, ChatContent } = ChatModels;
@@ -51,11 +53,13 @@ export const createChatRoom = async (
             }),
         );
 
+        const alarmMessage = AlarmMessageGlb.created;
+
         const chatContent = await ChatContent.create({
             chatroom: chatRoomInstance,
             seq: 0,
             content_type: "alarm",
-            content: "방이 생성되었어요",
+            content: JSON.stringify(alarmMessage),
             sender_id: Buffer.from([0]),
             image_url: "",
         });
