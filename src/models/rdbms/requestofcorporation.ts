@@ -5,7 +5,6 @@ export interface requestofcorporationAttributes {
     request_id: number;
     consumer_id: number;
     title: string;
-    subtitle?: object;
     head_count?: number;
     reward_price: number;
     currency: string;
@@ -35,7 +34,6 @@ export interface requestofcorporationAttributes {
 
 export type requestofcorporationOptionalAttributes =
     | "request_id"
-    | "subtitle"
     | "head_count"
     | "are_needed"
     | "are_required"
@@ -71,7 +69,6 @@ export class requestofcorporation
     request_id!: number;
     consumer_id!: number;
     title!: string;
-    subtitle?: object;
     head_count?: number;
     reward_price!: number;
     currency!: string;
@@ -115,10 +112,6 @@ export class requestofcorporation
                 title: {
                     type: DataTypes.STRING(255),
                     allowNull: false,
-                },
-                subtitle: {
-                    type: DataTypes.JSON,
-                    allowNull: true,
                 },
                 head_count: {
                     type: DataTypes.TINYINT.UNSIGNED,
@@ -224,8 +217,6 @@ export class requestofcorporation
                 sequelize,
                 tableName: "requestofcorporation",
                 timestamps: true,
-                createdAt: "created_at",
-                updatedAt: "updated_at",
             },
         );
     }

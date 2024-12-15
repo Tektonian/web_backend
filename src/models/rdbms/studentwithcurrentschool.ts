@@ -5,7 +5,7 @@ export interface studentwithcurrentschoolAttributes {
     user_id: any;
     name_glb: object;
     nationality: string;
-    age: string;
+    birth_date: string;
     student_phone_number: string;
     emergency_contact: string;
     gender: string;
@@ -60,7 +60,7 @@ export class studentwithcurrentschool
     user_id!: any;
     name_glb!: object;
     nationality!: string;
-    age!: string;
+    birth_date!: string;
     student_phone_number!: string;
     emergency_contact!: string;
     gender!: string;
@@ -103,8 +103,8 @@ export class studentwithcurrentschool
                     type: DataTypes.STRING(4),
                     allowNull: false,
                 },
-                age: {
-                    type: DataTypes.STRING(4),
+                birth_date: {
+                    type: DataTypes.DATEONLY,
                     allowNull: false,
                 },
                 student_phone_number: {

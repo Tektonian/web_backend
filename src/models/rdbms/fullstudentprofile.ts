@@ -6,7 +6,7 @@ export interface fullstudentprofileAttributes {
     user_id: any;
     name_glb: object;
     nationality: string;
-    age: string;
+    birth_date: string;
     created_at?: Date;
     email_verified?: Date;
     phone_number: string;
@@ -44,7 +44,7 @@ export class fullstudentprofile
     user_id!: any;
     name_glb!: object;
     nationality!: string;
-    age!: string;
+    birth_date!: string;
     created_at?: Date;
     email_verified?: Date;
     phone_number!: string;
@@ -78,8 +78,8 @@ export class fullstudentprofile
                     type: DataTypes.STRING(4),
                     allowNull: false,
                 },
-                age: {
-                    type: DataTypes.STRING(4),
+                birth_date: {
+                    type: DataTypes.DATEONLY,
                     allowNull: false,
                 },
                 email_verified: {
