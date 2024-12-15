@@ -4,6 +4,7 @@ import type { Corporation, CorporationId } from "./Corporation";
 import type { Organization, OrganizationId } from "./Organization";
 import type { Request, RequestId } from "./Request";
 import type { User, UserId } from "./User";
+import { ConsumerEnum } from "api_spec/enum";
 
 export interface ConsumerAttributes {
     consumer_id: number;
@@ -123,11 +124,9 @@ export class Consumer
                     allowNull: false,
                     validate: {
                         isValidType(value: string[]) {
-                            const validTypeSet = new Set([
-                                "corp",
-                                "orgn",
-                                "normal",
-                            ]);
+                            const validTypeSet = new Set(
+                                Object.values(ConsumerEnum.CONSUMER_ENUM),
+                            );
 
                             const valueSet = new Set(value);
 

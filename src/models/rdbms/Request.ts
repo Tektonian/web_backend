@@ -1,6 +1,7 @@
 import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
 import type { Consumer, ConsumerId } from "./Consumer";
+import { RequestEnum } from "api_spec/enum";
 
 export interface RequestAttributes {
     request_id: number;
@@ -181,6 +182,9 @@ export class Request
                     allowNull: true,
                     comment:
                         "There could be various statuses of a request.\n\nFor example\n\nPosted: consumer wrote a request but not paid\nPaid: consumer paid for a request\nOutdated: No provider(s) contracted with a consumer\nContracted: provider(s) contracted with a consumer\nFinished: work has been done!\nFailed: Contraction didn’t work properly\n",
+                    validate: {
+                        isIn: [RequestEnum],
+                    },
                 },
                 start_time: {
                     type: DataTypes.TIME,
