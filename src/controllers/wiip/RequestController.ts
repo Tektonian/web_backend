@@ -63,11 +63,11 @@ export const addProviderIdToRequest = async (
         throw new Error("No such data");
     }
 
-    const userIds = (request.student_ids ?? []) as string[];
+    const userIds = (request.provider_ids ?? []) as string[];
 
     await RequestModel.update(
         // Buffer type UUID will be stringfied
-        { student_ids: [...userIds, userInstance.user_id] },
+        { provider_ids: [...userIds, userInstance.user_id] },
         { where: { request_id: requestId } },
     );
 

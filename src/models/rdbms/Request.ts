@@ -6,7 +6,7 @@ import { RequestEnum } from "api_spec/enum";
 export interface RequestAttributes {
     request_id: number;
     consumer_id: number;
-    student_ids?: object;
+    provider_ids?: object;
     title: string;
     head_count?: number;
     reward_price: number;
@@ -34,7 +34,7 @@ export type RequestPk = "request_id";
 export type RequestId = Request[RequestPk];
 export type RequestOptionalAttributes =
     | "request_id"
-    | "student_ids"
+    | "provider_ids"
     | "head_count"
     | "are_needed"
     | "are_required"
@@ -63,7 +63,7 @@ export class Request
 {
     request_id!: number;
     consumer_id!: number;
-    student_ids?: object;
+    provider_ids?: object;
     title!: string;
     head_count?: number;
     reward_price!: number;
@@ -109,7 +109,7 @@ export class Request
                         key: "consumer_id",
                     },
                 },
-                student_ids: {
+                provider_ids: {
                     type: DataTypes.JSON,
                     allowNull: true,
                     comment: "Provider ids of students",
