@@ -13,8 +13,13 @@ import {
     addProviderIdToRequest,
     getRequestByRequestId,
 } from "../../controllers/wiip/RequestController";
+import { sendMessage } from "../../controllers/chat/chatContentController";
+import { getStudentByUserId } from "../../controllers/wiip/StudentController";
 
 import logger from "../../utils/logger";
+
+import { RequestEnum } from "api_spec/enum";
+import { AlarmMessageGlb } from "../../global/text";
 
 const ChatRouter = Router();
 
@@ -121,6 +126,9 @@ ChatRouter.delete("/chatroom", (req, res) => {
     const sessionUser = res.session.user;
 });
 
+// TODO: Approve 요청 유연하게 바꿀 수 있도록하기
+// 1. 제공자 선택을 바꿀 수 있게하기
+// 2. 제공자 인원수가 채워지고 난 다음에 request_status를 바꿀 수 있도록 하기
 ChatRouter.put("/request", async (req, res) => {
     logger.info(`START-Approve request`);
     const sessionUser = res.session?.user;
@@ -203,6 +211,81 @@ ChatRouter.post("/upload", async (req, res) => {
         res.json("Login first");
         return;
     }
+});
+
+// Request check attending
+ChatRouter.put("/check-attending", async (req, res) => {
+    logger.info("START-Check attending request");
+    const { request_id } = req.body;
+    const sessionUser = res.session?.user;
+
+    if (sessionUser === undefined) {
+        res.json("login first");
+        return;
+    }
+    // Start check validation
+
+    const student = (await getStudentByUserId(sessionUser.id))?.get({
+        plain: true,
+    });
+    const request = (await getRequestByRequestId(request_id))?.get({
+        plain: true,
+    });
+
+    if (!student || !request) {
+        logger.warn(`No such data`);
+        res.json("wrong data");
+        return;
+    }
+
+    if (request.request_status !== RequestEnum.REQUEST_STATUS_ENUM.CONTRACTED) {
+        logger.warn(`Only contracted request permitted`);
+        res.json("Wrong request");
+        return;
+    }
+
+    // Provider ideas are saved with stringifed UUID
+    const stringfiedProviderIds = request.student_ids;
+
+    const providerIds = stringfiedProviderIds.map((id) =>
+        Buffer.from(id),
+    ) as Buffer[];
+
+    const isProvider = providerIds.find((id) => id.equals(sessionUser.id));
+
+    if (isProvider === undefined) {
+        logger.warn(`Wrong provider`);
+        res.json(`Wrong provider`);
+        return;
+    }
+
+    const chatRoomAll = await ChatRoomController.getAliveChatRoomsByUser(
+        sessionUser.id,
+    );
+
+    if (chatRoomAll === undefined) {
+        logger.warn(`Could be wrong input or db error`);
+        return;
+    }
+
+    const chatRoom = chatRoomAll.find(
+        (room) => room.request_id === request.request_id,
+    );
+
+    if (chatRoom === undefined) {
+        logger.warn(`Could be wrong input`);
+        return;
+    }
+    // End check validation
+
+    const alarmMessage = AlarmMessageGlb.default.checkArrived;
+
+    await sendMessage(chatRoom._id, sessionUser.id, {
+        contentType: "alarm",
+        content: JSON.stringify(alarmMessage),
+    });
+
+    logger.info("End-Check attending request");
 });
 
 export default ChatRouter;
