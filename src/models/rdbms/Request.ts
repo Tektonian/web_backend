@@ -113,6 +113,14 @@ export class Request
                     type: DataTypes.JSON,
                     allowNull: true,
                     comment: "Provider ids of students",
+                    get() {
+                        const stringfiedUUIDs =
+                            this.getDataValue("provider_ids");
+                        const bufferUUIDs = stringfiedUUIDs.map((uuid) =>
+                            Buffer.from(uuid),
+                        );
+                        return bufferUUIDs;
+                    },
                 },
                 title: {
                     type: DataTypes.STRING(255),
