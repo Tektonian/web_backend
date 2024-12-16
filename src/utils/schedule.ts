@@ -101,4 +101,6 @@ const __exitHandler = () => {
         JSON.stringify(ret),
         "utf-8",
     );
+
+    schedule.gracefulShutdown();
 };

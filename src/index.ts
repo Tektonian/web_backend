@@ -136,7 +136,7 @@ const initServer = async () => {
     });
 
     __initChat(io);
-    __initSchedule();
+    // __initSchedule();
     // Listen server
     httpServer.listen(PORT, () => {
         logger.info(`Server is running on port ${PORT}`);
