@@ -28,7 +28,9 @@ export const chatTest = async () => {
         (val) => val.email === "student2@test.com",
     )[0];
 
-    const chatUsers = await chatUserController.getUsers(dataValues);
+    const chatUsers = await chatUserController.getChatUsersByUUID(
+        dataValues.map((d) => d.user_id),
+    );
     const requests = await Request.findAll({ raw: true });
     await Promise.all(
         requests.map(async (req) => {
