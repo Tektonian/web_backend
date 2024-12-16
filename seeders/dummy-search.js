@@ -54,7 +54,7 @@ const createDummyStudent = async (StudentWithCurrentSchool, studentIndex) => {
             name: student.name_glb[student.nationality] ?? "S",
             name_glb: student.name_glb,
             nationality: student.nationality,
-            age: student.age,
+            birth_date: student.birth_date,
             student_phone_number: student.student_phone_number,
             gender: student.gender,
             degree: student.degree,
