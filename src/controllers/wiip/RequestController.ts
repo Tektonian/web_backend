@@ -89,15 +89,14 @@ export const updateRequestProviderIds = async (
     newProviderIds: Buffer[],
     requestId: number,
 ) => {
-    await RequestModel.update(
+    return await RequestModel.update(
         // Buffer type UUID will be stringfied
         { provider_ids: newProviderIds },
         { where: { request_id: requestId } },
     );
-
-    return request;
 };
 
+// api_spec 문서 보고 데이터 타비 맞춰서 리턴하도록 수정
 export const createRequest = async (
     uuid: typeof DataTypes.UUID,
     role: "corp" | "orgn" | "normal",
