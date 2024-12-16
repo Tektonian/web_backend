@@ -3,8 +3,9 @@ import * as ChatModels from "../../models/chat";
 import type { UserAttributes } from "../../models/rdbms/User";
 import { models as RDBModels } from "../../models/rdbms";
 
-import AlarmMessageGlb from "../../global/text/chat/alarm";
+import { AlarmMessageGlbEnum } from "../../global/text/chat/alarm";
 import logger from "../../utils/logger";
+import { pushRefreshChatRooms } from "./messageQueue";
 
 const { ChatRoom, ChatUser, Unread, ChatContent } = ChatModels;
 const { Request, User } = RDBModels;
@@ -53,13 +54,13 @@ export const createChatRoom = async (
             }),
         );
 
-        const alarmMessage = AlarmMessageGlb.created;
+        const content: AlarmMessageGlbEnum = "created";
 
         const chatContent = await ChatContent.create({
             chatroom: chatRoomInstance,
             seq: 0,
             content_type: "alarm",
-            content: JSON.stringify(alarmMessage),
+            content: content,
             sender_id: Buffer.from([0]),
             image_url: "",
         });
@@ -80,6 +81,9 @@ export const getChatRoomsByRequestId = async (requestId: number) => {
     return await ChatRoom.find({ request_id: requestId });
 };
 
+/**
+ * @deprecated
+ */
 export const getAllChatRoomsByUser = async (user: UserAttributes) => {
     return await ChatRoom.find({ participant_ids: user.user_id });
 };
@@ -110,6 +114,12 @@ export const delChatRoomsByRequest = async (requestId: number) => {
     }
     const chatRooms = await ChatRoom.find({ request_id: request.request_id });
     const chatRoomIds = chatRooms.map((chatRoom) => chatRoom._id);
+    return await Promise.all(
+        chatRoomIds.map((roomId) => {
+            return delChatRoom(roomId);
+        }),
+    );
+    /*
     await Unread.deleteMany({ chatroom_id: { $in: chatRoomIds } });
 
     // change request_id: 23 -> -23
@@ -117,6 +127,7 @@ export const delChatRoomsByRequest = async (requestId: number) => {
         { request_id: request.request_id },
         { $set: { request_id: -1 * request.request_id } },
     );
+    */
 };
 
 export const delChatRoom = async (chatRoomId: Types.ObjectId) => {
@@ -133,6 +144,11 @@ export const delChatRoom = async (chatRoomId: Types.ObjectId) => {
     );
 };
 
+export const sendRefreshChatRooms = async (chatUserId: Types.ObjectId) => {
+    pushRefreshChatRooms(chatUserId);
+};
+
+// Not clean code
 export const actionCompleteRecruit = async (
     requestId: number,
     consumerId: Buffer,
@@ -151,7 +167,7 @@ export const actionCompleteRecruit = async (
         }),
     );
 
-    // Won't create unnecessary group room
+    // Won't create unnecessary group　chat room
     if (providerIds.length !== 1) {
         await createChatRoom(requestId, consumerId, [
             ...providerIds,
@@ -159,7 +175,9 @@ export const actionCompleteRecruit = async (
         ]);
     }
 
-    // TODO: Push Update chatroom request
+    return await ChatRoom.find({
+        $and: [{ consumer_id: consumerId }, { request_id: requestId }],
+    });
 };
 
 // Needed?

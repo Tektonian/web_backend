@@ -10,7 +10,9 @@ import type { APIType } from "api_spec";
 import type { ISessionUser } from "../../config/auth.types";
 import type { UserAttributes } from "../../models/rdbms/User";
 
+import { AlarmMessageGlb } from "../../global/text/chat/alarm";
 import logger from "../../utils/logger";
+import { getAliveChatRoomsByUser } from "../../controllers/chat/chatRoomController";
 
 const {
     chatContentController,
@@ -22,13 +24,20 @@ const {
 type ResSomeoneSent = APIType.WebSocketType.ResSomeoneSent;
 type ResChatRoom = APIType.ChatRoomType.ResChatRoom;
 
+/**
+ *
+ * @internal
+ */
 const EVENT_NAME_FACTORY = (
     chatUser: HydratedDocument<ChatTypes.ChatUserType>,
     chatRoom: HydratedDocument<ChatTypes.ChatRoomType>,
 ) => {
     return `${chatUser._id.toString()}:${chatRoom._id.toString()}`;
 };
-
+/**
+ *
+ * @internal
+ */
 const ResUserIdentityFactory = (chatUser: UserAttributes) => {
     return {
         user_name: chatUser.username ?? "",
@@ -39,7 +48,10 @@ const ResUserIdentityFactory = (chatUser: UserAttributes) => {
         image_url: chatUser.image ?? "",
     };
 };
-
+/**
+ *
+ * @internal
+ */
 const ResChatRoomFactory = async (
     chatRoom: HydratedDocument<ChatTypes.ChatRoomType>,
 ): Promise<ResChatRoom> => {
@@ -81,7 +93,10 @@ const ResChatRoomFactory = async (
     };
     return resChatroom;
 };
-
+/**
+ *
+ * @internal
+ */
 const ResMessageFactory = (
     message: ChatTypes.ChatContentType,
     direction: "outgoing" | "inbound",
@@ -96,19 +111,29 @@ const ResMessageFactory = (
             .digest("hex");
     }
 
-    logger.debug(`Processing Message: ${message}`);
-
-    return {
+    let ret = {
         _id: message._id,
         seq: message.seq,
         chatRoomId: message.chatroom,
-        contentType: "text",
-        content: message.content,
         senderId: hashedSenderId,
         direction: direction,
         createdAt: new Date(),
         updatedAt: new Date(),
     };
+    logger.debug(`Processing Message: ${message}`);
+    if (message.content_type === "text") {
+        return {
+            ...ret,
+            content: message.content,
+            contentType: message.content_type,
+        };
+    } else if (message.content_type === "alarm") {
+        return {
+            ...ret,
+            content: AlarmMessageGlb[message.content],
+            contentType: message.content_type,
+        };
+    }
 };
 
 const ResMessagesFactory = (
@@ -198,6 +223,39 @@ async function __updateChatRoomHandler(
         };
         logger.debug(`Update Room handler: ${ret}`);
         socket.emit("updateChatRoom", JSON.stringify(ret));
+    });
+}
+
+async function __refreshChatRoomsHandler(io: Server, socket: Socket) {
+    const chatUser: HydratedDocument<ChatTypes.ChatUserType> | undefined =
+        socket.data.chatUser;
+    const chatRoom: HydratedDocument<ChatTypes.ChatRoomType> | undefined =
+        socket.data.chatRoom;
+
+    if (!chatUser || !chatRoom) {
+        logger.error("No chat user or chat room");
+        // throw new Error("Wrong data")
+        return;
+    }
+
+    const refreshChatRooms = new QueueEvents("refreshChatRooms");
+    const eventName = chatUser._id.toString();
+
+    refreshChatRooms.on(eventName, async ({ jobId, returnvalue }: any) => {
+        const aliveChatRooms =
+            (await getAliveChatRoomsByUser(chatUser._id)) ?? [];
+
+        const resChatRooms = await Promise.all(
+            aliveChatRooms.map(async (chatRoom) =>
+                ResChatRoomFactory(chatRoom),
+            ),
+        );
+
+        logger.debug(`Refresh Room handler: ${resChatRooms}`);
+        socket.emit(
+            "refreshChatRooms",
+            JSON.stringify({ chatRooms: resChatRooms }),
+        );
     });
 }
 
@@ -310,7 +368,9 @@ async function __socketDisconnectHandler(
     }
     const eventName = chatUser._id.toString();
     const updateChatRoomEvent = new QueueEvents("updateChatRoom");
+    const refreshChatRoomsEvent = new QueueEvents("refreshChatRooms");
     updateChatRoomEvent.removeAllListeners(eventName);
+    refreshChatRoomsEvent.removeAllListeners(eventName);
     await chatUserController.delChatUserById(chatUser._id);
 }
 
@@ -550,6 +610,7 @@ export function __initChat(io: Server) {
         }
         socket.data.chatUser = chatUser;
         initSocketEvents(io, socket);
+        __refreshChatRoomsHandler(io, socket);
     });
 }
 

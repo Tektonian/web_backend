@@ -30,6 +30,9 @@ const updateChatRoomProducer = new QueueEventsProducer("updateChatRoom");
 const sendAlarmQueue = new Queue("sendAlarm");
 const sendAlarmProducer = new QueueEventsProducer("sendAlarm");
 
+const refreshChatRoomsQueue = new Queue("refreshChatRooms");
+const refreshChatRoomsProducer = new QueueEventsProducer("refreshChatRooms");
+
 export const pushSendAlarm = async (
     message: APIType.WebSocketType.UserSentEventReturn,
     userUUID: Buffer,
@@ -39,6 +42,20 @@ export const pushSendAlarm = async (
         eventName: userUUID.toString("hex"),
         jobId: "",
         returnvalue: JSON.stringify(message),
+    });
+};
+export const pushRefreshChatRooms = async (chatUserId: Types.ObjectId) => {
+    const chatUser = await ChatUser.findById(chatUserId);
+
+    if (!chatUser) {
+        logger.error("No push chat room data");
+        return;
+    }
+    logger.debug(`Update producer ${chatUser._id.toString()}`);
+    refreshChatRoomsProducer.publishEvent({
+        eventName: chatUser._id.toString(),
+        jobId: "",
+        returnvalue: "",
     });
 };
 /**

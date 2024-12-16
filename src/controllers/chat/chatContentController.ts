@@ -1,13 +1,15 @@
 import mongoose, { Types } from "mongoose";
-import * as ChatModels from "../../models/chat";
-import type { UserAttributes } from "../../models/rdbms/User";
+import {
+    ChatUser,
+    ChatContent,
+    ChatRoom,
+    Types as ChatTypes,
+} from "../../models/chat";
 
 import { pushMessageQueue } from "./messageQueue";
 
 import { APIType } from "api_spec";
 import logger from "../../utils/logger";
-
-const { ChatUser, ChatContent, ChatRoom } = ChatModels;
 
 export const sendMessage = async (
     chatRoomId: Types.ObjectId,
@@ -37,6 +39,17 @@ export const getChatRoomMessagesBySeq = async (
         "seq",
         lastSeq,
     );
+
+    return messages;
+};
+
+export const getChatRoomMessagesByContentType = async (
+    chatRoomId: mongoose.Types.ObjectId,
+    contentType: ChatTypes.ChatContentType["content_type"],
+) => {
+    const messages = await ChatContent.find({
+        $and: [{ chatroom: chatRoomId }, { content_type: contentType }],
+    });
 
     return messages;
 };
