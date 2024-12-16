@@ -48,26 +48,13 @@ export const getAllRequest = async () => {
     return requests;
 };
 
-export const addProviderIdToRequest = async (
-    userId: Buffer,
+export const updateRequestProviderIds = async (
+    newProviderIds: Buffer[],
     requestId: number,
 ) => {
-    const userInstance = (
-        await UserModel.findOne({ where: { user_id: userId } })
-    )?.get({ plain: true });
-    const request = await getRequestByRequestId(requestId);
-    console.log(userInstance?.user_id);
-    logger.debug(`User: ${userInstance}-${userId}, Request: ${request}`);
-    if (userInstance === undefined || request === null) {
-        console.log(userId);
-        throw new Error("No such data");
-    }
-
-    const userIds = (request.provider_ids ?? []) as string[];
-
     await RequestModel.update(
         // Buffer type UUID will be stringfied
-        { provider_ids: [...userIds, userInstance.user_id] },
+        { provider_ids: newProviderIds },
         { where: { request_id: requestId } },
     );
 
