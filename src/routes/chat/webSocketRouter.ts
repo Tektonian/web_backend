@@ -243,7 +243,7 @@ async function __refreshChatRoomsHandler(io: Server, socket: Socket) {
 
     refreshChatRooms.on(eventName, async ({ jobId, returnvalue }: any) => {
         const aliveChatRooms =
-            (await getAliveChatRoomsByUser(chatUser._id)) ?? [];
+            (await getAliveChatRoomsByUser(chatUser.user_id)) ?? [];
 
         const resChatRooms = await Promise.all(
             aliveChatRooms.map(async (chatRoom) =>

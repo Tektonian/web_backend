@@ -88,15 +88,9 @@ export const getAllChatRoomsByUser = async (user: UserAttributes) => {
     return await ChatRoom.find({ participant_ids: user.user_id });
 };
 
-export const getAliveChatRoomsByUser = async (userId: Types.ObjectId) => {
-    const chatUser = await ChatUser.findOne({ user_id: userId });
-
-    if (chatUser === null) {
-        return undefined;
-    }
-
+export const getAliveChatRoomsByUser = async (userId: Buffer) => {
     return await ChatRoom.find({
-        participant_ids: chatUser.user_id,
+        participant_ids: userId,
         // request_id of chat rooms whose requests are not done yet should be bigger than 0
         request_id: { $gte: 0 },
     });

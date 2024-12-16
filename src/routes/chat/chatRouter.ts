@@ -106,6 +106,7 @@ ChatRouter.post("/chatroom", async (req, res) => {
 /**
  * @deprecated
  */
+/*
 ChatRouter.get("/chatroom", async (req, res, next) => {
     const sessionUser = res.session.user;
     if (sessionUser === undefined) res.json("No session");
@@ -135,6 +136,7 @@ ChatRouter.get("/chatroom", async (req, res, next) => {
     );
     res.json(resChatRooms);
 });
+*/
 
 ChatRouter.delete("/chatroom", (req, res) => {
     const { chatRoomId, tempId } = req.body;
