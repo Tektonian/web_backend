@@ -63,7 +63,7 @@ RequestRouter.get(
     }) as APISpec.RequestAPISpec["/:request_id"]["get"]["__handler"],
 );
 
-RequestRouter.post("/request/status/contract", async (req, res) => {
+RequestRouter.post("/status/contract", async (req, res) => {
     logger.info("START-Update Request status to Contract");
 
     const sessionUser = res.session?.user;
@@ -159,7 +159,7 @@ RequestRouter.post("/request/status/contract", async (req, res) => {
     logger.info("END-Update Request status to Contract");
 });
 
-RequestRouter.post("/request/status/finish", async (req, res) => {
+RequestRouter.post("/status/finish", async (req, res) => {
     logger.info("START-Update Request status to finish");
 
     const sessionUser = res.session?.user;
@@ -205,7 +205,7 @@ RequestRouter.post("/request/status/finish", async (req, res) => {
     logger.info("END-Update Request status to finish");
 });
 
-RequestRouter.post("/request/provider", async (req, res) => {
+RequestRouter.post("/provider", async (req, res) => {
     logger.info("START-Update provider_ids of Request table");
 
     const sessionUser = res.session?.user;
