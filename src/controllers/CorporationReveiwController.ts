@@ -1,12 +1,16 @@
 import { CorporationReview } from "../models/rdbms/CorporationReview";
-import { sequelize } from "../models/rdbms";
 import { Request } from "../models/rdbms/Request";
 import { getConsumerByReqId, getCorpByCsmId } from "./ConsumerController";
 import { stringify } from "querystring";
-import { findCorpProfileByCorpId } from "../global/corpInfo/kr/CorpInfoController";
 import { fullreviewinfoofcorp } from "../models/rdbms/fullreviewinfoofcorp";
-import { reverse } from "dns";
 
+export const getCorpReviewsByRequestId = async (requestId: number) => {
+    return await CorporationReview.findAll({
+        where: { request_id: requestId },
+    });
+};
+
+/** Min */
 export const getAllCorpReviewByCsmId = async (consumer_id: number) => {
     try {
         const reviews = await CorporationReview.findAll({

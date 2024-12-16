@@ -4,6 +4,8 @@ import { Op } from "sequelize";
 import { DataTypes } from "sequelize";
 import { APIType } from "api_spec";
 import logger from "../../utils/logger";
+import { Consumer } from "../../models/rdbms/Consumer";
+import { ChatRoom } from "../../models/chat";
 
 const client = new MeiliSearch({
     host: "http://127.0.0.1:7700",
@@ -43,9 +45,44 @@ export const getRequestByRequestId = async (request_id: number) => {
     return request;
 };
 
-export const getAllRequest = async () => {
-    const requests = await RequestModel.findAll({});
-    return requests;
+export const getRequestsByUserId = async (
+    userId: Buffer,
+    as: "consumer" | "provider" | undefined = undefined,
+) => {
+    /**
+     * We can search chatrooms to identify all users related with request
+     */
+    let requestIds = [] as number[];
+    if (as === undefined) {
+        const chatRooms = await ChatRoom.find({
+            participant_ids: { $in: userId },
+        });
+        // request_id could be less than 0 (when deleted)
+        requestIds = Array.from(
+            new Set(chatRooms.map((room) => Math.abs(room.request_id))),
+        );
+    } else if (as === "consumer") {
+        const chatRooms = await ChatRoom.find({
+            consumer_id: userId,
+        });
+        // request_id could be less than 0 (when deleted)
+        requestIds = Array.from(
+            new Set(chatRooms.map((room) => Math.abs(room.request_id))),
+        );
+    } else if (as === "provider") {
+        const chatRooms = await ChatRoom.find({
+            $and: [
+                { consumer_id: { $ne: userId } },
+                { participant_ids: { $in: userId } },
+            ],
+        });
+        // request_id could be less than 0 (when deleted)
+        requestIds = Array.from(
+            new Set(chatRooms.map((room) => Math.abs(room.request_id))),
+        );
+    }
+
+    return await RequestModel.findAll({ where: { request_id: requestIds } });
 };
 
 export const updateRequestProviderIds = async (
@@ -81,7 +118,7 @@ export const createRequest = async (
             if (consumerIdentity === undefined) {
                 throw new Error("No consumer identity exist");
             }
-
+            // TODO: should add corp_id or orgn_id according to consumer identity
             const createdRequest = await RequestModel.create(
                 {
                     ...data,
