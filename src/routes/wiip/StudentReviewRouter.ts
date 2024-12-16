@@ -37,7 +37,7 @@ StudentReviewRouter.post(
         )?.get({ plain: true });
 
         if (request === undefined) {
-            res.json("No such request");
+            res.json("No such request or Db error");
             return;
         }
 
@@ -50,7 +50,7 @@ StudentReviewRouter.post(
         if (consumer === undefined) {
             res.json("No such consumer");
             return;
-        } else if (consumer.user_id.equals(sessionUser.id)) {
+        } else if (!consumer.user_id.equals(sessionUser.id)) {
             res.json("Wrong consumer");
             return;
         }

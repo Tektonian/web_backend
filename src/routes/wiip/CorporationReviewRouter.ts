@@ -1,14 +1,5 @@
 import express, { Request, Response } from "express";
-import { CorporationReview } from "../../models/rdbms/CorporationReview";
-import { Request as RequestModel } from "../../models/rdbms/Request";
-import { Consumer } from "../../models/rdbms/Consumer";
-import { Corporation } from "../../models/rdbms/Corporation";
-import {
-    createCorporationReview,
-    getAllCorpReviewByCorpId,
-    getAllCorpReviewByCsmId,
-} from "../../controllers/CorporationReveiwController";
-import { getRequestByCsmId } from "../../controllers/ConsumerController";
+import { createCorporationReview } from "../../controllers/CorporationReveiwController";
 import { getStudentByUserId } from "../../controllers/wiip/StudentController";
 import { getUserByName } from "../../controllers/UserController";
 
