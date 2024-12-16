@@ -217,6 +217,8 @@ export class requestofcorporation
                 sequelize,
                 tableName: "requestofcorporation",
                 timestamps: true,
+                createdAt: "created_at",
+                updatedAt: "updated_at",
             },
         );
     }
