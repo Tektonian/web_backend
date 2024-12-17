@@ -1,6 +1,28 @@
 import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
 
+type AcademicType = {
+    school_id: number;
+    degree: string;
+    start_date: string;
+    end_date: string;
+    status: 0 | 1 | 2;
+    faculty: string;
+    school_name: string;
+    school_name_glb: string;
+    country_code: string;
+    address: string;
+    coordinate: string;
+    hompage_url: string;
+    phone_number: string;
+};
+type LanguageType = {
+    exam_id: number;
+    exam_result: string;
+    exam_name_glb: string;
+    exam_results: object;
+    lang_country_code: string;
+};
 export interface fullstudentprofileAttributes {
     student_id: number;
     user_id: any;
@@ -15,8 +37,8 @@ export interface fullstudentprofileAttributes {
     image?: string;
     has_car?: number;
     keyword_list?: object;
-    academic?: object;
-    language?: object;
+    academic?: AcademicType[];
+    language?: LanguageType[];
 }
 
 export type fullstudentprofileOptionalAttributes =
