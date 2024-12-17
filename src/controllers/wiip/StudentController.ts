@@ -14,7 +14,6 @@ import { runCatchingAsync } from "../../utils/runCatcher";
 import logger from "../../utils/logger";
 import { APIType } from "api_spec";
 import { Corporation } from "../../models/rdbms/Corporation";
-import { Organization } from "../../models/rdbms/Organization";
 
 const client = new MeiliSearch({
     host: "http://127.0.0.1:7700",
@@ -36,9 +35,7 @@ export const getRecommendedStudentByRequestId = async (request_id: number) => {
 
     const request = reqResult.getOrNull();
     const elseval = reqResult.getOrElse(() => 2);
-    const coordi = JSON.parse(
-        JSON.stringify(request?.address_coordinate),
-    ).coordinates;
+    const coordi = JSON.parse(JSON.stringify(request?.address_coordinate)).coordinates;
 
     const ret = await runCatchingAsync(async () =>
         studentSearch.search("", {
@@ -61,7 +58,7 @@ export const getRecommendedStudentByRequestId = async (request_id: number) => {
 export const getStudentFullProfileByStudentId = async (student_id: number) => {
     const studentProfile = await fullstudentprofile.findOne({
         where: { student_id: student_id },
-        attributes: { exclude: ["user_id"] },
+        attributes: { exclude: ["user_id", "id"] },
     });
 
     return studentProfile;
@@ -80,6 +77,7 @@ export const getStudentByUserId = async (user_id: Buffer | null) => {
     return studentProfile;
 };
 
+// api_spec 에 데이터 타입 맞춰서 리턴하도록
 export const getInstReviewOfStudentByStudentId = async (student_id: number) => {
     const reviews = await StudentReview.findAll({
         where: { student_id: student_id },
@@ -89,10 +87,7 @@ export const getInstReviewOfStudentByStudentId = async (student_id: number) => {
 };
 
 // TODO: Add type laterㅇ
-export const createUnVerifiedStudentIdentity = async (
-    uuid: typeof DataTypes.UUID,
-    data,
-) => {
+export const createUnVerifiedStudentIdentity = async (uuid: typeof DataTypes.UUID, data) => {
     try {
         const ret = await sequelize.transaction(async (t) => {
             const { userType, academicHistory, examHistory, ...student } = data;
@@ -137,9 +132,7 @@ export const createUnVerifiedStudentIdentity = async (
                     { transaction: t },
                 );
                 if (isAttending === 1) {
-                    const school = (
-                        await School.findByPk(history.school_id)
-                    )?.get({ plain: true });
+                    const school = (await School.findByPk(history.school_id))?.get({ plain: true });
                     console.log(school);
                     searchDocument = {
                         ...searchDocument,
@@ -157,10 +150,7 @@ export const createUnVerifiedStudentIdentity = async (
                 examHistory: examHistory,
             };
 
-            const searchRet = await studentSearch.addDocuments(
-                [searchDocument],
-                { primaryKey: "id" },
-            );
+            const searchRet = await studentSearch.addDocuments([searchDocument], { primaryKey: "id" });
 
             const searchTask = await client.waitForTask(searchRet.taskUid);
 
@@ -176,9 +166,7 @@ export const createUnVerifiedStudentIdentity = async (
             }
 
             if (searchTask.status !== "succeeded") {
-                throw new Error(
-                    "No record created " + JSON.stringify(searchTask),
-                );
+                throw new Error("No record created " + JSON.stringify(searchTask));
             }
             return createdStudent;
         });

@@ -62,10 +62,10 @@ StudentRouter.get("/:student_id" satisfies keyof APISpec.StudentAPISpec, (async 
 
     ret.profile = studentFullProfile.get({ plain: true });
     if (roles !== null && (roles.includes("corp") || roles.includes("orgn"))) {
-        const reviewModels = await getInstReviewOfStudentByStudentId(Number(student_id));
+        const reviews = await getInstReviewOfStudentByStudentId(Number(student_id));
 
         await Promise.all(
-            reviewModels.map(async (model) => {
+            reviews.map(async (model) => {
                 const review = model.get({ plain: true });
                 const request = (await getRequestByRequestId(review.request_id))?.get({ plain: true });
                 let logo_image = "";
