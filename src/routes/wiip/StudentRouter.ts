@@ -1,11 +1,11 @@
 import express, { Request, Response } from "express";
 import {
     getStudentFullProfileByStudentId,
+    getStudentByUserId,
     getInstReviewOfStudentByStudentId,
     createUnVerifiedStudentIdentity,
 } from "../../controllers/wiip/StudentController";
 import { APISpec } from "api_spec";
-import { fullstudentprofile } from "../../models/rdbms/fullstudentprofile";
 import logger from "../../utils/logger";
 import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
 import { Corporation } from "../../models/rdbms/Corporation";
@@ -17,6 +17,15 @@ StudentRouter.post("/", async (req: Request, res: Response) => {
 
     if (sessionUser === undefined) {
         res.json("Login first");
+        return;
+    }
+
+    const studentExist = (
+        await getStudentByUserId(sessionUser.id as Buffer)
+    )?.get({ plain: true });
+
+    if (studentExist !== undefined) {
+        res.json("Illigal request. Student identity is already exist");
         return;
     }
 
@@ -43,7 +52,7 @@ StudentRouter.get(
             review: [],
         };
 
-        if (student_id === undefined) {
+        if (!student_id) {
             res.json(ret);
             return;
         }
