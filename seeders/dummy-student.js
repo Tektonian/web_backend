@@ -110,7 +110,7 @@ module.exports = {
                     user_id: user.user_id,
                     name_glb: { kr: user.username },
                     nationality: "kr",
-                    birth_date: new Date("1989-08-01"),
+                    birth_date: new Date(),
                     email_verified: new Date(),
                     phone_number: "01022222222",
                     emergency_contact: "01044444444",
