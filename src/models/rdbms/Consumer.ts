@@ -4,6 +4,7 @@ import type { Corporation, CorporationId } from "./Corporation";
 import type { Organization, OrganizationId } from "./Organization";
 import type { Request, RequestId } from "./Request";
 import type { User, UserId } from "./User";
+import { ConsumerEnum } from "api_spec/enum";
 
 export interface ConsumerAttributes {
     consumer_id: number;
@@ -121,6 +122,19 @@ export class Consumer
                 consumer_type: {
                     type: DataTypes.STRING(255),
                     allowNull: false,
+                    validate: {
+                        isValidType(value: string[]) {
+                            const validTypeSet = new Set(
+                                Object.values(ConsumerEnum.CONSUMER_ENUM),
+                            );
+
+                            const valueSet = new Set(value);
+
+                            if (valueSet.difference(validTypeSet).size !== 0) {
+                                throw new Error("Wrong type input");
+                            }
+                        },
+                    },
                 },
                 consumer_email: {
                     type: DataTypes.STRING(255),
@@ -140,7 +154,9 @@ export class Consumer
             {
                 sequelize,
                 tableName: "Consumer",
-                timestamps: false,
+                timestamps: true,
+                createdAt: "created_at",
+                updatedAt: "updated_at",
                 indexes: [
                     {
                         name: "PRIMARY",

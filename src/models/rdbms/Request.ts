@@ -1,12 +1,13 @@
 import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
 import type { Consumer, ConsumerId } from "./Consumer";
+import { RequestEnum } from "api_spec/enum";
 
 export interface RequestAttributes {
     request_id: number;
     consumer_id: number;
+    provider_ids?: object;
     title: string;
-    subtitle?: object;
     head_count?: number;
     reward_price: number;
     currency: string;
@@ -33,7 +34,7 @@ export type RequestPk = "request_id";
 export type RequestId = Request[RequestPk];
 export type RequestOptionalAttributes =
     | "request_id"
-    | "subtitle"
+    | "provider_ids"
     | "head_count"
     | "are_needed"
     | "are_required"
@@ -62,8 +63,8 @@ export class Request
 {
     request_id!: number;
     consumer_id!: number;
+    provider_ids?: object;
     title!: string;
-    subtitle?: object;
     head_count?: number;
     reward_price!: number;
     currency!: string;
@@ -108,13 +109,22 @@ export class Request
                         key: "consumer_id",
                     },
                 },
+                provider_ids: {
+                    type: DataTypes.JSON,
+                    allowNull: true,
+                    comment: "Provider ids of students",
+                    get() {
+                        const stringfiedUUIDs =
+                            this.getDataValue("provider_ids");
+                        const bufferUUIDs = stringfiedUUIDs.map((uuid) =>
+                            Buffer.from(uuid),
+                        );
+                        return bufferUUIDs;
+                    },
+                },
                 title: {
                     type: DataTypes.STRING(255),
                     allowNull: false,
-                },
-                subtitle: {
-                    type: DataTypes.JSON,
-                    allowNull: true,
                 },
                 head_count: {
                     type: DataTypes.TINYINT.UNSIGNED,
@@ -173,6 +183,9 @@ export class Request
                     allowNull: true,
                     comment:
                         "There could be various statuses of a request.\n\nFor example\n\nPosted: consumer wrote a request but not paid\nPaid: consumer paid for a request\nOutdated: No provider(s) contracted with a consumer\nContracted: provider(s) contracted with a consumer\nFinished: work has been done!\nFailed: Contraction didn’t work properly\n",
+                    validate: {
+                        isIn: [Object.values(RequestEnum.REQUEST_STATUS_ENUM)],
+                    },
                 },
                 start_time: {
                     type: DataTypes.TIME,
@@ -198,7 +211,9 @@ export class Request
             {
                 sequelize,
                 tableName: "Request",
-                timestamps: false,
+                timestamps: true,
+                createdAt: "created_at",
+                updatedAt: "updated_at",
                 indexes: [
                     {
                         name: "PRIMARY",

@@ -22,32 +22,20 @@ export const delChatUserById = async (objectId: Types.ObjectId) => {
     return await ChatUser.findByIdAndDelete(objectId);
 };
 
-export const getChatUser = async (user: UserAttributes) => {
-    return await ChatUser.findOne({ user_id: user.user_id });
-};
-
-export const getChatUserByUUID = async (uuid: mongoose.Types.UUID) => {
+export const getChatUserByUUID = async (uuid: Buffer) => {
     return await ChatUser.findOne({ user_id: uuid });
 };
 
-export const getUsers = async (users: UserAttributes[]) => {
-    const uuidList = users.map((user) => user.user_id);
-
-    return await ChatUser.find({ user_id: { $in: uuidList } });
-};
-
-export const getUsersByUUID = async (uuids: mongoose.Types.UUID[]) => {
+export const getChatUsersByUUID = async (uuids: Buffer[]) => {
     const ret = await ChatUser.find({ user_id: { $in: uuids } });
 
     return ret;
 };
 
-export const getUsersById = async (objectIds: mongoose.Types.ObjectId[]) => {
+export const getChatUsersById = async (
+    objectIds: mongoose.Types.ObjectId[],
+) => {
     const ret = await ChatUser.find({ _id: { $in: objectIds } });
 
     return ret;
-};
-
-export const getUserByEmail = async (email: string) => {
-    return await ChatUser.findOne({ email: email });
 };

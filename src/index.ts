@@ -20,6 +20,7 @@ import VerificationRouter from "./routes/VerificationRouter";
 import ChatRouter from "./routes/chat/chatRouter";
 import SSEAlarmRouter from "./routes/chat/sseRouter";
 import __initChat from "./routes/chat/webSocketRouter";
+import { __initSchedule } from "./utils/schedule";
 import { chatTest } from "./dummyChatData";
 import { TspecDocsMiddleware } from "tspec";
 import * as rTracer from "cls-rtracer";
@@ -135,7 +136,7 @@ const initServer = async () => {
     });
 
     __initChat(io);
-
+    // __initSchedule();
     // Listen server
     httpServer.listen(PORT, () => {
         logger.info(`Server is running on port ${PORT}`);

@@ -41,3 +41,33 @@ export const currentSession = async (
 
     return next();
 };
+
+export const filterSessionByRBAC = async (
+    roles: "normal" | "corp" | "orgn" | ""[],
+) => {
+    const callback = async (
+        req: Request,
+        res: Response,
+        next: NextFunction,
+    ) => {
+        const sessionUser = res.session?.user;
+        if (sessionUser === undefined) {
+            // TODO: log additional data such as IP
+            logger.warn(`Unlogined user tried to access`);
+            // throw new Error
+            return;
+        }
+
+        const userRoleSet = new Set(sessionUser.roles);
+        const authRoleSet = new Set(roles);
+
+        if (userRoleSet.intersection(authRoleSet).size === 0) {
+            logger.warn(`User tried unathorized access: User: ${sessionUser}`);
+            // throw new Error
+            return;
+        }
+        next();
+    };
+
+    return callback;
+};

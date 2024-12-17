@@ -5,7 +5,6 @@ export interface requestofcorporationAttributes {
     request_id: number;
     consumer_id: number;
     title: string;
-    subtitle?: object;
     head_count?: number;
     reward_price: number;
     currency: string;
@@ -21,7 +20,6 @@ export interface requestofcorporationAttributes {
     prep_material?: object;
     created_at?: Date;
     request_status?: number;
-    corp_status?: string;
     start_time?: string;
     end_time?: string;
     corp_id: number;
@@ -36,7 +34,6 @@ export interface requestofcorporationAttributes {
 
 export type requestofcorporationOptionalAttributes =
     | "request_id"
-    | "subtitle"
     | "head_count"
     | "are_needed"
     | "are_required"
@@ -49,7 +46,6 @@ export type requestofcorporationOptionalAttributes =
     | "prep_material"
     | "created_at"
     | "request_status"
-    | "corp_status"
     | "start_time"
     | "end_time"
     | "corp_id"
@@ -73,14 +69,14 @@ export class requestofcorporation
     request_id!: number;
     consumer_id!: number;
     title!: string;
-    subtitle?: object;
     head_count?: number;
     reward_price!: number;
     currency!: string;
     content!: string;
     are_needed?: object;
     are_required?: object;
-    date?: string;
+    start_date?: string;
+    end_date?: string;
     address?: string;
     address_coordinate?: any;
     provide_food?: any;
@@ -88,7 +84,6 @@ export class requestofcorporation
     prep_material?: object;
     created_at?: Date;
     request_status?: number;
-    corp_status?: string;
     start_time?: string;
     end_time?: string;
     corp_id!: number;
@@ -117,10 +112,6 @@ export class requestofcorporation
                 title: {
                     type: DataTypes.STRING(255),
                     allowNull: false,
-                },
-                subtitle: {
-                    type: DataTypes.JSON,
-                    allowNull: true,
                 },
                 head_count: {
                     type: DataTypes.TINYINT.UNSIGNED,
@@ -178,11 +169,7 @@ export class requestofcorporation
                     type: DataTypes.TINYINT,
                     allowNull: true,
                     comment:
-                        "There could be various request_statuses of a request.\n\nFor example\n\nPosted: consumer wrote a request but not paid\nPaid: consumer paid for a request\nOutdated: No provider(s) contracted with a consumer\nContracted: provider(s) contracted with a consumer\nFinished: work has been done!\nFailed: Contraction didn’t work properly\n",
-                },
-                corp_status: {
-                    type: DataTypes.STRING(255),
-                    allowNull: true,
+                        "There could be various statuses of a request.\n\nFor example\n\nPosted: consumer wrote a request but not paid\nPaid: consumer paid for a request\nOutdated: No provider(s) contracted with a consumer\nContracted: provider(s) contracted with a consumer\nFinished: work has been done!\nFailed: Contraction didn’t work properly\n",
                 },
                 start_time: {
                     type: DataTypes.TIME,
@@ -229,7 +216,9 @@ export class requestofcorporation
             {
                 sequelize,
                 tableName: "requestofcorporation",
-                timestamps: false,
+                timestamps: true,
+                createdAt: "created_at",
+                updatedAt: "updated_at",
             },
         );
     }

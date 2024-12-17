@@ -5,12 +5,12 @@ export interface studentwithcurrentschoolAttributes {
     user_id: any;
     name_glb: object;
     nationality: string;
-    age: string;
+    birth_date: string;
     student_phone_number: string;
     emergency_contact: string;
     gender: string;
     image?: string;
-    has_car?: any;
+    has_car?: number;
     keyword_list?: object;
     id: number;
     student_id: number;
@@ -60,12 +60,12 @@ export class studentwithcurrentschool
     user_id!: any;
     name_glb!: object;
     nationality!: string;
-    age!: string;
+    birth_date!: string;
     student_phone_number!: string;
     emergency_contact!: string;
     gender!: string;
     image?: string;
-    has_car?: any;
+    has_car?: number;
     keyword_list?: object;
     id!: number;
     student_id!: number;
@@ -103,8 +103,8 @@ export class studentwithcurrentschool
                     type: DataTypes.STRING(4),
                     allowNull: false,
                 },
-                age: {
-                    type: DataTypes.STRING(4),
+                birth_date: {
+                    type: DataTypes.DATEONLY,
                     allowNull: false,
                 },
                 student_phone_number: {
@@ -124,7 +124,7 @@ export class studentwithcurrentschool
                     allowNull: true,
                 },
                 has_car: {
-                    type: DataTypes.BLOB,
+                    type: DataTypes.TINYINT,
                     allowNull: true,
                 },
                 keyword_list: {

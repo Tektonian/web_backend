@@ -3,6 +3,7 @@ import { DataTypes, Model, Optional } from "sequelize";
 import type { Account, AccountId } from "./Account";
 import type { Consumer, ConsumerId } from "./Consumer";
 import type { Student, StudentId } from "./Student";
+import { UserEnum } from "api_spec/enum";
 
 export interface UserAttributes {
     user_id: any;
@@ -117,12 +118,26 @@ export class User
                     allowNull: true,
                     comment:
                         "To implement RBAC based access control, `roles` are needed.\n\nWe can filter unauthorized requests with role entity without querying database.\n\nOnce verification has been occurred user’s roles must be changed!!!!",
+                    validate: {
+                        isValidRole(value: string[]) {
+                            const validRoleSet = new Set(
+                                Object.values(UserEnum.USER_ROLE_ENUM),
+                            );
+                            const valueSet = new Set(value);
+
+                            if (valueSet.difference(validRoleSet).size !== 0) {
+                                throw new Error("Wrong role input");
+                            }
+                        },
+                    },
                 },
             },
             {
                 sequelize,
                 tableName: "User",
-                timestamps: false,
+                timestamps: true,
+                createdAt: "created_at",
+                updatedAt: "updated_at",
                 indexes: [
                     {
                         name: "PRIMARY",

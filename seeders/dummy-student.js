@@ -103,13 +103,14 @@ module.exports = {
 
         const studentUsers = [];
 
-        allUsers.forEach((user) => {
+        allUsers.forEach((user, idx) => {
             if (user.username.startsWith("student")) {
                 studentUsers.push({
+                    student_id: idx,
                     user_id: user.user_id,
                     name_glb: { kr: user.username },
                     nationality: "kr",
-                    age: 32,
+                    birth_date: new Date("1989-08-01"),
                     email_verified: new Date(),
                     phone_number: "01022222222",
                     emergency_contact: "01044444444",

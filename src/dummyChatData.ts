@@ -33,7 +33,7 @@ export const chatTest = async () => {
     await Promise.all(
         requests.map(async (req) => {
             return await Request.update(
-                { student_ids: [] },
+                { provider_ids: [] },
                 { where: { request_id: req.request_id } },
             );
         }),

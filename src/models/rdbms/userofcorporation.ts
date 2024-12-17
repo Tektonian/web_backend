@@ -17,13 +17,13 @@ export interface userofcorporationAttributes {
   corp_num: number;
   biz_num?: number;
   biz_started_at?: string;
-  status?: string;
+  corp_status?: number;
   biz_type?: string;
   logo_image?: string;
   site_url?: string;
 }
 
-export type userofcorporationOptionalAttributes = "user_id" | "username" | "image" | "roles" | "corp_id" | "corp_domain" | "ceo_name" | "corp_address" | "phone_number" | "biz_num" | "biz_started_at" | "status" | "biz_type" | "logo_image" | "site_url";
+export type userofcorporationOptionalAttributes = "user_id" | "username" | "image" | "roles" | "corp_id" | "corp_domain" | "ceo_name" | "corp_address" | "phone_number" | "biz_num" | "biz_started_at" | "corp_status" | "biz_type" | "logo_image" | "site_url";
 export type userofcorporationCreationAttributes = Optional<userofcorporationAttributes, userofcorporationOptionalAttributes>;
 
 export class userofcorporation extends Model<userofcorporationAttributes, userofcorporationCreationAttributes> implements userofcorporationAttributes {
@@ -42,7 +42,7 @@ export class userofcorporation extends Model<userofcorporationAttributes, userof
   corp_num!: number;
   biz_num?: number;
   biz_started_at?: string;
-  status?: string;
+  corp_status?: number;
   biz_type?: string;
   logo_image?: string;
   site_url?: string;
@@ -102,19 +102,19 @@ export class userofcorporation extends Model<userofcorporationAttributes, userof
       allowNull: true
     },
     corp_num: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.BIGINT.UNSIGNED,
       allowNull: false
     },
     biz_num: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.BIGINT.UNSIGNED,
       allowNull: true
     },
     biz_started_at: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    status: {
-      type: DataTypes.STRING(255),
+    corp_status: {
+      type: DataTypes.TINYINT,
       allowNull: true
     },
     biz_type: {

@@ -11,7 +11,6 @@ export interface requestofuserAttributes {
     request_id: number;
     consumer_id: number;
     title: string;
-    subtitle?: object;
     head_count?: number;
     reward_price: number;
     currency: string;
@@ -36,7 +35,6 @@ export type requestofuserOptionalAttributes =
     | "username"
     | "image"
     | "request_id"
-    | "subtitle"
     | "head_count"
     | "are_needed"
     | "are_required"
@@ -69,14 +67,14 @@ export class requestofuser
     request_id!: number;
     consumer_id!: number;
     title!: string;
-    subtitle?: object;
     head_count?: number;
     reward_price!: number;
     currency!: string;
     content!: string;
     are_needed?: object;
     are_required?: object;
-    date?: string;
+    start_date?: string;
+    end_date?: string;
     address?: string;
     address_coordinate?: any;
     provide_food?: any;
@@ -129,10 +127,6 @@ export class requestofuser
                 title: {
                     type: DataTypes.STRING(255),
                     allowNull: false,
-                },
-                subtitle: {
-                    type: DataTypes.JSON,
-                    allowNull: true,
                 },
                 head_count: {
                     type: DataTypes.TINYINT.UNSIGNED,
@@ -204,7 +198,9 @@ export class requestofuser
             {
                 sequelize,
                 tableName: "requestofuser",
-                timestamps: false,
+                timestamps: true,
+                createdAt: "created_at",
+                updatedAt: "updated_at",
             },
         );
     }

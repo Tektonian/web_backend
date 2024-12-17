@@ -8,7 +8,7 @@ export interface OrganizationAttributes {
   nationality: string;
   full_name: string;
   short_name?: string;
-  status?: string;
+  orgn_status?: string;
   phone_number?: string;
   site_url?: string;
   orgn_type?: string;
@@ -16,7 +16,7 @@ export interface OrganizationAttributes {
 
 export type OrganizationPk = "orgn_id";
 export type OrganizationId = Organization[OrganizationPk];
-export type OrganizationOptionalAttributes = "orgn_id" | "orgn_code" | "short_name" | "status" | "phone_number" | "site_url" | "orgn_type";
+export type OrganizationOptionalAttributes = "orgn_id" | "orgn_code" | "short_name" | "orgn_status" | "phone_number" | "site_url" | "orgn_type";
 export type OrganizationCreationAttributes = Optional<OrganizationAttributes, OrganizationOptionalAttributes>;
 
 export class Organization extends Model<OrganizationAttributes, OrganizationCreationAttributes> implements OrganizationAttributes {
@@ -25,7 +25,7 @@ export class Organization extends Model<OrganizationAttributes, OrganizationCrea
   nationality!: string;
   full_name!: string;
   short_name?: string;
-  status?: string;
+  orgn_status?: string;
   phone_number?: string;
   site_url?: string;
   orgn_type?: string;
@@ -67,7 +67,7 @@ export class Organization extends Model<OrganizationAttributes, OrganizationCrea
       type: DataTypes.STRING(255),
       allowNull: true
     },
-    status: {
+    orgn_status: {
       type: DataTypes.STRING(255),
       allowNull: true
     },

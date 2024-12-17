@@ -9,13 +9,13 @@ export interface StudentAttributes {
     user_id: any;
     name_glb: object;
     nationality: string;
-    age: string;
+    birth_date: string;
     email_verified?: Date;
     phone_number: string;
     emergency_contact: string;
     gender: string;
     image?: string;
-    has_car?: boolean;
+    has_car?: number;
     keyword_list?: object;
     created_at?: Date;
     updated_at?: Date;
@@ -44,13 +44,13 @@ export class Student
     user_id!: any;
     name_glb!: object;
     nationality!: string;
-    age!: string;
+    birth_date!: string;
     email_verified?: Date;
     phone_number!: string;
     emergency_contact!: string;
     gender!: string;
     image?: string;
-    has_car?: boolean;
+    has_car?: number;
     keyword_list?: object;
     created_at?: Date;
     updated_at?: Date;
@@ -152,8 +152,8 @@ export class Student
                     type: DataTypes.STRING(4),
                     allowNull: false,
                 },
-                age: {
-                    type: DataTypes.STRING(4),
+                birth_date: {
+                    type: DataTypes.DATEONLY,
                     allowNull: false,
                 },
                 email_verified: {
@@ -179,7 +179,7 @@ export class Student
                     allowNull: true,
                 },
                 has_car: {
-                    type: DataTypes.SMALLINT,
+                    type: DataTypes.TINYINT,
                     allowNull: true,
                 },
                 keyword_list: {
@@ -190,7 +190,9 @@ export class Student
             {
                 sequelize,
                 tableName: "Student",
-                timestamps: false,
+                timestamps: true,
+                createdAt: "created_at",
+                updatedAt: "updated_at",
                 indexes: [
                     {
                         name: "PRIMARY",

@@ -6,14 +6,14 @@ export interface fullstudentprofileAttributes {
     user_id: any;
     name_glb: object;
     nationality: string;
-    age: string;
+    birth_date: string;
     created_at?: Date;
     email_verified?: Date;
     phone_number: string;
     emergency_contact: string;
     gender: string;
     image?: string;
-    has_car?: any;
+    has_car?: number;
     keyword_list?: object;
     academic?: object;
     language?: object;
@@ -44,14 +44,14 @@ export class fullstudentprofile
     user_id!: any;
     name_glb!: object;
     nationality!: string;
-    age!: string;
+    birth_date!: string;
     created_at?: Date;
     email_verified?: Date;
     phone_number!: string;
     emergency_contact!: string;
     gender!: string;
     image?: string;
-    has_car?: any;
+    has_car?: number;
     keyword_list?: object;
     academic?: object;
     language?: object;
@@ -65,7 +65,6 @@ export class fullstudentprofile
                     type: DataTypes.INTEGER,
                     allowNull: false,
                     defaultValue: 0,
-                    primaryKey: true,
                 },
                 user_id: {
                     type: DataTypes.BLOB,
@@ -79,8 +78,8 @@ export class fullstudentprofile
                     type: DataTypes.STRING(4),
                     allowNull: false,
                 },
-                age: {
-                    type: DataTypes.STRING(4),
+                birth_date: {
+                    type: DataTypes.DATEONLY,
                     allowNull: false,
                 },
                 email_verified: {
@@ -106,7 +105,7 @@ export class fullstudentprofile
                     allowNull: true,
                 },
                 has_car: {
-                    type: DataTypes.BLOB,
+                    type: DataTypes.TINYINT,
                     allowNull: true,
                 },
                 keyword_list: {

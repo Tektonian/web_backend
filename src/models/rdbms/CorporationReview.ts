@@ -10,8 +10,8 @@ export interface CorporationReviewAttributes {
     request_url: string;
     review_text?: string;
     prep_requirement?: string;
-    work_atmosphere?: string;
     sense_of_achive?: number;
+    work_atmosphere?: number;
     created_at?: Date;
     updated_at?: Date;
 }
@@ -22,8 +22,8 @@ export type CorporationReviewOptionalAttributes =
     | "id"
     | "review_text"
     | "prep_requirement"
-    | "work_atmosphere"
     | "sense_of_achive"
+    | "work_atmosphere"
     | "created_at"
     | "updated_at";
 export type CorporationReviewCreationAttributes = Optional<
@@ -46,8 +46,8 @@ export class CorporationReview
     request_url!: string;
     review_text?: string;
     prep_requirement?: string;
-    work_atmosphere?: string;
     sense_of_achive?: number;
+    work_atmosphere?: number;
     created_at?: Date;
     updated_at?: Date;
 
@@ -88,11 +88,11 @@ export class CorporationReview
                     type: DataTypes.STRING(255),
                     allowNull: true,
                 },
-                work_atmosphere: {
-                    type: DataTypes.STRING(255),
+                sense_of_achive: {
+                    type: DataTypes.TINYINT,
                     allowNull: true,
                 },
-                sense_of_achive: {
+                work_atmosphere: {
                     type: DataTypes.TINYINT,
                     allowNull: true,
                 },
@@ -100,7 +100,9 @@ export class CorporationReview
             {
                 sequelize,
                 tableName: "CorporationReview",
-                timestamps: false,
+                timestamps: true,
+                createdAt: "created_at",
+                updatedAt: "updated_at",
                 indexes: [
                     {
                         name: "PRIMARY",
