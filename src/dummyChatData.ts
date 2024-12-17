@@ -39,8 +39,8 @@ export const chatTest = async () => {
 
     const chatRoom = chatRooms[0];
 
-    const test0Chat = await chatUserController.getUserByEmail("test0@test.com");
-    const test1Chat = await chatUserController.getUserByEmail("test1@test.com");
+    const test0Chat = await chatUserController.getChatUserByUUID(test0.user_id);
+    const test1Chat = await chatUserController.getChatUserByUUID(test1.user_id);
 
     for (var i = 0; i < 30; i++) {
         await chatContentController.sendMessage(chatRoom._id, i % 2 === 0 ? test0Chat._id : test1Chat._id, {
