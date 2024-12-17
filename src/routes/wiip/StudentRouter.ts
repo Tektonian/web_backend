@@ -5,10 +5,11 @@ import {
     getInstReviewOfStudentByStudentId,
     createUnVerifiedStudentIdentity,
 } from "../../controllers/wiip/StudentController";
-import { APISpec } from "api_spec";
-import logger from "../../utils/logger";
 import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
 import { Corporation } from "../../models/rdbms/Corporation";
+
+import { APISpec, APIType } from "api_spec";
+import logger from "../../utils/logger";
 
 const StudentRouter = express.Router();
 
@@ -43,7 +44,7 @@ StudentRouter.get("/:student_id" satisfies keyof APISpec.StudentAPISpec, (async 
     const { student_id } = req.params;
     const roles: string[] | null = res.session?.user?.roles ?? null;
     // TODO: add response type
-    let ret: { profile: any; review: any } = {
+    let ret: APIType.StudentType.ResGetStudentProfile = {
         profile: undefined,
         review: [],
     };
@@ -53,14 +54,27 @@ StudentRouter.get("/:student_id" satisfies keyof APISpec.StudentAPISpec, (async 
         return;
     }
 
-    const studentFullProfile = await getStudentFullProfileByStudentId(Number(student_id));
+    const studentFullProfile = (await getStudentFullProfileByStudentId(Number(student_id)))?.get({ plain: true });
 
-    if (studentFullProfile === null) {
+    if (studentFullProfile === undefined) {
         res.json(ret);
         return;
     }
 
-    ret.profile = studentFullProfile.get({ plain: true });
+    ret.profile = {
+        name_glb: studentFullProfile.name_glb,
+        nationality: studentFullProfile.nationality,
+        birth_date: new Date(studentFullProfile.birth_date),
+        phone_number: studentFullProfile.phone_number,
+        emergency_contact: studentFullProfile.emergency_contact,
+        email_verified: studentFullProfile.email_verified,
+        gender: Number(studentFullProfile.gender),
+        image: studentFullProfile.image ?? "",
+        has_car: studentFullProfile.has_car,
+        keyword_list: studentFullProfile.keyword_list,
+        academic_history: studentFullProfile.academic ?? [],
+        exam_history: studentFullProfile.language ?? [],
+    };
     if (roles !== null && (roles.includes("corp") || roles.includes("orgn"))) {
         const reviews = await getInstReviewOfStudentByStudentId(Number(student_id));
 
@@ -68,8 +82,9 @@ StudentRouter.get("/:student_id" satisfies keyof APISpec.StudentAPISpec, (async 
             reviews.map(async (model) => {
                 const review = model.get({ plain: true });
                 const request = (await getRequestByRequestId(review.request_id))?.get({ plain: true });
+                if (!review || !request) return;
                 let logo_image = "";
-                if (request?.corp_id !== undefined) {
+                if (request.corp_id !== undefined) {
                     logo_image =
                         (
                             await Corporation.findOne({
@@ -81,8 +96,15 @@ StudentRouter.get("/:student_id" satisfies keyof APISpec.StudentAPISpec, (async 
                 }
                 ret.review.push({
                     ...review,
-                    request: request,
-                    logo_image,
+                    request: {
+                        request_id: request.request_id,
+                        title: request.title,
+                        reward_price: request.reward_price,
+                        currency: request.currency,
+                        address: request.address ?? "",
+                        start_date: request.start_date ?? "",
+                        logo_image: logo_image,
+                    },
                 });
             }),
         );
