@@ -6,47 +6,47 @@ const EvalDummyTextx = [
     "불명확한 혹은 불확실한 상황에서도 현명한 결정을 내립니다",
     "표면적으로 드러난 상황 혹은 이슈 진단에 그치지 않고 근본 원인을 파악합니다",
     "단기보다 장기적인 안목으로 전략적으로 생각하고, 하려는 일과 하지 않고자 하는 일을 명확히 구분합니다",
-    "🗣️ 소통이 효과적인",
+    "소통이 효과적인",
     "말과 글이 간결하고 명료합니다",
     "전체적인 맥락을 이해하려고 노력한 뒤 반응합니다",
     "동료에게 솔직하며 건설적인 피드백을 적시에 제공합니다",
     "스트레스가 높은 상황에서도 평정을 유지하며 명석하게 사고합니다",
-    "🎓 호기심을 갖고 배우는",
+    "호기심을 갖고 배우는",
     "빠르고, 열정적으로 배웁니다",
     "전문 분야가 아닌 영역에도 실질적인 도움을 줍니다",
     "다양한 관점으로 상황을 바라보며, 타인이 놓친 연관 관계를 찾아냅니다",
     "고객을 이해하기 위해 노력하고, 어떻게 더 나은 서비스(제품) 혹은 경험을 제공할지 고민합니다",
-    "🧗 용기 있게 도전하는",
+    "용기 있게 도전하는",
     "조직의 가치에 부합하지 않는 행동에 문제를 제기합니다",
     "진실을 추구하기 위해, 자신에게 미칠 영향을 감수합니다",
     "실패할 가능성이 있어도, 위험을 피하지 않고 용감하고 현명하게 도전합니다",
     "어려운 상황에서도 무엇이 회사의 이익에 가장 부합하는지 본인의 생각을 분명하게 전달합니다",
-    "🔥 끈기 있게 열정적인",
+    "끈기 있게 열정적인",
     "자신 있더라도 자만하지 않습니다",
     "쉽게 포기하지 않으며 낙관적입니다",
     "고객을 아끼고 조직의 성공을 염원합니다",
     "늘 탁월성을 추구하며 주변 사람들의 귀감이 됩니다",
-    "🤝 동료와 협력하는",
+    "동료와 협력하는",
     "동료를 돕는데 시간을 아끼지 않습니다",
     "열린 자세로 훌륭한 아이디어를 모색합니다",
     "정보를 투명하게, 널리, 적극적으로 공유합니다",
     "본인이나 소속 팀이 아니라 조직 전체의 이익을 우선시합니다",
-    "🚀 문제를 해결하고 혁신하는",
+    "문제를 해결하고 혁신하는",
     "참신하고 유용한 아이디어를 제안합니다",
     "어려운 문제에는 개념을 재정립해 해결책을 찾아냅니다",
     "보편적 가설에 이의를 제기하고 더 좋은 접근법을 제시합니다",
     "변화에 잘 적응할 수 있도록 복잡성을 줄이고 단순화해 조직의 민첩성을 유지합니다",
-    "🤲 다양함을 포용하는",
+    "다양함을 포용하는",
     "누군가 소외되는 상황을 좌시하지 않습니다",
     "배경과 문화가 다양한 사람들과 효과적으로 협업합니다",
     "다양한 시각을 장려하고 수용하여 더 좋은 결론을 도출합니다",
     "누구나 편견이 있다는 사실을 받아들이고, 편견을 극복하고자 노력합니다",
-    "💎 진실하고 투명한",
+    "진실하고 투명한",
     "솔직하고 진실하며 숨김이 없고, 비정치적입니다",
     "직급이나 견해 차이와 관계없이 상대를 존중합니다",
     "동료 직원에 관한 의견은 당사자 앞에서 이야기할 수 있는 것만 말합니다",
     "실수를 기꺼이, 공개적으로 인정하며, 공유하기 다소 꺼려지는 부분이 있더라도 업무와 관련된 정보는 항상 공유합니다",
-    "🎯 결과를 만들어내는",
+    "결과를 만들어내는",
     "중요한 일을 많이 해냅니다",
     "과정보다는 결과를 중시합니다",
     "동료에게 긍정적인 영향을 줍니다",
@@ -139,7 +139,7 @@ module.exports = {
         const Request = db.sequelize.models.Request;
         const Student = db.sequelize.models.Student;
 
-        const allStudentData = await Student.findAll();
+        const allStudentData = await Student.findAll({ raw: true });
 
         // failed requests: Outdated or Failed status
         const failedRequests = await Request.findAll({
@@ -164,61 +164,54 @@ module.exports = {
             where: {
                 [Op.or]: [{ request_status: 4 }],
             },
+            raw: true,
         });
 
         await Promise.all(
             completedRequests.map(async (req) => {
-                const randStudent =
-                    allStudentData[
-                        Math.floor(Math.random() * allStudentData.length)
-                    ];
+                const randStudentIds = [];
+                for (let i = 0; i < req.head_count; i++) {
+                    const randStudent = allStudentData[Math.floor(Math.random() * allStudentData.length)];
 
-                req.update({ student_ids: [randStudent.student_id] });
+                    randStudentIds.push(randStudent.user_id);
+                    if (req.corp_id) {
+                        const studentReview = {
+                            corp_id: req.corp_id,
+                            orgn_id: req.orgn_id,
+                            consumer_id: req.consumer_id,
+                            student_id: randStudent.student_id,
+                            request_id: req.request_id,
+                            request_url: "",
+                            was_late: Math.floor(Math.random() * 5),
+                            was_proactive: Math.floor(Math.random() * 5),
+                            was_diligent: Math.floor(Math.random() * 5),
+                            commu_ability: Math.floor(Math.random() * 5),
+                            lang_fluent: Math.floor(Math.random() * 5),
+                            goal_fulfillment: Math.floor(Math.random() * 5),
+                            want_cowork: Math.floor(Math.random() * 5),
+                            praise: EvalDummyTextx[Math.floor(Math.random() * EvalDummyTextx.length)],
+                            need_improve: EvalDummyTextx[Math.floor(Math.random() * EvalDummyTextx.length)],
+                        };
 
-                const studentReview = {
-                    corp_id: req.corp_id,
-                    orgn_id: req.orgn_id,
-                    consumer_id: req.consumer_id,
-                    student_id: randStudent.student_id,
-                    request_id: req.request_id,
-                    request_url: "",
-                    was_late: Math.floor(Math.random() * 5),
-                    was_proactive: Math.floor(Math.random() * 5),
-                    was_diligent: Math.floor(Math.random() * 5),
-                    commu_ability: Math.floor(Math.random() * 5),
-                    lang_fluent: Math.floor(Math.random() * 5),
-                    goal_fulfillment: Math.floor(Math.random() * 5),
-                    want_cowork: Math.floor(Math.random() * 5),
-                    praise: EvalDummyTextx[
-                        Math.floor(Math.random() * EvalDummyTextx.length)
-                    ],
-                    need_improve:
-                        EvalDummyTextx[
-                            Math.floor(Math.random() * EvalDummyTextx.length)
-                        ],
-                };
+                        await StudentReview.bulkCreate([studentReview]);
+                        const corpReview = {
+                            corp_id: req.corp_id,
+                            consumer_id: req.consumer_id,
+                            student_id: randStudent.student_id,
+                            request_id: req.request_id,
+                            request_url: "",
+                            review_text: ReviewDummyTexts[Math.floor(Math.random() * ReviewDummyTexts.length)],
+                            prep_requirement: EvalDummyTextx[Math.floor(Math.random() * EvalDummyTextx.length)],
+                            sense_of_achive: Math.floor(Math.random() * 5),
+                            work_atmosphere: Math.floor(Math.random() * 5),
+                        };
 
-                await StudentReview.bulkCreate([studentReview]);
+                        await CorporationReview.bulkCreate([corpReview]);
+                    }
+                }
+                await Request.update({ provider_ids: randStudentIds }, { where: { request_id: req.request_id } });
 
-                const corpReview = {
-                    corp_id: req.corp_id,
-                    consumer_id: req.consumer_id,
-                    student_id: randStudent.student_id,
-                    request_id: req.request_id,
-                    request_url: "",
-                    review_text:
-                        ReviewDummyTexts[
-                            Math.floor(Math.random() * ReviewDummyTexts.length)
-                        ],
-                    prep_requirement:
-                        EvalDummyTextx[
-                            Math.floor(Math.random() * EvalDummyTextx.length)
-                        ],
-                    sense_of_achive: Math.floor(Math.random() * 5),
-                    work_atmosphere: Math.floor(Math.random() * 5),
-                };
-
-                return CorporationReview.bulkCreate([corpReview]);
+                return;
             }),
         );
 
