@@ -18,10 +18,7 @@ export type VerificationTokenCreationAttributes = Optional<
 >;
 
 export class VerificationToken
-    extends Model<
-        VerificationTokenAttributes,
-        VerificationTokenCreationAttributes
-    >
+    extends Model<VerificationTokenAttributes, VerificationTokenCreationAttributes>
     implements VerificationTokenAttributes
 {
     identifier!: string;
@@ -47,8 +44,7 @@ export class VerificationToken
                 expires: {
                     type: DataTypes.DATE,
                     allowNull: false,
-                    defaultValue:
-                        Sequelize.Sequelize.literal("CURRENT_TIMESTAMP"),
+                    defaultValue: Sequelize.Sequelize.literal("CURRENT_TIMESTAMP"),
                 },
                 token_type: {
                     type: DataTypes.STRING(45),
@@ -56,11 +52,7 @@ export class VerificationToken
                     comment:
                         "Verification token can be used for various types of entities\n\nFor example: verification for corporation user, organization user, and student user \n\nSo there could be four types. \nnull: default type when user sign in\nstudent: when user verifies itself is student\norgz: ``\nCorp: ``",
                     validate: {
-                        isIn: [
-                            Object.values(
-                                VerificationTokenEnum.VERIFICATION_TOKEN_ENUM,
-                            ),
-                        ],
+                        isIn: [Object.values(VerificationTokenEnum.VERIFICATION_TOKEN_ENUM)],
                     },
                 },
             },

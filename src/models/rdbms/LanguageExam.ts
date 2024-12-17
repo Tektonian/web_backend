@@ -11,14 +11,8 @@ export interface LanguageExamAttributes {
 
 export type LanguageExamPk = "exam_id";
 export type LanguageExamId = LanguageExam[LanguageExamPk];
-export type LanguageExamOptionalAttributes =
-    | "exam_name_glb"
-    | "exam_results"
-    | "lang_country_code";
-export type LanguageExamCreationAttributes = Optional<
-    LanguageExamAttributes,
-    LanguageExamOptionalAttributes
->;
+export type LanguageExamOptionalAttributes = "exam_name_glb" | "exam_results" | "lang_country_code";
+export type LanguageExamCreationAttributes = Optional<LanguageExamAttributes, LanguageExamOptionalAttributes>;
 
 export class LanguageExam
     extends Model<LanguageExamAttributes, LanguageExamCreationAttributes>
@@ -32,35 +26,14 @@ export class LanguageExam
     // LanguageExam hasMany ExamHistory via exam_id
     ExamHistories!: ExamHistory[];
     getExamHistories!: Sequelize.HasManyGetAssociationsMixin<ExamHistory>;
-    setExamHistories!: Sequelize.HasManySetAssociationsMixin<
-        ExamHistory,
-        ExamHistoryId
-    >;
-    addExamHistory!: Sequelize.HasManyAddAssociationMixin<
-        ExamHistory,
-        ExamHistoryId
-    >;
-    addExamHistories!: Sequelize.HasManyAddAssociationsMixin<
-        ExamHistory,
-        ExamHistoryId
-    >;
+    setExamHistories!: Sequelize.HasManySetAssociationsMixin<ExamHistory, ExamHistoryId>;
+    addExamHistory!: Sequelize.HasManyAddAssociationMixin<ExamHistory, ExamHistoryId>;
+    addExamHistories!: Sequelize.HasManyAddAssociationsMixin<ExamHistory, ExamHistoryId>;
     createExamHistory!: Sequelize.HasManyCreateAssociationMixin<ExamHistory>;
-    removeExamHistory!: Sequelize.HasManyRemoveAssociationMixin<
-        ExamHistory,
-        ExamHistoryId
-    >;
-    removeExamHistories!: Sequelize.HasManyRemoveAssociationsMixin<
-        ExamHistory,
-        ExamHistoryId
-    >;
-    hasExamHistory!: Sequelize.HasManyHasAssociationMixin<
-        ExamHistory,
-        ExamHistoryId
-    >;
-    hasExamHistories!: Sequelize.HasManyHasAssociationsMixin<
-        ExamHistory,
-        ExamHistoryId
-    >;
+    removeExamHistory!: Sequelize.HasManyRemoveAssociationMixin<ExamHistory, ExamHistoryId>;
+    removeExamHistories!: Sequelize.HasManyRemoveAssociationsMixin<ExamHistory, ExamHistoryId>;
+    hasExamHistory!: Sequelize.HasManyHasAssociationMixin<ExamHistory, ExamHistoryId>;
+    hasExamHistories!: Sequelize.HasManyHasAssociationsMixin<ExamHistory, ExamHistoryId>;
     countExamHistories!: Sequelize.HasManyCountAssociationsMixin;
 
     static initModel(sequelize: Sequelize.Sequelize): typeof LanguageExam {
@@ -78,8 +51,7 @@ export class LanguageExam
                 exam_results: {
                     type: DataTypes.JSON,
                     allowNull: true,
-                    comment:
-                        "If a test is class type then the classes of a result of the test should be listed",
+                    comment: "If a test is class type then the classes of a result of the test should be listed",
                 },
                 lang_country_code: {
                     type: DataTypes.STRING(45),

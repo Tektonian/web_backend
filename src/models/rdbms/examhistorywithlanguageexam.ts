@@ -21,10 +21,7 @@ export type examhistorywithlanguageexamCreationAttributes = Optional<
 >;
 
 export class examhistorywithlanguageexam
-    extends Model<
-        examhistorywithlanguageexamAttributes,
-        examhistorywithlanguageexamCreationAttributes
-    >
+    extends Model<examhistorywithlanguageexamAttributes, examhistorywithlanguageexamCreationAttributes>
     implements examhistorywithlanguageexamAttributes
 {
     student_id!: number;
@@ -34,9 +31,7 @@ export class examhistorywithlanguageexam
     exam_results?: object;
     lang_country_code?: string;
 
-    static initModel(
-        sequelize: Sequelize.Sequelize,
-    ): typeof examhistorywithlanguageexam {
+    static initModel(sequelize: Sequelize.Sequelize): typeof examhistorywithlanguageexam {
         return examhistorywithlanguageexam.init(
             {
                 student_id: {
@@ -58,8 +53,7 @@ export class examhistorywithlanguageexam
                 exam_results: {
                     type: DataTypes.JSON,
                     allowNull: true,
-                    comment:
-                        "If a test is class type then the classes of a result of the test should be listed",
+                    comment: "If a test is class type then the classes of a result of the test should be listed",
                 },
                 lang_country_code: {
                     type: DataTypes.STRING(45),

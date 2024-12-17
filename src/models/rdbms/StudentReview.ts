@@ -32,10 +32,7 @@ export type StudentReviewOptionalAttributes =
     | "need_improve"
     | "created_at"
     | "updated_at";
-export type StudentReviewCreationAttributes = Optional<
-    StudentReviewAttributes,
-    StudentReviewOptionalAttributes
->;
+export type StudentReviewCreationAttributes = Optional<StudentReviewAttributes, StudentReviewOptionalAttributes>;
 
 export class StudentReview
     extends Model<StudentReviewAttributes, StudentReviewCreationAttributes>
@@ -72,14 +69,12 @@ export class StudentReview
                 corp_id: {
                     type: DataTypes.INTEGER,
                     allowNull: true,
-                    comment:
-                        "Have no idea that this field could be utilized late;;",
+                    comment: "Have no idea that this field could be utilized late;;",
                 },
                 orgn_id: {
                     type: DataTypes.INTEGER,
                     allowNull: true,
-                    comment:
-                        "Have no idea that this field could be utilized late;;",
+                    comment: "Have no idea that this field could be utilized late;;",
                 },
                 consumer_id: {
                     type: DataTypes.INTEGER,

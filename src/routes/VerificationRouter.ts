@@ -50,19 +50,13 @@ VerificationRouter.post("/callback/identity-verify", async (req, res, next) => {
         order: [["expires", "DESC"]],
     });
 
-    if (
-        verificationToken === null ||
-        verificationToken.dataValues.token !== token
-    ) {
+    if (verificationToken === null || verificationToken.dataValues.token !== token) {
         res.json("Wrong identification");
         return;
     }
 
     if (type === "student") {
-        await models.Student.update(
-            { email_verified: new Date() },
-            { where: { student_id: profileId } },
-        );
+        await models.Student.update({ email_verified: new Date() }, { where: { student_id: profileId } });
     } else if (type === "corp") {
         await models.Consumer.create({
             user_id: userInstance.user_id,
@@ -86,18 +80,10 @@ VerificationRouter.post("/callback/identity-verify", async (req, res, next) => {
     // Add student role
     logger.debug(`User email Verified through email: ${userInstance}`);
     if (userInstance.roles === undefined) {
-        await models.User.update(
-            { roles: [type] },
-            { where: { email: userInstance.email } },
-        );
+        await models.User.update({ roles: [type] }, { where: { email: userInstance.email } });
     } else {
-        const newRoles = Array.from(
-            new Set([...(userInstance.roles as string[]), type]),
-        );
-        await models.User.update(
-            { roles: newRoles },
-            { where: { email: userInstance.email } },
-        );
+        const newRoles = Array.from(new Set([...(userInstance.roles as string[]), type]));
+        await models.User.update({ roles: newRoles }, { where: { email: userInstance.email } });
     }
 
     res.json({ status: "ok" });
@@ -157,12 +143,7 @@ VerificationRouter.post("/identity-verify", async (req, res, next) => {
     res.json("");
 });
 
-function html(params: {
-    url: string;
-    host: string;
-    theme: Theme;
-    token: string;
-}) {
+function html(params: { url: string; host: string; theme: Theme; token: string }) {
     const { url, host, theme, token } = params;
 
     const escapedHost = host.replace(/\./g, "&#8203;.");

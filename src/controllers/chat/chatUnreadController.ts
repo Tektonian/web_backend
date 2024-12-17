@@ -1,53 +1,30 @@
 import mongoose, { Types, HydratedDocument } from "mongoose";
-import {
-    Unread,
-    ChatUser,
-    ChatRoom,
-    Types as ChatTypes,
-} from "../../models/chat";
+import { Unread, ChatUser, ChatRoom, Types as ChatTypes } from "../../models/chat";
 import { pushSendAlarm, pushUpdateChatRoom } from "./messageQueue";
 import { APIType } from "api_spec";
 import logger from "../../utils/logger";
 
 type UserSentEventReturn = APIType.WebSocketType.UserSentEventReturn;
 
-export const updateUserUnreadByUUID = async (
-    uuid: Buffer,
-    chatRoomId: Types.ObjectId,
-    seq: number,
-) => {
-    await Unread.findOneAndUpdate(
-        { chatroom: chatRoomId, user_id: uuid },
-        { last_read_seq: seq },
-    );
+export const updateUserUnreadByUUID = async (uuid: Buffer, chatRoomId: Types.ObjectId, seq: number) => {
+    await Unread.findOneAndUpdate({ chatroom: chatRoomId, user_id: uuid }, { last_read_seq: seq });
 };
 
-export const updateUserUnread = async (
-    chatUserId: Types.ObjectId,
-    chatRoomId: Types.ObjectId,
-    seq: number,
-) => {
+export const updateUserUnread = async (chatUserId: Types.ObjectId, chatRoomId: Types.ObjectId, seq: number) => {
     const chatUser = await ChatUser.findById(chatUserId);
     if (chatUser === null) {
         return;
     }
 
-    await Unread.findOneAndUpdate(
-        { chatroom: chatRoomId, user_id: chatUser.user_id },
-        { last_read_seq: seq },
-    );
+    await Unread.findOneAndUpdate({ chatroom: chatRoomId, user_id: chatUser.user_id }, { last_read_seq: seq });
 };
 
 export const updateUsersUnreads = async (objectIds: Types.ObjectId[]) => {
-    const uuids = await ChatUser.find({ _id: { $in: objectIds } }).get(
-        "user_id",
-    );
+    const uuids = await ChatUser.find({ _id: { $in: objectIds } }).get("user_id");
 };
 
 export const getUnreadSequences = async (chatRoomId: Types.ObjectId) => {
-    const unreadSequences = (await Unread.find({ chatroom: chatRoomId })).map(
-        (val) => val.last_read_seq,
-    );
+    const unreadSequences = (await Unread.find({ chatroom: chatRoomId })).map((val) => val.last_read_seq);
 
     return unreadSequences;
 };
@@ -59,10 +36,7 @@ export const getUnreadCountOfUser = async (uuid: Buffer) => {
 
     let ret = 0;
     chatRooms.forEach((chatRoom) => {
-        const foundUnread = userUnreads.find(
-            (unread) =>
-                unread.chatroom._id.toString() === chatRoom._id.toString(),
-        );
+        const foundUnread = userUnreads.find((unread) => unread.chatroom._id.toString() === chatRoom._id.toString());
         // Chat room newly created and user never participated in a room
         if (foundUnread === undefined || foundUnread.last_read_seq === -1) {
             ret += chatRoom.message_seq;
@@ -85,9 +59,7 @@ export const whetherSendAlarm = async (
         logger.debug(`WhethersendAlarm: ${chatUser}:${message}`);
 
         if (chatUser !== null) {
-            const isParticipated = chatUsersIds.find(
-                (userId) => userId.toString() === chatUser._id.toString(),
-            );
+            const isParticipated = chatUsersIds.find((userId) => userId.toString() === chatUser._id.toString());
 
             logger.debug(`push update chat room:, ${chatUser}`);
             if (isParticipated === undefined) {

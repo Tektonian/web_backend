@@ -12,24 +12,12 @@ function asError(error: any) {
 type Parameter = any[];
 type RunOptions = { log: boolean };
 
-type Function<F extends (...args: any) => any> = (
-    ...params: Parameter
-) => ReturnType<F>;
+type Function<F extends (...args: any) => any> = (...params: Parameter) => ReturnType<F>;
 
-type AsyncFunction<F extends (...args: any) => any> = (
-    ...params: Parameter
-) => Promise<ReturnType<F>>;
+type AsyncFunction<F extends (...args: any) => any> = (...params: Parameter) => Promise<ReturnType<F>>;
 
-type MiddlewareFunction = (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-) => any;
-type AsyncMiddlewareFunction = (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-) => Promise<any>;
+type MiddlewareFunction = (req: Request, res: Response, next: NextFunction) => any;
+type AsyncMiddlewareFunction = (req: Request, res: Response, next: NextFunction) => Promise<any>;
 
 class Result<T> {
     __data: T;

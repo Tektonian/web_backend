@@ -26,12 +26,7 @@ import { TspecDocsMiddleware } from "tspec";
 import * as rTracer from "cls-rtracer";
 
 import logger from "./utils/logger";
-const ErrorMiddleware = (
-    err: Error,
-    req: Request,
-    res: Response,
-    next: NextFunction,
-) => {
+const ErrorMiddleware = (err: Error, req: Request, res: Response, next: NextFunction) => {
     logger.error(err.stack);
     res.json();
 };

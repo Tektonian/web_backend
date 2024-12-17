@@ -3,13 +3,8 @@ import { authConfig } from "../config/auth.config.js";
 import type { NextFunction, Request, Response } from "express";
 import logger from "../utils/logger.js";
 
-export const authenticateUser = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-) => {
-    const session =
-        res.locals.session ?? (await getSession(req, authConfig)) ?? undefined;
+export const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
+    const session = res.locals.session ?? (await getSession(req, authConfig)) ?? undefined;
     res.locals.session = session;
 
     if (session) {
@@ -19,22 +14,14 @@ export const authenticateUser = async (
     res.status(401).json({ message: "Not Authenticated" });
 };
 
-export const currentSession = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-) => {
+export const currentSession = async (req: Request, res: Response, next: NextFunction) => {
     const session = (await getSession(req, authConfig)) ?? undefined;
     res.session = session;
 
     console.log("currentSession", session);
     // encode JSON.stringfied Buffer to Buffer
     // https://stackoverflow.com/questions/34557889/how-to-deserialize-a-nested-buffer-using-json-parse
-    if (
-        session !== undefined &&
-        session.user !== undefined &&
-        session.user.id !== undefined
-    ) {
+    if (session !== undefined && session.user !== undefined && session.user.id !== undefined) {
         res.session.user.id = Buffer.from(session.user?.id);
         req.id = Buffer.from(session.user.id);
     }
@@ -42,14 +29,8 @@ export const currentSession = async (
     return next();
 };
 
-export const filterSessionByRBAC = async (
-    roles: "normal" | "corp" | "orgn" | ""[],
-) => {
-    const callback = async (
-        req: Request,
-        res: Response,
-        next: NextFunction,
-    ) => {
+export const filterSessionByRBAC = async (roles: "normal" | "corp" | "orgn" | ""[]) => {
+    const callback = async (req: Request, res: Response, next: NextFunction) => {
         const sessionUser = res.session?.user;
         if (sessionUser === undefined) {
             // TODO: log additional data such as IP

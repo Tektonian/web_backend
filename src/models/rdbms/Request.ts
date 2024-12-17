@@ -52,15 +52,9 @@ export type RequestOptionalAttributes =
     | "updated_at"
     | "corp_id"
     | "orgn_id";
-export type RequestCreationAttributes = Optional<
-    RequestAttributes,
-    RequestOptionalAttributes
->;
+export type RequestCreationAttributes = Optional<RequestAttributes, RequestOptionalAttributes>;
 
-export class Request
-    extends Model<RequestAttributes, RequestCreationAttributes>
-    implements RequestAttributes
-{
+export class Request extends Model<RequestAttributes, RequestCreationAttributes> implements RequestAttributes {
     request_id!: number;
     consumer_id!: number;
     provider_ids?: object;
@@ -114,11 +108,8 @@ export class Request
                     allowNull: true,
                     comment: "Provider ids of students",
                     get() {
-                        const stringfiedUUIDs =
-                            this.getDataValue("provider_ids");
-                        const bufferUUIDs = stringfiedUUIDs.map((uuid) =>
-                            Buffer.from(uuid),
-                        );
+                        const stringfiedUUIDs = this.getDataValue("provider_ids");
+                        const bufferUUIDs = stringfiedUUIDs.map((uuid) => Buffer.from(uuid));
                         return bufferUUIDs;
                     },
                 },
@@ -198,14 +189,12 @@ export class Request
                 corp_id: {
                     type: DataTypes.INTEGER,
                     allowNull: true,
-                    comment:
-                        "Have no idea that this field could be utilized late;;",
+                    comment: "Have no idea that this field could be utilized late;;",
                 },
                 orgn_id: {
                     type: DataTypes.INTEGER,
                     allowNull: true,
-                    comment:
-                        "Have no idea that this field could be utilized late;;",
+                    comment: "Have no idea that this field could be utilized late;;",
                 },
             },
             {

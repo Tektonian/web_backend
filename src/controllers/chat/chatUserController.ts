@@ -32,9 +32,7 @@ export const getChatUsersByUUID = async (uuids: Buffer[]) => {
     return ret;
 };
 
-export const getChatUsersById = async (
-    objectIds: mongoose.Types.ObjectId[],
-) => {
+export const getChatUsersById = async (objectIds: mongoose.Types.ObjectId[]) => {
     const ret = await ChatUser.find({ _id: { $in: objectIds } });
 
     return ret;

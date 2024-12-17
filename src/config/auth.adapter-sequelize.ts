@@ -12,11 +12,7 @@ export default function SequelizeAdapter(client: Sequelize): Adapter {
     let _synced = false;
     const sync = async () => {
         if (process.env.NODE_ENV !== "production" && !_synced) {
-            await Promise.all([
-                User.sync(),
-                Account.sync(),
-                VerificationToken.sync(),
-            ]);
+            await Promise.all([User.sync(), Account.sync(), VerificationToken.sync()]);
 
             _synced = true;
         }
@@ -143,14 +139,10 @@ export default function SequelizeAdapter(client: Sequelize): Adapter {
                 where: { provider, providerAccountId },
             });
         },
-        async createVerificationToken(
-            verificationToken,
-            tokenType: string = "email",
-        ) {
+        async createVerificationToken(verificationToken, tokenType: string = "email") {
             await sync();
 
-            verificationToken.token_type =
-                verificationToken.token_type ?? tokenType;
+            verificationToken.token_type = verificationToken.token_type ?? tokenType;
 
             return await VerificationToken.create(verificationToken);
         },

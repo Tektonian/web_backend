@@ -9,10 +9,7 @@ const client = new MeiliSearch({
 
 const SchoolSearchRouter = express.Router();
 
-SchoolSearchRouter.get("/" satisfies keyof APISpec.SearchSchoolAPISpec, (async (
-    req,
-    res,
-) => {
+SchoolSearchRouter.get("/" satisfies keyof APISpec.SearchSchoolAPISpec, (async (req, res) => {
     const { country_code } = req.query;
 
     const index = client.index(`school-name-${country_code}`);

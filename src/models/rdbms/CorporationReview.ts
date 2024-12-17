@@ -32,10 +32,7 @@ export type CorporationReviewCreationAttributes = Optional<
 >;
 
 export class CorporationReview
-    extends Model<
-        CorporationReviewAttributes,
-        CorporationReviewCreationAttributes
-    >
+    extends Model<CorporationReviewAttributes, CorporationReviewCreationAttributes>
     implements CorporationReviewAttributes
 {
     id!: number;
