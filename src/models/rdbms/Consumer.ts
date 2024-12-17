@@ -29,15 +29,9 @@ export type ConsumerOptionalAttributes =
     | "consumer_verified"
     | "created_at"
     | "updated_at";
-export type ConsumerCreationAttributes = Optional<
-    ConsumerAttributes,
-    ConsumerOptionalAttributes
->;
+export type ConsumerCreationAttributes = Optional<ConsumerAttributes, ConsumerOptionalAttributes>;
 
-export class Consumer
-    extends Model<ConsumerAttributes, ConsumerCreationAttributes>
-    implements ConsumerAttributes
-{
+export class Consumer extends Model<ConsumerAttributes, ConsumerCreationAttributes> implements ConsumerAttributes {
     consumer_id!: number;
     user_id?: any;
     corp_id?: number;
@@ -57,28 +51,19 @@ export class Consumer
     addRequests!: Sequelize.HasManyAddAssociationsMixin<Request, RequestId>;
     createRequest!: Sequelize.HasManyCreateAssociationMixin<Request>;
     removeRequest!: Sequelize.HasManyRemoveAssociationMixin<Request, RequestId>;
-    removeRequests!: Sequelize.HasManyRemoveAssociationsMixin<
-        Request,
-        RequestId
-    >;
+    removeRequests!: Sequelize.HasManyRemoveAssociationsMixin<Request, RequestId>;
     hasRequest!: Sequelize.HasManyHasAssociationMixin<Request, RequestId>;
     hasRequests!: Sequelize.HasManyHasAssociationsMixin<Request, RequestId>;
     countRequests!: Sequelize.HasManyCountAssociationsMixin;
     // Consumer belongsTo Corporation via corp_id
     corp!: Corporation;
     getCorp!: Sequelize.BelongsToGetAssociationMixin<Corporation>;
-    setCorp!: Sequelize.BelongsToSetAssociationMixin<
-        Corporation,
-        CorporationId
-    >;
+    setCorp!: Sequelize.BelongsToSetAssociationMixin<Corporation, CorporationId>;
     createCorp!: Sequelize.BelongsToCreateAssociationMixin<Corporation>;
     // Consumer belongsTo Organization via orgn_id
     orgn!: Organization;
     getOrgn!: Sequelize.BelongsToGetAssociationMixin<Organization>;
-    setOrgn!: Sequelize.BelongsToSetAssociationMixin<
-        Organization,
-        OrganizationId
-    >;
+    setOrgn!: Sequelize.BelongsToSetAssociationMixin<Organization, OrganizationId>;
     createOrgn!: Sequelize.BelongsToCreateAssociationMixin<Organization>;
     // Consumer belongsTo User via user_id
     user!: User;
@@ -124,9 +109,7 @@ export class Consumer
                     allowNull: false,
                     validate: {
                         isValidType(value: string[]) {
-                            const validTypeSet = new Set(
-                                Object.values(ConsumerEnum.CONSUMER_ENUM),
-                            );
+                            const validTypeSet = new Set(Object.values(ConsumerEnum.CONSUMER_ENUM));
 
                             const valueSet = new Set(value);
 

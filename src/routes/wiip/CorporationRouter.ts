@@ -29,14 +29,10 @@ CorporationRouter.get("/", async (req: Request, res: Response) => {
 CorporationRouter.get("/corpProfile", async (req: Request, res: Response) => {
     const corpNum = req.query.corpNum;
 
-    const storedCorpProfile = await CorpController.findCorpProfileByCorpNum(
-        Number(corpNum),
-    );
+    const storedCorpProfile = await CorpController.findCorpProfileByCorpNum(Number(corpNum));
 
     if (storedCorpProfile === undefined) {
-        const externCorpProfile = await CorpController.externReqCorpProfile(
-            Number(corpNum),
-        );
+        const externCorpProfile = await CorpController.externReqCorpProfile(Number(corpNum));
 
         if (externCorpProfile === undefined) {
             res.json({ status: "Extern API error", profile: undefined });

@@ -9,10 +9,7 @@ const client = new MeiliSearch({
 
 const ExamSearchRouter = express.Router();
 
-ExamSearchRouter.get("/" satisfies keyof APISpec.SearchExamAPISpec, (async (
-    req,
-    res,
-) => {
+ExamSearchRouter.get("/" satisfies keyof APISpec.SearchExamAPISpec, (async (req, res) => {
     const index = client.index(`language-exam`);
 
     try {

@@ -23,8 +23,7 @@ export interface academichistorywithschoolAttributes {
 }
 
 export type academichistorywithschoolPk = "id";
-export type academichistorywithschoolId =
-    academichistorywithschool[academichistorywithschoolPk];
+export type academichistorywithschoolId = academichistorywithschool[academichistorywithschoolPk];
 export type academichistorywithschoolOptionalAttributes =
     | "id"
     | "school_email"
@@ -38,10 +37,7 @@ export type academichistorywithschoolCreationAttributes = Optional<
 >;
 
 export class academichistorywithschool
-    extends Model<
-        academichistorywithschoolAttributes,
-        academichistorywithschoolCreationAttributes
-    >
+    extends Model<academichistorywithschoolAttributes, academichistorywithschoolCreationAttributes>
     implements academichistorywithschoolAttributes
 {
     id!: number;
@@ -63,9 +59,7 @@ export class academichistorywithschool
     email_domain?: string;
     phone_number?: string;
 
-    static initModel(
-        sequelize: Sequelize.Sequelize,
-    ): typeof academichistorywithschool {
+    static initModel(sequelize: Sequelize.Sequelize): typeof academichistorywithschool {
         return academichistorywithschool.init(
             {
                 id: {

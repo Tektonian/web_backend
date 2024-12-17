@@ -1,9 +1,4 @@
-import {
-    ChatRoom,
-    ChatContent,
-    ChatUser,
-    Types as ChatTypes,
-} from "../../models/chat";
+import { ChatRoom, ChatContent, ChatUser, Types as ChatTypes } from "../../models/chat";
 import { Queue, Worker, QueueEventsProducer } from "bullmq";
 import mongoose, { Types } from "mongoose";
 
@@ -33,10 +28,7 @@ const sendAlarmProducer = new QueueEventsProducer("sendAlarm");
 const refreshChatRoomsQueue = new Queue("refreshChatRooms");
 const refreshChatRoomsProducer = new QueueEventsProducer("refreshChatRooms");
 
-export const pushSendAlarm = async (
-    message: APIType.WebSocketType.UserSentEventReturn,
-    userUUID: Buffer,
-) => {
+export const pushSendAlarm = async (message: APIType.WebSocketType.UserSentEventReturn, userUUID: Buffer) => {
     logger.debug(`push alaram: ${userUUID.toString("hex")}`);
     sendAlarmProducer.publishEvent({
         eventName: userUUID.toString("hex"),

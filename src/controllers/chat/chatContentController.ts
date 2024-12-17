@@ -1,10 +1,5 @@
 import mongoose, { Types } from "mongoose";
-import {
-    ChatUser,
-    ChatContent,
-    ChatRoom,
-    Types as ChatTypes,
-} from "../../models/chat";
+import { ChatUser, ChatContent, ChatRoom, Types as ChatTypes } from "../../models/chat";
 
 import { pushMessageQueue } from "./messageQueue";
 
@@ -16,29 +11,19 @@ export const sendMessage = async (
     senderId: Types.ObjectId,
     message: APIType.ContentType.MessageContentType,
 ) => {
-    logger.debug(
-        `Send message: ChatRoomId: ${chatRoomId}, Sender: ${senderId}, Message: ${message}`,
-    );
+    logger.debug(`Send message: ChatRoomId: ${chatRoomId}, Sender: ${senderId}, Message: ${message}`);
 
     await pushMessageQueue(message, chatRoomId, senderId);
 };
 
-export const getChatRoomMessages = async (
-    chatRoomId: mongoose.Types.ObjectId,
-) => {
+export const getChatRoomMessages = async (chatRoomId: mongoose.Types.ObjectId) => {
     const messages = await ChatContent.find({ chatroom: chatRoomId });
 
     return messages;
 };
 
-export const getChatRoomMessagesBySeq = async (
-    chatRoomId: mongoose.Types.ObjectId,
-    lastSeq: number,
-) => {
-    const messages = await ChatContent.find({ chatroom: chatRoomId }).gte(
-        "seq",
-        lastSeq,
-    );
+export const getChatRoomMessagesBySeq = async (chatRoomId: mongoose.Types.ObjectId, lastSeq: number) => {
+    const messages = await ChatContent.find({ chatroom: chatRoomId }).gte("seq", lastSeq);
 
     return messages;
 };

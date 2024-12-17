@@ -31,15 +31,9 @@ export type StudentOptionalAttributes =
     | "keyword_list"
     | "created_at"
     | "updated_at";
-export type StudentCreationAttributes = Optional<
-    StudentAttributes,
-    StudentOptionalAttributes
->;
+export type StudentCreationAttributes = Optional<StudentAttributes, StudentOptionalAttributes>;
 
-export class Student
-    extends Model<StudentAttributes, StudentCreationAttributes>
-    implements StudentAttributes
-{
+export class Student extends Model<StudentAttributes, StudentCreationAttributes> implements StudentAttributes {
     student_id!: number;
     user_id!: any;
     name_glb!: object;
@@ -58,68 +52,26 @@ export class Student
     // Student hasMany AcademicHistory via student_id
     AcademicHistories!: AcademicHistory[];
     getAcademicHistories!: Sequelize.HasManyGetAssociationsMixin<AcademicHistory>;
-    setAcademicHistories!: Sequelize.HasManySetAssociationsMixin<
-        AcademicHistory,
-        AcademicHistoryId
-    >;
-    addAcademicHistory!: Sequelize.HasManyAddAssociationMixin<
-        AcademicHistory,
-        AcademicHistoryId
-    >;
-    addAcademicHistories!: Sequelize.HasManyAddAssociationsMixin<
-        AcademicHistory,
-        AcademicHistoryId
-    >;
+    setAcademicHistories!: Sequelize.HasManySetAssociationsMixin<AcademicHistory, AcademicHistoryId>;
+    addAcademicHistory!: Sequelize.HasManyAddAssociationMixin<AcademicHistory, AcademicHistoryId>;
+    addAcademicHistories!: Sequelize.HasManyAddAssociationsMixin<AcademicHistory, AcademicHistoryId>;
     createAcademicHistory!: Sequelize.HasManyCreateAssociationMixin<AcademicHistory>;
-    removeAcademicHistory!: Sequelize.HasManyRemoveAssociationMixin<
-        AcademicHistory,
-        AcademicHistoryId
-    >;
-    removeAcademicHistories!: Sequelize.HasManyRemoveAssociationsMixin<
-        AcademicHistory,
-        AcademicHistoryId
-    >;
-    hasAcademicHistory!: Sequelize.HasManyHasAssociationMixin<
-        AcademicHistory,
-        AcademicHistoryId
-    >;
-    hasAcademicHistories!: Sequelize.HasManyHasAssociationsMixin<
-        AcademicHistory,
-        AcademicHistoryId
-    >;
+    removeAcademicHistory!: Sequelize.HasManyRemoveAssociationMixin<AcademicHistory, AcademicHistoryId>;
+    removeAcademicHistories!: Sequelize.HasManyRemoveAssociationsMixin<AcademicHistory, AcademicHistoryId>;
+    hasAcademicHistory!: Sequelize.HasManyHasAssociationMixin<AcademicHistory, AcademicHistoryId>;
+    hasAcademicHistories!: Sequelize.HasManyHasAssociationsMixin<AcademicHistory, AcademicHistoryId>;
     countAcademicHistories!: Sequelize.HasManyCountAssociationsMixin;
     // Student hasMany ExamHistory via student_id
     ExamHistories!: ExamHistory[];
     getExamHistories!: Sequelize.HasManyGetAssociationsMixin<ExamHistory>;
-    setExamHistories!: Sequelize.HasManySetAssociationsMixin<
-        ExamHistory,
-        ExamHistoryId
-    >;
-    addExamHistory!: Sequelize.HasManyAddAssociationMixin<
-        ExamHistory,
-        ExamHistoryId
-    >;
-    addExamHistories!: Sequelize.HasManyAddAssociationsMixin<
-        ExamHistory,
-        ExamHistoryId
-    >;
+    setExamHistories!: Sequelize.HasManySetAssociationsMixin<ExamHistory, ExamHistoryId>;
+    addExamHistory!: Sequelize.HasManyAddAssociationMixin<ExamHistory, ExamHistoryId>;
+    addExamHistories!: Sequelize.HasManyAddAssociationsMixin<ExamHistory, ExamHistoryId>;
     createExamHistory!: Sequelize.HasManyCreateAssociationMixin<ExamHistory>;
-    removeExamHistory!: Sequelize.HasManyRemoveAssociationMixin<
-        ExamHistory,
-        ExamHistoryId
-    >;
-    removeExamHistories!: Sequelize.HasManyRemoveAssociationsMixin<
-        ExamHistory,
-        ExamHistoryId
-    >;
-    hasExamHistory!: Sequelize.HasManyHasAssociationMixin<
-        ExamHistory,
-        ExamHistoryId
-    >;
-    hasExamHistories!: Sequelize.HasManyHasAssociationsMixin<
-        ExamHistory,
-        ExamHistoryId
-    >;
+    removeExamHistory!: Sequelize.HasManyRemoveAssociationMixin<ExamHistory, ExamHistoryId>;
+    removeExamHistories!: Sequelize.HasManyRemoveAssociationsMixin<ExamHistory, ExamHistoryId>;
+    hasExamHistory!: Sequelize.HasManyHasAssociationMixin<ExamHistory, ExamHistoryId>;
+    hasExamHistories!: Sequelize.HasManyHasAssociationsMixin<ExamHistory, ExamHistoryId>;
     countExamHistories!: Sequelize.HasManyCountAssociationsMixin;
     // Student belongsTo User via user_id
     user!: User;

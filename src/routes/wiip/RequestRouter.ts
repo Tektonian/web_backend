@@ -21,10 +21,7 @@ import logger from "../../utils/logger";
 
 const RequestRouter = express.Router();
 
-RequestRouter.post("/" satisfies keyof APISpec.RequestAPISpec, (async (
-    req,
-    res,
-) => {
+RequestRouter.post("/" satisfies keyof APISpec.RequestAPISpec, (async (req, res) => {
     const user = res.session?.user;
     const { data, role } = req.body;
 
@@ -49,19 +46,16 @@ RequestRouter.post("/" satisfies keyof APISpec.RequestAPISpec, (async (
     }
 }) as APISpec.RequestAPISpec["/"]["post"]["__handler"]);
 
-RequestRouter.get(
-    "/:request_id" satisfies keyof APISpec.RequestAPISpec,
-    (async (req, res) => {
-        const request_id = req.params.request_id;
-        const roles = res.session?.user.roles;
+RequestRouter.get("/:request_id" satisfies keyof APISpec.RequestAPISpec, (async (req, res) => {
+    const request_id = req.params.request_id;
+    const roles = res.session?.user.roles;
 
-        const request = (await getRequestByRequestId(Number(request_id)))?.get({
-            plain: true,
-        });
+    const request = (await getRequestByRequestId(Number(request_id)))?.get({
+        plain: true,
+    });
 
-        res.json({ data: request, status: "ok" });
-    }) as APISpec.RequestAPISpec["/:request_id"]["get"]["__handler"],
-);
+    res.json({ data: request, status: "ok" });
+}) as APISpec.RequestAPISpec["/:request_id"]["get"]["__handler"]);
 
 RequestRouter.post("/status/contract", async (req, res) => {
     logger.info("START-Update Request status to Contract");
@@ -102,10 +96,7 @@ RequestRouter.post("/status/contract", async (req, res) => {
         return;
     }
 
-    await updateRequestStatus(
-        request.request_id,
-        RequestEnum.REQUEST_STATUS_ENUM.CONTRACTED,
-    );
+    await updateRequestStatus(request.request_id, RequestEnum.REQUEST_STATUS_ENUM.CONTRACTED);
     /**
      * Once request_status changed into CONTRACTED, several things should be set
      * 1. Update Chat Rooms.
@@ -130,9 +121,7 @@ RequestRouter.post("/status/contract", async (req, res) => {
         request.provider_ids as Buffer[],
     );
 
-    const chatUsers = await getChatUsersByUUID(
-        request.provider_ids as Buffer[],
-    );
+    const chatUsers = await getChatUsersByUUID(request.provider_ids as Buffer[]);
 
     await Promise.all(
         chatUsers.map((chatUser) => {
@@ -194,10 +183,7 @@ RequestRouter.post("/status/finish", async (req, res) => {
         return;
     }
 
-    await updateRequestStatus(
-        request.request_id,
-        RequestEnum.REQUEST_STATUS_ENUM.FINISHED,
-    );
+    await updateRequestStatus(request.request_id, RequestEnum.REQUEST_STATUS_ENUM.FINISHED);
     // TODO: implement after actions,
     // such as remove chatrooms by request_id
     // and refersh chatroom etc...
@@ -218,11 +204,7 @@ RequestRouter.post("/provider", async (req, res) => {
 
     const chatRoom = await getChatRoomById(chatroom_id);
 
-    if (
-        chatRoom === null ||
-        chatRoom.participant_ids.length !== 2 ||
-        chatRoom.consumer_id !== sessionUser.id
-    ) {
+    if (chatRoom === null || chatRoom.participant_ids.length !== 2 || chatRoom.consumer_id !== sessionUser.id) {
         res.json("Wrong chatroom_id input or DB error");
         return;
     }
@@ -254,18 +236,14 @@ RequestRouter.post("/provider", async (req, res) => {
     const prevProviderIds = request.provider_ids as Buffer[];
 
     // counterpart of a consumer in chatroom is provider
-    const selectedProviderId = chatRoom.participant_ids.find(
-        (id) => !id.equals(sessionUser.id as Buffer),
-    );
+    const selectedProviderId = chatRoom.participant_ids.find((id) => !id.equals(sessionUser.id as Buffer));
 
     if (selectedProviderId === undefined) {
         res.json("Wrong user");
         return;
     }
 
-    const newProviderIds = [...prevProviderIds, selectedProviderId].filter(
-        (id) => !id.equals(selectedProviderId),
-    );
+    const newProviderIds = [...prevProviderIds, selectedProviderId].filter((id) => !id.equals(selectedProviderId));
 
     await updateRequestProviderIds(newProviderIds, request.request_id);
 
@@ -274,10 +252,7 @@ RequestRouter.post("/provider", async (req, res) => {
     logger.info("END-Update provider_ids of Request table");
 });
 
-RequestRouter.put("/update" satisfies keyof APISpec.RequestAPISpec, (async (
-    req,
-    res,
-) => {
+RequestRouter.put("/update" satisfies keyof APISpec.RequestAPISpec, (async (req, res) => {
     logger.info("START-Update request status");
     const sessionUser = res.session?.user;
     const { request_id, update } = req.body;

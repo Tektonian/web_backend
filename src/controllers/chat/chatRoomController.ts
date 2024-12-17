@@ -11,11 +11,7 @@ const { ChatRoom, ChatUser, Unread, ChatContent } = ChatModels;
 const { Request, User } = RDBModels;
 
 // TODO: should be transactional!! -> Need new MongoDB setting
-export const createChatRoom = async (
-    requestId: number,
-    consumerId: Buffer,
-    participantIds: Buffer[],
-) => {
+export const createChatRoom = async (requestId: number, consumerId: Buffer, participantIds: Buffer[]) => {
     try {
         const request = await Request.findOne({
             where: { request_id: requestId },
@@ -132,10 +128,7 @@ export const delChatRoom = async (chatRoomId: Types.ObjectId) => {
 
     await Unread.deleteMany({ chatroom_id: chatRoom._id });
 
-    return await ChatRoom.updateOne(
-        { _id: chatRoom._id },
-        { $set: { request_id: -1 * chatRoom.request_id } },
-    );
+    return await ChatRoom.updateOne({ _id: chatRoom._id }, { $set: { request_id: -1 * chatRoom.request_id } });
 };
 
 export const sendRefreshChatRooms = async (chatUserId: Types.ObjectId) => {
@@ -143,17 +136,10 @@ export const sendRefreshChatRooms = async (chatUserId: Types.ObjectId) => {
 };
 
 // Not clean code
-export const actionCompleteRecruit = async (
-    requestId: number,
-    consumerId: Buffer,
-    providerIds: Buffer[],
-) => {
+export const actionCompleteRecruit = async (requestId: number, consumerId: Buffer, providerIds: Buffer[]) => {
     // Find chatRooms that need to be deleted
     const toDelChatRooms = await ChatRoom.find({
-        $and: [
-            { request_id: requestId },
-            { participant_ids: { $nin: providerIds } },
-        ],
+        $and: [{ request_id: requestId }, { participant_ids: { $nin: providerIds } }],
     });
     await Promise.all(
         toDelChatRooms.map(async (room) => {
@@ -163,10 +149,7 @@ export const actionCompleteRecruit = async (
 
     // Won't create unnecessary group　chat room
     if (providerIds.length !== 1) {
-        await createChatRoom(requestId, consumerId, [
-            ...providerIds,
-            consumerId,
-        ]);
+        await createChatRoom(requestId, consumerId, [...providerIds, consumerId]);
     }
 
     return await ChatRoom.find({
@@ -175,10 +158,7 @@ export const actionCompleteRecruit = async (
 };
 
 // Needed?
-export const leaveChatRoom = async (
-    chatRoomId: Types.ObjectId,
-    userId: Buffer,
-) => {
+export const leaveChatRoom = async (chatRoomId: Types.ObjectId, userId: Buffer) => {
     const chatRoom = await ChatRoom.findById(chatRoomId);
 
     if (chatRoom === null) {
@@ -187,8 +167,5 @@ export const leaveChatRoom = async (
 
     const newIds = chatRoom.participant_ids.filter((id) => !id.equals(userId));
 
-    return await ChatRoom.updateOne(
-        { _id: chatRoom._id },
-        { participant_ids: newIds },
-    );
+    return await ChatRoom.updateOne({ _id: chatRoom._id }, { participant_ids: newIds });
 };

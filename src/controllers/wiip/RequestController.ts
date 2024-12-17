@@ -45,10 +45,7 @@ export const getRequestByRequestId = async (request_id: number) => {
     return request;
 };
 
-export const getRequestsByUserId = async (
-    userId: Buffer,
-    as: "consumer" | "provider" | undefined = undefined,
-) => {
+export const getRequestsByUserId = async (userId: Buffer, as: "consumer" | "provider" | undefined = undefined) => {
     /**
      * We can search chatrooms to identify all users related with request
      */
@@ -58,37 +55,25 @@ export const getRequestsByUserId = async (
             participant_ids: { $in: userId },
         });
         // request_id could be less than 0 (when deleted)
-        requestIds = Array.from(
-            new Set(chatRooms.map((room) => Math.abs(room.request_id))),
-        );
+        requestIds = Array.from(new Set(chatRooms.map((room) => Math.abs(room.request_id))));
     } else if (as === "consumer") {
         const chatRooms = await ChatRoom.find({
             consumer_id: userId,
         });
         // request_id could be less than 0 (when deleted)
-        requestIds = Array.from(
-            new Set(chatRooms.map((room) => Math.abs(room.request_id))),
-        );
+        requestIds = Array.from(new Set(chatRooms.map((room) => Math.abs(room.request_id))));
     } else if (as === "provider") {
         const chatRooms = await ChatRoom.find({
-            $and: [
-                { consumer_id: { $ne: userId } },
-                { participant_ids: { $in: userId } },
-            ],
+            $and: [{ consumer_id: { $ne: userId } }, { participant_ids: { $in: userId } }],
         });
         // request_id could be less than 0 (when deleted)
-        requestIds = Array.from(
-            new Set(chatRooms.map((room) => Math.abs(room.request_id))),
-        );
+        requestIds = Array.from(new Set(chatRooms.map((room) => Math.abs(room.request_id))));
     }
 
     return await RequestModel.findAll({ where: { request_id: requestIds } });
 };
 
-export const updateRequestProviderIds = async (
-    newProviderIds: Buffer[],
-    requestId: number,
-) => {
+export const updateRequestProviderIds = async (newProviderIds: Buffer[], requestId: number) => {
     return await RequestModel.update(
         // Buffer type UUID will be stringfied
         { provider_ids: newProviderIds },
@@ -97,11 +82,7 @@ export const updateRequestProviderIds = async (
 };
 
 // api_spec 문서 보고 데이터 타비 맞춰서 리턴하도록 수정
-export const createRequest = async (
-    uuid: typeof DataTypes.UUID,
-    role: "corp" | "orgn" | "normal",
-    data,
-) => {
+export const createRequest = async (uuid: typeof DataTypes.UUID, role: "corp" | "orgn" | "normal", data) => {
     try {
         const ret = await sequelize.transaction(async (t) => {
             logger.info("Start: Transaction-[Create Request]");
@@ -128,9 +109,7 @@ export const createRequest = async (
 
             logger.info(`Request created: ${createRequest}`);
 
-            const coordinate = JSON.parse(
-                JSON.stringify(createdRequest.dataValues.address_coordinate),
-            ).coordinates;
+            const coordinate = JSON.parse(JSON.stringify(createdRequest.dataValues.address_coordinate)).coordinates;
 
             const searchRet = await requestSearch.addDocuments(
                 [
@@ -146,9 +125,7 @@ export const createRequest = async (
             const searchTask = await client.waitForTask(searchRet.taskUid);
 
             if (searchTask.status !== "succeeded") {
-                throw new Error(
-                    "No record created! " + JSON.stringify(searchTask),
-                );
+                throw new Error("No record created! " + JSON.stringify(searchTask));
             }
             logger.info("Request has been added to Search Engine");
             return createdRequest.request_id;
@@ -162,10 +139,7 @@ export const createRequest = async (
     }
 };
 
-export const updateRequestStatus = async (
-    requestId: number,
-    status: APIType.RequestType.REQUEST_STATUS_ENUM,
-) => {
+export const updateRequestStatus = async (requestId: number, status: APIType.RequestType.REQUEST_STATUS_ENUM) => {
     const request = await RequestModel.findOne({
         where: { request_id: requestId },
         raw: true,
@@ -176,8 +150,5 @@ export const updateRequestStatus = async (
         return undefined;
     }
 
-    return await RequestModel.update(
-        { request_status: status },
-        { where: { request_id: request.request_id } },
-    );
+    return await RequestModel.update({ request_status: status }, { where: { request_id: request.request_id } });
 };

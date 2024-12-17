@@ -49,10 +49,7 @@ export type requestofuserOptionalAttributes =
     | "status"
     | "start_time"
     | "end_time";
-export type requestofuserCreationAttributes = Optional<
-    requestofuserAttributes,
-    requestofuserOptionalAttributes
->;
+export type requestofuserCreationAttributes = Optional<requestofuserAttributes, requestofuserOptionalAttributes>;
 
 export class requestofuser
     extends Model<requestofuserAttributes, requestofuserCreationAttributes>
@@ -91,9 +88,7 @@ export class requestofuser
                 user_id: {
                     type: DataTypes.BLOB,
                     allowNull: false,
-                    defaultValue: Sequelize.Sequelize.literal(
-                        "uuid_to_bin(uuid())",
-                    ),
+                    defaultValue: Sequelize.Sequelize.literal("uuid_to_bin(uuid())"),
                 },
                 username: {
                     type: DataTypes.STRING(64),

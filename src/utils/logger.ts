@@ -62,11 +62,7 @@ const printfFormat = (exclude: string[] = []) => {
             Object.keys(info)
                 .reverse()
                 .reduce((acc, key, i) => {
-                    if (
-                        typeof key === "string" &&
-                        !exclude.includes(key) &&
-                        !["message", "level"].includes(key)
-                    ) {
+                    if (typeof key === "string" && !exclude.includes(key) && !["message", "level"].includes(key)) {
                         if (i > 0) acc += "\n ";
                         acc += `"${key}": "${info[key]}"`;
                     }
@@ -105,8 +101,7 @@ const customFormat = winston.format((info: InformationType) => {
             ? ""
             : `${str.slice(0, 8)}-${str.slice(8, 12)}-${str.slice(12, 16)}-${str.slice(16, 20)}-${str.slice(20)}`;
     const fileName = errorAt.getFileName();
-    const functionName =
-        errorAt.getFunctionName() ?? errorAt.getMethodName() ?? "<anonymous>";
+    const functionName = errorAt.getFunctionName() ?? errorAt.getMethodName() ?? "<anonymous>";
     const lineNumber = errorAt.getLineNumber();
     const columnNumber = errorAt.getColumnNumber();
 

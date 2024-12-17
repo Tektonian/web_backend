@@ -18,17 +18,8 @@ const getEventHandler = (name: string, target: string, action: string) => {
     };
 };
 
-export const addEventSchedule = (
-    name: string,
-    target: string,
-    action: string,
-    date: Date,
-) => {
-    schedule.scheduleJob(
-        JOB_NAME_CONSTRUCTOR(name, target, action),
-        date,
-        getEventHandler(name, target, action),
-    );
+export const addEventSchedule = (name: string, target: string, action: string, date: Date) => {
+    schedule.scheduleJob(JOB_NAME_CONSTRUCTOR(name, target, action), date, getEventHandler(name, target, action));
 };
 
 const initDevelopment = () => {};
@@ -67,9 +58,7 @@ const JOB_NAME_CONSTRUCTOR = (name: string, target: string, action: string) => {
     return `${name}:${target}:${action}`;
 };
 
-const JOB_NAME_PARSER = (
-    jobName: string,
-): { name: string; target: string; action: string } => {
+const JOB_NAME_PARSER = (jobName: string): { name: string; target: string; action: string } => {
     const sliced = jobName.split(":");
     return {
         name: sliced[0],
@@ -96,11 +85,7 @@ const __exitHandler = () => {
             });
         }
     }
-    const events = fs.writeFileSync(
-        "events.json",
-        JSON.stringify(ret),
-        "utf-8",
-    );
+    const events = fs.writeFileSync("events.json", JSON.stringify(ret), "utf-8");
 
     schedule.gracefulShutdown();
 };

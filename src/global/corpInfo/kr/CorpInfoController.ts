@@ -82,8 +82,7 @@ export const externReqCorpProfile = async (corpNum: number) => {
             crno: corpNum,
         };
         const getQuery = new URLSearchParams(getParams).toString();
-        const getUrl =
-            CORP_API_BASE_URL + "/" + CORP_API_END_POINT + "?" + getQuery;
+        const getUrl = CORP_API_BASE_URL + "/" + CORP_API_END_POINT + "?" + getQuery;
 
         const externReq = await fetch(getUrl, {
             method: "GET",
@@ -113,17 +112,13 @@ export const createCorpProfile = async (corpProfile) => {
 };
 
 export const findCorpProfileByCorpNum = async (corpNum: number) => {
-    const corpProfile = (
-        await Corporation.findOne({ where: { corp_num: corpNum } })
-    )?.get({ plain: true });
+    const corpProfile = (await Corporation.findOne({ where: { corp_num: corpNum } }))?.get({ plain: true });
 
     return corpProfile;
 };
 
 export const findCorpProfileByCorpId = async (corpId: number) => {
-    const corpProfile = (
-        await Corporation.findOne({ where: { corp_id: corpId } })
-    )?.get({ plain: true });
+    const corpProfile = (await Corporation.findOne({ where: { corp_id: corpId } }))?.get({ plain: true });
 
     return corpProfile;
 };

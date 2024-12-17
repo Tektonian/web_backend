@@ -60,10 +60,7 @@ export type requestofcorporationCreationAttributes = Optional<
 >;
 
 export class requestofcorporation
-    extends Model<
-        requestofcorporationAttributes,
-        requestofcorporationCreationAttributes
-    >
+    extends Model<requestofcorporationAttributes, requestofcorporationCreationAttributes>
     implements requestofcorporationAttributes
 {
     request_id!: number;
@@ -95,9 +92,7 @@ export class requestofcorporation
     logo_image?: string;
     site_url?: string;
 
-    static initModel(
-        sequelize: Sequelize.Sequelize,
-    ): typeof requestofcorporation {
+    static initModel(sequelize: Sequelize.Sequelize): typeof requestofcorporation {
         return requestofcorporation.init(
             {
                 request_id: {

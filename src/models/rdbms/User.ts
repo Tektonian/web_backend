@@ -17,22 +17,10 @@ export interface UserAttributes {
 
 export type UserPk = "user_id";
 export type UserId = User[UserPk];
-export type UserOptionalAttributes =
-    | "user_id"
-    | "username"
-    | "created_at"
-    | "updated_at"
-    | "image"
-    | "roles";
-export type UserCreationAttributes = Optional<
-    UserAttributes,
-    UserOptionalAttributes
->;
+export type UserOptionalAttributes = "user_id" | "username" | "created_at" | "updated_at" | "image" | "roles";
+export type UserCreationAttributes = Optional<UserAttributes, UserOptionalAttributes>;
 
-export class User
-    extends Model<UserAttributes, UserCreationAttributes>
-    implements UserAttributes
-{
+export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
     user_id!: any;
     username?: string;
     email!: string;
@@ -49,10 +37,7 @@ export class User
     addAccounts!: Sequelize.HasManyAddAssociationsMixin<Account, AccountId>;
     createAccount!: Sequelize.HasManyCreateAssociationMixin<Account>;
     removeAccount!: Sequelize.HasManyRemoveAssociationMixin<Account, AccountId>;
-    removeAccounts!: Sequelize.HasManyRemoveAssociationsMixin<
-        Account,
-        AccountId
-    >;
+    removeAccounts!: Sequelize.HasManyRemoveAssociationsMixin<Account, AccountId>;
     hasAccount!: Sequelize.HasManyHasAssociationMixin<Account, AccountId>;
     hasAccounts!: Sequelize.HasManyHasAssociationsMixin<Account, AccountId>;
     countAccounts!: Sequelize.HasManyCountAssociationsMixin;
@@ -63,14 +48,8 @@ export class User
     addConsumer!: Sequelize.HasManyAddAssociationMixin<Consumer, ConsumerId>;
     addConsumers!: Sequelize.HasManyAddAssociationsMixin<Consumer, ConsumerId>;
     createConsumer!: Sequelize.HasManyCreateAssociationMixin<Consumer>;
-    removeConsumer!: Sequelize.HasManyRemoveAssociationMixin<
-        Consumer,
-        ConsumerId
-    >;
-    removeConsumers!: Sequelize.HasManyRemoveAssociationsMixin<
-        Consumer,
-        ConsumerId
-    >;
+    removeConsumer!: Sequelize.HasManyRemoveAssociationMixin<Consumer, ConsumerId>;
+    removeConsumers!: Sequelize.HasManyRemoveAssociationsMixin<Consumer, ConsumerId>;
     hasConsumer!: Sequelize.HasManyHasAssociationMixin<Consumer, ConsumerId>;
     hasConsumers!: Sequelize.HasManyHasAssociationsMixin<Consumer, ConsumerId>;
     countConsumers!: Sequelize.HasManyCountAssociationsMixin;
@@ -82,10 +61,7 @@ export class User
     addStudents!: Sequelize.HasManyAddAssociationsMixin<Student, StudentId>;
     createStudent!: Sequelize.HasManyCreateAssociationMixin<Student>;
     removeStudent!: Sequelize.HasManyRemoveAssociationMixin<Student, StudentId>;
-    removeStudents!: Sequelize.HasManyRemoveAssociationsMixin<
-        Student,
-        StudentId
-    >;
+    removeStudents!: Sequelize.HasManyRemoveAssociationsMixin<Student, StudentId>;
     hasStudent!: Sequelize.HasManyHasAssociationMixin<Student, StudentId>;
     hasStudents!: Sequelize.HasManyHasAssociationsMixin<Student, StudentId>;
     countStudents!: Sequelize.HasManyCountAssociationsMixin;
@@ -96,9 +72,7 @@ export class User
                 user_id: {
                     type: DataTypes.BLOB,
                     allowNull: false,
-                    defaultValue: Sequelize.Sequelize.literal(
-                        "uuid_to_bin(uuid())",
-                    ),
+                    defaultValue: Sequelize.Sequelize.literal("uuid_to_bin(uuid())"),
                     primaryKey: true,
                 },
                 username: {
@@ -120,9 +94,7 @@ export class User
                         "To implement RBAC based access control, `roles` are needed.\n\nWe can filter unauthorized requests with role entity without querying database.\n\nOnce verification has been occurred user’s roles must be changed!!!!",
                     validate: {
                         isValidRole(value: string[]) {
-                            const validRoleSet = new Set(
-                                Object.values(UserEnum.USER_ROLE_ENUM),
-                            );
+                            const validRoleSet = new Set(Object.values(UserEnum.USER_ROLE_ENUM));
                             const valueSet = new Set(value);
 
                             if (valueSet.difference(validRoleSet).size !== 0) {

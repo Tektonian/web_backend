@@ -9,30 +9,19 @@ import * as ChatRoomController from "../../controllers/chat/chatRoomController";
 import { getUserByConsumerId } from "../../controllers/UserController";
 import { getUnreadCountOfUser } from "../../controllers/chat/chatUnreadController";
 import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
-import {
-    getChatRoomMessagesByContentType,
-    sendMessage,
-} from "../../controllers/chat/chatContentController";
+import { getChatRoomMessagesByContentType, sendMessage } from "../../controllers/chat/chatContentController";
 import { getStudentByUserId } from "../../controllers/wiip/StudentController";
 
 import logger from "../../utils/logger";
 
 import { RequestEnum } from "api_spec/enum";
-import {
-    AlarmMessageGlb,
-    AlarmMessageGlbEnum,
-} from "../../global/text/chat/alarm";
+import { AlarmMessageGlb, AlarmMessageGlbEnum } from "../../global/text/chat/alarm";
 
 const ChatRouter = Router();
 
 const { User, Request } = models;
 
-const {
-    actionCompleteRecruit,
-    createChatRoom,
-    getChatRoomById,
-    getAliveChatRoomsByUser,
-} = ChatRoomController;
+const { actionCompleteRecruit, createChatRoom, getChatRoomById, getAliveChatRoomsByUser } = ChatRoomController;
 
 /**
  * @deprecated
@@ -76,20 +65,17 @@ ChatRouter.post("/chatroom", async (req, res) => {
         return;
     }
 
-    const consumerInstance = await getUserByConsumerId(
-        reqeustInstance.consumer_id,
-    );
+    const consumerInstance = await getUserByConsumerId(reqeustInstance.consumer_id);
 
     if (consumerInstance === undefined) {
         res.json({ status: "Db error" });
         return;
     }
 
-    const chatRoom = await createChatRoom(
-        reqeustInstance.request_id,
+    const chatRoom = await createChatRoom(reqeustInstance.request_id, consumerInstance.user_id, [
         consumerInstance.user_id,
-        [consumerInstance.user_id, userInstance.user_id],
-    );
+        userInstance.user_id,
+    ]);
 
     res.json({ status: "ok" });
     return;
@@ -160,11 +146,9 @@ ChatRouter.put("/request", async (req, res) => {
             return;
         }
 
-        const request = (await getRequestByRequestId(chatRoom.request_id))?.get(
-            {
-                plain: true,
-            },
-        );
+        const request = (await getRequestByRequestId(chatRoom.request_id))?.get({
+            plain: true,
+        });
 
         if (request === undefined || chatRoom === null) {
             res.json("Db error");
@@ -185,9 +169,7 @@ ChatRouter.put("/request", async (req, res) => {
         */
         const prevProviderIds = (request.provider_ids ?? []) as Buffer[];
 
-        const newProviderId = chatRoom.participant_ids.find(
-            (id) => !id.equals(sessionUser.id as Buffer),
-        );
+        const newProviderId = chatRoom.participant_ids.find((id) => !id.equals(sessionUser.id as Buffer));
 
         if (newProviderId === undefined) {
             res.json("Something wrong");
@@ -196,11 +178,10 @@ ChatRouter.put("/request", async (req, res) => {
 
         if (prevProviderIds.length + 1 === request.head_count) {
             await addProviderIdToRequest(newProviderId, request.request_id);
-            await actionCompleteRecruit(
-                request.request_id,
-                sessionUser.id as Buffer,
-                [...prevProviderIds, newProviderId],
-            );
+            await actionCompleteRecruit(request.request_id, sessionUser.id as Buffer, [
+                ...prevProviderIds,
+                newProviderId,
+            ]);
         } else if (prevProviderIds.length < request.head_count) {
             await addProviderIdToRequest(newProviderId, request.request_id);
         } else {
@@ -261,9 +242,7 @@ ChatRouter.post("/check-attending", async (req, res) => {
     // Provider ideas are saved with stringifed UUID
     const stringfiedProviderIds = request.provider_ids;
 
-    const providerIds = stringfiedProviderIds.map((id) =>
-        Buffer.from(id),
-    ) as Buffer[];
+    const providerIds = stringfiedProviderIds.map((id) => Buffer.from(id)) as Buffer[];
 
     const isProvider = providerIds.find((id) => id.equals(sessionUser.id));
 
@@ -273,9 +252,7 @@ ChatRouter.post("/check-attending", async (req, res) => {
         return;
     }
 
-    const chatRoomAll = await ChatRoomController.getAliveChatRoomsByUser(
-        sessionUser.id,
-    );
+    const chatRoomAll = await ChatRoomController.getAliveChatRoomsByUser(sessionUser.id);
 
     if (chatRoomAll === undefined) {
         logger.warn(`Could be wrong input or db error`);
@@ -283,9 +260,7 @@ ChatRouter.post("/check-attending", async (req, res) => {
     }
 
     const chatRoom = chatRoomAll.find(
-        (room) =>
-            room.request_id === request.request_id &&
-            room.participant_ids.length === 2,
+        (room) => room.request_id === request.request_id && room.participant_ids.length === 2,
     );
 
     if (chatRoom === undefined) {
@@ -294,10 +269,7 @@ ChatRouter.post("/check-attending", async (req, res) => {
     }
 
     // Check previously sended check arrived message
-    const messages = await getChatRoomMessagesByContentType(
-        chatRoom._id,
-        "alarm",
-    );
+    const messages = await getChatRoomMessagesByContentType(chatRoom._id, "alarm");
 
     const text: AlarmMessageGlbEnum = "checkArrived";
     const prevMsg = messages.find((msg) => msg.content === text);

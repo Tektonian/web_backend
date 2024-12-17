@@ -34,10 +34,7 @@ export type fullstudentprofileCreationAttributes = Optional<
 >;
 
 export class fullstudentprofile
-    extends Model<
-        fullstudentprofileAttributes,
-        fullstudentprofileCreationAttributes
-    >
+    extends Model<fullstudentprofileAttributes, fullstudentprofileCreationAttributes>
     implements fullstudentprofileAttributes
 {
     student_id!: number;
@@ -56,9 +53,7 @@ export class fullstudentprofile
     academic?: object;
     language?: object;
 
-    static initModel(
-        sequelize: Sequelize.Sequelize,
-    ): typeof fullstudentprofile {
+    static initModel(sequelize: Sequelize.Sequelize): typeof fullstudentprofile {
         return fullstudentprofile.init(
             {
                 student_id: {

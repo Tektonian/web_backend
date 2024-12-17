@@ -33,8 +33,7 @@ export interface studentwithcurrentschoolAttributes {
 }
 
 export type studentwithcurrentschoolPk = "id";
-export type studentwithcurrentschoolId =
-    studentwithcurrentschool[studentwithcurrentschoolPk];
+export type studentwithcurrentschoolId = studentwithcurrentschool[studentwithcurrentschoolPk];
 export type studentwithcurrentschoolOptionalAttributes =
     | "image"
     | "has_car"
@@ -51,10 +50,7 @@ export type studentwithcurrentschoolCreationAttributes = Optional<
 >;
 
 export class studentwithcurrentschool
-    extends Model<
-        studentwithcurrentschoolAttributes,
-        studentwithcurrentschoolCreationAttributes
-    >
+    extends Model<studentwithcurrentschoolAttributes, studentwithcurrentschoolCreationAttributes>
     implements studentwithcurrentschoolAttributes
 {
     user_id!: any;
@@ -86,9 +82,7 @@ export class studentwithcurrentschool
     email_domain?: string;
     phone_number?: string;
 
-    static initModel(
-        sequelize: Sequelize.Sequelize,
-    ): typeof studentwithcurrentschool {
+    static initModel(sequelize: Sequelize.Sequelize): typeof studentwithcurrentschool {
         return studentwithcurrentschool.init(
             {
                 user_id: {
