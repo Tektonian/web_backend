@@ -39,6 +39,8 @@ SSEAlarmRouter.get("/", async (req, res) => {
         sendSSEAlarm.removeAllListeners(`${user.id.toString("hex")}`);
     });
 });
+// TODO: 회원가입 후에 미 인증 시에 보낼 알람 추가
+// TODO: 국적 / 활동 국가 미 입력 시 보낼 알람 추가
 
 // TODO: 알람 설계 추가적으로 고려해야할 로직 필요
 // 1. 학생과 컨수머 2개 모두 가진경우? (e.g. 학생 / 기업) (그냥 마이페이지로 넘어가기?)
