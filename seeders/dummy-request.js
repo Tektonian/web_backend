@@ -156,14 +156,14 @@ const TaskStatus = new Map([
     ["Failed", 5], // Contraction didn’t work properly
 ]);
 
-function pickOneId(ids) {
+function randPickOne(ids) {
     return ids[Math.floor(Math.random() * ids.length)];
 }
 
-function pickIds(ids, number) {
+function randPick(ids, number) {
     const ret = [];
     for (let i = 0; i < number; i++) {
-        ret.push(pickOneId(ids));
+        ret.push(randPickOne(ids));
     }
     return ret;
 }
@@ -176,13 +176,14 @@ module.exports = {
         const Consumer = db.sequelize.models.Consumer;
         const Student = db.sequelize.models.Student;
 
-        const allStudentDataIds = (await Student.findAll({ raw: true, attributes: ["user_id"] })).map(
-            (val) => val.user_id,
-        );
+        const allStudentDataIds = (await Student.findAll({ raw: true })).map((val) => val.user_id);
 
         const corpConsumer = (await Consumer.findOne({ where: { consumer_type: "corp" } })).get({ plain: true });
         const orgnConsumer = (await Consumer.findOne({ where: { consumer_type: "orgn" } })).get({ plain: true });
-
+        const testConsumer = (await Consumer.findAll({ raw: true })).filter(
+            (con) => !con.consumer_email.startsWith("student"),
+        );
+        const allConsumer = [corpConsumer, orgnConsumer, ...testConsumer];
         const dummyRequests = [];
 
         for (let i = 0; i < 30; i++) {
@@ -200,10 +201,10 @@ module.exports = {
                 // On preceeding requests
                 case 0: // posted
                     // insert one provider
-                    requestStatus.provider_ids = pickOneId(allStudentDataIds);
+                    requestStatus.provider_ids = randPickOne(allStudentDataIds);
                 case 1: // paid
                 case 3: // contracted
-                    requestStatus.provider_ids = pickIds(allStudentDataIds, head_count);
+                    requestStatus.provider_ids = randPick(allStudentDataIds, head_count);
                     requestStatus.request_status = i % 5;
                     requestStatus.start_date = new Date(Date.now() + ONE_DAY * 30).toISOString(); // format: "2011-10-05T14:48:00.000Z"
                     requestStatus.end_date = new Date(Date.now() + ONE_DAY * 30).toISOString(); // format: "2011-10-05T14:48:00.000Z"
@@ -224,11 +225,13 @@ module.exports = {
                     break;
             }
 
+            const randConsumer = randPickOne(allConsumer);
+
             dummyRequests.push({
                 request_id: i,
-                consumer_id: i % 2 === 0 ? corpConsumer.consumer_id : orgnConsumer.consumer_id,
-                corp_id: i % 2 === 0 ? corpConsumer.corp_id : null,
-                orgn_id: i % 2 === 0 ? null : orgnConsumer.orgn_id,
+                consumer_id: randConsumer.consumer_id,
+                corp_id: randConsumer.corp_id ?? null,
+                orgn_id: randConsumer.orgn_id ?? null,
                 title: Task[taskIdx],
                 reward_price: Math.floor(Math.random() * 2000 + 20000),
                 currency: i % 2 === 0 ? "jp" : "kr",
