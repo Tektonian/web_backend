@@ -7,8 +7,8 @@
         "start": "cross-env NODE_ENV=production node compiled/index.js",
         "build": "tsx -p .",
         "test": "echo \"Error: no test specified\" && exit 1",
-        "dev": "cross-env NODE_ENV=development nodemon --watch \"src/**/*.ts\" --exec vite-node \"src/index.ts\" --options.deps.inline=\"dotenv/config dotenv_config_path=./.env.local\"",
-        "production": "cross-env NODE_ENV=production vite-node --options.deps.inline=\"dotenv/config dotenv_config_path=./.env\""
+        "dev": "cross-env NODE_ENV=development nodemon --watch \"src/**/*.ts\" --exec vite-node \"src/server.ts\" --options.deps.inline=\"dotenv/config dotenv_config_path=./.env.local\"",
+        "production": "cross-env NODE_ENV=production vite-node \"src/server.ts\" --options.deps.inline=\"dotenv/config dotenv_config_path=./.env\""
     },
     "keywords": [],
     "author": "",
