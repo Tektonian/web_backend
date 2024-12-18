@@ -6,10 +6,12 @@ export interface userofcorporationAttributes {
     username?: string;
     email: string;
     image?: string;
+    user_nationality?: string;
+    user_working_country?: string;
     roles?: object;
     corp_id: number;
     corp_name: string;
-    nationality: string;
+    corp_nationality: string;
     corp_domain?: string;
     ceo_name?: string;
     corp_address?: string;
@@ -27,6 +29,8 @@ export type userofcorporationOptionalAttributes =
     | "user_id"
     | "username"
     | "image"
+    | "user_nationality"
+    | "user_working_country"
     | "roles"
     | "corp_id"
     | "corp_domain"
@@ -52,10 +56,12 @@ export class userofcorporation
     username?: string;
     email!: string;
     image?: string;
+    user_nationality?: string;
+    user_working_country?: string;
     roles?: object;
     corp_id!: number;
     corp_name!: string;
-    nationality!: string;
+    corp_nationality!: string;
     corp_domain?: string;
     ceo_name?: string;
     corp_address?: string;
@@ -88,6 +94,14 @@ export class userofcorporation
                     type: DataTypes.STRING(255),
                     allowNull: true,
                 },
+                user_nationality: {
+                    type: DataTypes.STRING(2),
+                    allowNull: true,
+                },
+                user_working_country: {
+                    type: DataTypes.STRING(2),
+                    allowNull: true,
+                },
                 roles: {
                     type: DataTypes.JSON,
                     allowNull: true,
@@ -103,7 +117,7 @@ export class userofcorporation
                     type: DataTypes.STRING(255),
                     allowNull: false,
                 },
-                nationality: {
+                corp_nationality: {
                     type: DataTypes.STRING(4),
                     allowNull: false,
                 },

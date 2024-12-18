@@ -15,9 +15,11 @@ module.exports = {
         const allUsers = await User.findAll();
         const allConsumerData = [];
 
-        for (let user of allUsers) {
+        let consumer_id = 1;
+        allUsers.map((user) => {
             if (user.username.startsWith("corp")) {
                 allConsumerData.push({
+                    consumer_id: consumer_id++,
                     user_id: user.user_id,
                     corp_id: 1,
                     consumer_type: "corp",
@@ -27,6 +29,7 @@ module.exports = {
                 });
             } else if (user.username.startsWith("orgn")) {
                 allConsumerData.push({
+                    consumer_id: consumer_id++,
                     user_id: user.user_id,
                     orgn_id: 1,
                     consumer_type: "orgn",
@@ -38,12 +41,13 @@ module.exports = {
 
             // default consumer identity
             allConsumerData.push({
+                consumer_id: consumer_id++,
                 user_id: user.user_id,
                 consumer_type: "normal",
                 phone_number: "",
                 consumer_email: user.email,
             });
-        }
+        });
 
         await Consumer.bulkCreate(allConsumerData);
         return;

@@ -156,93 +156,87 @@ const TaskStatus = new Map([
     ["Failed", 5], // Contraction didn’t work properly
 ]);
 
+function randPickOne(ids) {
+    return ids[Math.floor(Math.random() * ids.length)];
+}
+
+function randPick(ids, number) {
+    const ret = [];
+    for (let i = 0; i < number; i++) {
+        ret.push(randPickOne(ids));
+    }
+    return ret;
+}
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
         const db = require("../models");
         const Request = db.sequelize.models.Request;
         const Consumer = db.sequelize.models.Consumer;
+        const Student = db.sequelize.models.Student;
 
-        const corpConsumer = (
-            await Consumer.findOne({ where: { consumer_type: "corp" } })
-        ).get({ plain: true });
-        const orgnConsumer = (
-            await Consumer.findOne({ where: { consumer_type: "orgn" } })
-        ).get({ plain: true });
+        const allStudentDataIds = (await Student.findAll({ raw: true })).map((val) => val.user_id);
 
+        const corpConsumer = (await Consumer.findOne({ where: { consumer_type: "corp" } })).get({ plain: true });
+        const orgnConsumer = (await Consumer.findOne({ where: { consumer_type: "orgn" } })).get({ plain: true });
+        const testConsumer = (await Consumer.findAll({ raw: true })).filter(
+            (con) => !con.consumer_email.startsWith("student"),
+        );
+        const allConsumer = [corpConsumer, orgnConsumer, ...testConsumer];
         const dummyRequests = [];
 
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 30; i++) {
             const taskIdx = Math.floor(Math.random() * Task.length);
-            const krAddressIdx = Math.floor(
-                Math.random() * KoreaFamousPlace.length,
-            );
-            const jpAddressIdx = Math.floor(
-                Math.random() * JapanFamousPlacd.length,
-            );
+            const krAddressIdx = Math.floor(Math.random() * KoreaFamousPlace.length);
+            const jpAddressIdx = Math.floor(Math.random() * JapanFamousPlacd.length);
 
             const ONE_HOUR = 3600 * 1000;
             const ONE_DAY = ONE_HOUR * 24;
 
             let requestStatus = {};
-
+            let head_count = Math.floor(Math.random() * 4 + 1);
+            let provider_ids = [];
             switch (i % 5) {
                 // On preceeding requests
-                case 0:
-                case 1:
-                case 3:
-                    requestStatus.request_status = i;
-                    requestStatus.start_date = new Date(
-                        Date.now() + ONE_DAY * 30,
-                    ).toISOString(); // format: "2011-10-05T14:48:00.000Z"
-                    requestStatus.end_date = new Date(
-                        Date.now() + ONE_DAY * 30,
-                    ).toISOString(); // format: "2011-10-05T14:48:00.000Z"
-                    requestStatus.start_time = new Date(
-                        Date.now(),
-                    ).toLocaleTimeString("it-IT"); // format: 01:15:30
-                    requestStatus.end_time = new Date(
-                        Date.now() + ONE_HOUR * 5,
-                    ).toLocaleTimeString("it-IT"); // format: 01:15:30
+                case 0: // posted
+                    // insert one provider
+                    requestStatus.provider_ids = randPickOne(allStudentDataIds);
+                case 1: // paid
+                case 3: // contracted
+                    requestStatus.provider_ids = randPick(allStudentDataIds, head_count);
+                    requestStatus.request_status = i % 5;
+                    requestStatus.start_date = new Date(Date.now() + ONE_DAY * 30).toISOString(); // format: "2011-10-05T14:48:00.000Z"
+                    requestStatus.end_date = new Date(Date.now() + ONE_DAY * 30).toISOString(); // format: "2011-10-05T14:48:00.000Z"
+                    requestStatus.start_time = new Date(Date.now()).toLocaleTimeString("it-IT"); // format: 01:15:30
+                    requestStatus.end_time = new Date(Date.now() + ONE_HOUR * 5).toLocaleTimeString("it-IT"); // format: 01:15:30
                     break;
-                // Done requests
-                case 2:
-                case 4:
-                case 5:
-                    requestStatus.request_status = i;
-                    requestStatus.start_date = new Date(
-                        Date.now() - ONE_DAY * 30,
-                    ).toISOString(); // format: 12/12/2024
-                    requestStatus.end_date = new Date(
-                        Date.now() - ONE_DAY * 30,
-                    ).toISOString(); // format: 12/12/2024
-                    requestStatus.start_time = new Date(
-                        Date.now(),
-                    ).toLocaleTimeString("it-IT"); // format: 01:15:30
-                    requestStatus.end_time = new Date(
-                        Date.now() + ONE_HOUR * 5,
-                    ).toLocaleTimeString("it-IT"); // format: 01:15:30
+                // Done requests -> provider_ids of done request will be filled at dummy-review.js
+                case 2: // outdated
+                case 4: // finish
+                case 5: // failed
+                    requestStatus.request_status = i % 5;
+                    requestStatus.start_date = new Date(Date.now() - ONE_DAY * 30).toISOString(); // format: 12/12/2024
+                    requestStatus.end_date = new Date(Date.now() - ONE_DAY * 30).toISOString(); // format: 12/12/2024
+                    requestStatus.start_time = new Date(Date.now()).toLocaleTimeString("it-IT"); // format: 01:15:30
+                    requestStatus.end_time = new Date(Date.now() + ONE_HOUR * 5).toLocaleTimeString("it-IT"); // format: 01:15:30
                     break;
                 default:
                     break;
             }
 
+            const randConsumer = randPickOne(allConsumer);
+
             dummyRequests.push({
                 request_id: i,
-                consumer_id:
-                    i % 2 === 0
-                        ? corpConsumer.consumer_id
-                        : orgnConsumer.consumer_id,
-                corp_id: i % 2 === 0 ? corpConsumer.corp_id : null,
-                orgn_id: i % 2 === 0 ? null : orgnConsumer.orgn_id,
+                consumer_id: randConsumer.consumer_id,
+                corp_id: randConsumer.corp_id ?? null,
+                orgn_id: randConsumer.orgn_id ?? null,
                 title: Task[taskIdx],
                 reward_price: Math.floor(Math.random() * 2000 + 20000),
-                currency: i % 2 === 0 ? "yen" : "won",
+                currency: i % 2 === 0 ? "jp" : "kr",
                 content: Task[taskIdx],
-                address:
-                    i % 2 === 0
-                        ? JapanFamousPlacd[jpAddressIdx].name
-                        : KoreaFamousPlace[krAddressIdx].name,
+                address: i % 2 === 0 ? JapanFamousPlacd[jpAddressIdx].name : KoreaFamousPlace[krAddressIdx].name,
                 address_coordinate: {
                     type: "Point",
                     coordinates:
@@ -250,10 +244,11 @@ module.exports = {
                             ? JapanFamousPlacd[jpAddressIdx].coordinate
                             : KoreaFamousPlace[krAddressIdx].coordinate,
                 },
-                head_count: 1,
+                head_count: head_count,
                 are_needed: ["you", "body", "head"],
                 are_required: ["inner", "peace"],
-                provide_food: 1,
+                provide_food: 0,
+                provide_trans_exp: 0,
                 prep_material: ["shose", "bike", "car"],
                 ...requestStatus,
             });

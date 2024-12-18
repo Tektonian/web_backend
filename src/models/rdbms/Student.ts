@@ -8,15 +8,14 @@ export interface StudentAttributes {
     student_id: number;
     user_id: any;
     name_glb: object;
-    nationality: string;
     birth_date: string;
     email_verified?: Date;
     phone_number: string;
     emergency_contact: string;
-    gender: string;
-    image?: string;
-    has_car?: number;
-    keyword_list?: object;
+    gender: number;
+    image: string;
+    has_car: number;
+    keyword_list: object;
     created_at?: Date;
     updated_at?: Date;
 }
@@ -28,7 +27,6 @@ export type StudentOptionalAttributes =
     | "email_verified"
     | "image"
     | "has_car"
-    | "keyword_list"
     | "created_at"
     | "updated_at";
 export type StudentCreationAttributes = Optional<StudentAttributes, StudentOptionalAttributes>;
@@ -37,15 +35,14 @@ export class Student extends Model<StudentAttributes, StudentCreationAttributes>
     student_id!: number;
     user_id!: any;
     name_glb!: object;
-    nationality!: string;
     birth_date!: string;
     email_verified?: Date;
     phone_number!: string;
     emergency_contact!: string;
-    gender!: string;
-    image?: string;
-    has_car?: number;
-    keyword_list?: object;
+    gender!: number;
+    image!: string;
+    has_car!: number;
+    keyword_list!: object;
     created_at?: Date;
     updated_at?: Date;
 
@@ -100,10 +97,6 @@ export class Student extends Model<StudentAttributes, StudentCreationAttributes>
                     type: DataTypes.JSON,
                     allowNull: false,
                 },
-                nationality: {
-                    type: DataTypes.STRING(4),
-                    allowNull: false,
-                },
                 birth_date: {
                     type: DataTypes.DATEONLY,
                     allowNull: false,
@@ -123,20 +116,22 @@ export class Student extends Model<StudentAttributes, StudentCreationAttributes>
                     allowNull: false,
                 },
                 gender: {
-                    type: DataTypes.STRING(8),
+                    type: DataTypes.TINYINT,
                     allowNull: false,
                 },
                 image: {
                     type: DataTypes.STRING(255),
-                    allowNull: true,
+                    allowNull: false,
+                    defaultValue: "",
                 },
                 has_car: {
                     type: DataTypes.TINYINT,
-                    allowNull: true,
+                    allowNull: false,
+                    defaultValue: 0,
                 },
                 keyword_list: {
                     type: DataTypes.JSON,
-                    allowNull: true,
+                    allowNull: false,
                 },
             },
             {

@@ -5,23 +5,23 @@ export interface requestofcorporationAttributes {
     request_id: number;
     consumer_id: number;
     title: string;
-    head_count?: number;
+    head_count: number;
     reward_price: number;
     currency: string;
     content: string;
     are_needed?: object;
     are_required?: object;
-    start_date?: string;
-    end_date?: string;
+    start_date: string;
+    end_date: string;
     address?: string;
     address_coordinate?: any;
-    provide_food?: any;
-    provide_trans_exp?: any;
+    provide_food: any;
+    provide_trans_exp: any;
     prep_material?: object;
     created_at?: Date;
     request_status?: number;
-    start_time?: string;
-    end_time?: string;
+    start_time: string;
+    end_time: string;
     corp_id: number;
     corp_name: string;
     corp_domain?: string;
@@ -34,11 +34,8 @@ export interface requestofcorporationAttributes {
 
 export type requestofcorporationOptionalAttributes =
     | "request_id"
-    | "head_count"
     | "are_needed"
     | "are_required"
-    | "start_date"
-    | "end_date"
     | "address"
     | "address_coordinate"
     | "provide_food"
@@ -46,8 +43,6 @@ export type requestofcorporationOptionalAttributes =
     | "prep_material"
     | "created_at"
     | "request_status"
-    | "start_time"
-    | "end_time"
     | "corp_id"
     | "corp_domain"
     | "corp_address"
@@ -66,23 +61,23 @@ export class requestofcorporation
     request_id!: number;
     consumer_id!: number;
     title!: string;
-    head_count?: number;
+    head_count!: number;
     reward_price!: number;
     currency!: string;
     content!: string;
     are_needed?: object;
     are_required?: object;
-    start_date?: string;
-    end_date?: string;
+    start_date!: string;
+    end_date!: string;
     address?: string;
     address_coordinate?: any;
-    provide_food?: any;
-    provide_trans_exp?: any;
+    provide_food!: any;
+    provide_trans_exp!: any;
     prep_material?: object;
     created_at?: Date;
     request_status?: number;
-    start_time?: string;
-    end_time?: string;
+    start_time!: string;
+    end_time!: string;
     corp_id!: number;
     corp_name!: string;
     corp_domain?: string;
@@ -110,14 +105,14 @@ export class requestofcorporation
                 },
                 head_count: {
                     type: DataTypes.TINYINT.UNSIGNED,
-                    allowNull: true,
+                    allowNull: false,
                 },
                 reward_price: {
                     type: DataTypes.INTEGER,
                     allowNull: false,
                 },
                 currency: {
-                    type: DataTypes.STRING(7),
+                    type: DataTypes.STRING(2),
                     allowNull: false,
                 },
                 content: {
@@ -134,11 +129,11 @@ export class requestofcorporation
                 },
                 start_date: {
                     type: DataTypes.DATEONLY,
-                    allowNull: true,
+                    allowNull: false,
                 },
                 end_date: {
                     type: DataTypes.DATEONLY,
-                    allowNull: true,
+                    allowNull: false,
                 },
                 address: {
                     type: DataTypes.STRING(255),
@@ -150,11 +145,13 @@ export class requestofcorporation
                 },
                 provide_food: {
                     type: DataTypes.BLOB,
-                    allowNull: true,
+                    allowNull: false,
+                    defaultValue: "0x30",
                 },
                 provide_trans_exp: {
                     type: DataTypes.BLOB,
-                    allowNull: true,
+                    allowNull: false,
+                    defaultValue: "0x30",
                 },
                 prep_material: {
                     type: DataTypes.JSON,
@@ -168,11 +165,11 @@ export class requestofcorporation
                 },
                 start_time: {
                     type: DataTypes.TIME,
-                    allowNull: true,
+                    allowNull: false,
                 },
                 end_time: {
                     type: DataTypes.TIME,
-                    allowNull: true,
+                    allowNull: false,
                 },
                 corp_id: {
                     type: DataTypes.INTEGER,

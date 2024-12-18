@@ -16,22 +16,15 @@ export interface StudentReviewAttributes {
     lang_fluent: number;
     goal_fulfillment: number;
     want_cowork: number;
-    praise?: string;
-    need_improve?: string;
+    praise: string;
+    need_improve: string;
     created_at?: Date;
     updated_at?: Date;
 }
 
 export type StudentReviewPk = "id";
 export type StudentReviewId = StudentReview[StudentReviewPk];
-export type StudentReviewOptionalAttributes =
-    | "id"
-    | "corp_id"
-    | "orgn_id"
-    | "praise"
-    | "need_improve"
-    | "created_at"
-    | "updated_at";
+export type StudentReviewOptionalAttributes = "id" | "corp_id" | "orgn_id" | "created_at" | "updated_at";
 export type StudentReviewCreationAttributes = Optional<StudentReviewAttributes, StudentReviewOptionalAttributes>;
 
 export class StudentReview
@@ -52,8 +45,8 @@ export class StudentReview
     lang_fluent!: number;
     goal_fulfillment!: number;
     want_cowork!: number;
-    praise?: string;
-    need_improve?: string;
+    praise!: string;
+    need_improve!: string;
     created_at?: Date;
     updated_at?: Date;
 
@@ -122,11 +115,11 @@ export class StudentReview
                 },
                 praise: {
                     type: DataTypes.TEXT,
-                    allowNull: true,
+                    allowNull: false,
                 },
                 need_improve: {
                     type: DataTypes.TEXT,
-                    allowNull: true,
+                    allowNull: false,
                 },
             },
             {

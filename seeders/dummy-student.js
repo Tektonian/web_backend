@@ -109,12 +109,12 @@ module.exports = {
                     student_id: idx,
                     user_id: user.user_id,
                     name_glb: { kr: user.username },
-                    nationality: "kr",
                     birth_date: new Date(),
                     email_verified: new Date(),
                     phone_number: "01022222222",
                     emergency_contact: "01044444444",
-                    gender: "male",
+                    keyword_list: [],
+                    gender: 0,
                     image: "",
                     has_car: 0,
                 });
@@ -132,17 +132,11 @@ module.exports = {
             academicHistories.push({
                 school_id: allSchools[idx].school_id,
                 student_id: student.student_id,
-                degree: ["학사", "석사", "박사"].at(
-                    Math.floor(Math.random() * 3),
-                ),
+                degree: ["학사", "석사", "박사"].at(Math.floor(Math.random() * 3)),
                 start_date: new Date(),
                 end_date: new Date(),
-                status: ["재학중", "휴학", "중퇴", "자퇴", "수료", "졸업"].at(
-                    Math.floor(Math.random() * 6),
-                ),
-                faculty: DepartMentList.at(
-                    Math.floor(Math.random() * DepartMentList.length),
-                ),
+                status: ["재학중", "휴학", "중퇴", "자퇴", "수료", "졸업"].at(Math.floor(Math.random() * 6)),
+                faculty: DepartMentList.at(Math.floor(Math.random() * DepartMentList.length)),
                 school_email: `email_of_${idx}th_school@test.com`,
                 is_attending: true,
             });
@@ -156,11 +150,7 @@ module.exports = {
     async down(queryInterface, Sequelize) {
         await queryInterface.bulkDelete("AcademicHistory", null, {});
         await queryInterface.bulkDelete("Student", null, {});
-        await queryInterface.bulkDelete(
-            "User",
-            { username: { [Sequelize.Op.startsWith]: "student" } },
-            {},
-        );
+        await queryInterface.bulkDelete("User", { username: { [Sequelize.Op.startsWith]: "student" } }, {});
         await queryInterface.bulkDelete("School");
         /**
          * Add commands to revert seed here.

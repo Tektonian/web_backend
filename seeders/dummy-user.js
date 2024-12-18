@@ -5,10 +5,7 @@ module.exports = {
     async up(queryInterface, Sequelize) {
         const DataTypes = require("sequelize").DataTypes;
         const fs = require("fs");
-        const JpSchoolDataest = await fs.readFileSync(
-            "../../school_dataset/assets/jp/school_list.csv",
-            "utf-8",
-        );
+        const JpSchoolDataest = await fs.readFileSync("../../school_dataset/assets/jp/school_list.csv", "utf-8");
         const rows = JpSchoolDataest.split("\n");
         const MeiliSearch = require("meilisearch").MeiliSearch;
         const client = new MeiliSearch({
@@ -75,29 +72,39 @@ module.exports = {
                 username: "test0",
                 email: "test0@test.com",
                 email_verified: new Date(),
+                nationality: "kr",
+                working_country: "kr",
                 roles: ["admin", "normal"],
             },
             {
                 username: "test1",
                 email: "test1@test.com",
+                nationality: "kr",
+                working_country: "kr",
                 email_verified: new Date(),
                 roles: ["admin", "normal"],
             },
             {
                 username: "kang",
                 email: "kang@test.com",
+                nationality: "kr",
+                working_country: "kr",
                 email_verified: new Date(),
                 roles: ["student", "normal"],
             },
             {
                 username: "corp_1_user",
                 email: "corp@test.com",
+                nationality: "kr",
+                working_country: "kr",
                 email_verified: new Date(),
                 roles: ["corp", "normal"],
             },
             {
                 username: "orgn_1_user",
                 email: "orgn@test.com",
+                nationality: "kr",
+                working_country: "kr",
                 email_verified: new Date(),
                 roles: ["orgn", "normal"],
             },
@@ -108,6 +115,8 @@ module.exports = {
                 username: `student_${i}`,
                 email: `student${i}@test.com`,
                 email_verified: new Date(),
+                nationality: "kr",
+                working_country: "jp",
                 roles: ["student", "normal"],
             });
         }
