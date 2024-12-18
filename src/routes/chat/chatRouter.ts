@@ -282,10 +282,14 @@ ChatRouter.post("/check-attending", async (req, res) => {
 
     const alarmMessage: AlarmMessageGlbEnum = "checkArrived";
 
-    await sendMessage(chatRoom._id, sessionUser.id, {
-        contentType: "alarm",
-        content: alarmMessage,
-    });
+    await sendMessage(
+        {
+            contentType: "alarm",
+            content: alarmMessage,
+        },
+        chatRoom._id,
+        undefined,
+    );
 
     logger.info("End-Check attending request");
 });

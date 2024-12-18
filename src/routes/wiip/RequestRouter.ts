@@ -130,13 +130,13 @@ RequestRouter.post("/status/contract", async (req, res) => {
     );
 
     const message = {
-        content_type: "alarm",
+        contentType: "alarm",
         content: "contracted",
     };
 
     await Promise.all(
         chatRoomAll.map((room) => {
-            return sendMessage(room._id, sessionUser._id, message);
+            return sendMessage(message, room._id, undefined);
         }),
     );
 

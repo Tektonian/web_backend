@@ -7,13 +7,15 @@ import { APIType } from "api_spec";
 import logger from "../../utils/logger";
 
 export const sendMessage = async (
-    chatRoomId: Types.ObjectId,
-    senderId: Types.ObjectId,
     message: APIType.ContentType.MessageContentType,
+    chatRoomId: Types.ObjectId,
+    senderId?: Types.ObjectId,
 ) => {
     logger.debug(`Send message: ChatRoomId: ${chatRoomId}, Sender: ${senderId}, Message: ${message}`);
 
-    await pushMessageQueue(message, chatRoomId, senderId);
+    if (message.contentType === "text" && senderId !== undefined) {
+        await pushMessageQueue(message, chatRoomId, senderId);
+    }
 };
 
 export const getChatRoomMessages = async (chatRoomId: mongoose.Types.ObjectId) => {
