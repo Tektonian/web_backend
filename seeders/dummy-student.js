@@ -113,7 +113,8 @@ module.exports = {
                     email_verified: new Date(),
                     phone_number: "01022222222",
                     emergency_contact: "01044444444",
-                    gender: "male",
+                    keyword_list: [],
+                    gender: 0,
                     image: "",
                     has_car: 0,
                 });

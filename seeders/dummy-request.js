@@ -231,7 +231,7 @@ module.exports = {
                 orgn_id: i % 2 === 0 ? null : orgnConsumer.orgn_id,
                 title: Task[taskIdx],
                 reward_price: Math.floor(Math.random() * 2000 + 20000),
-                currency: i % 2 === 0 ? "yen" : "won",
+                currency: i % 2 === 0 ? "jp" : "kr",
                 content: Task[taskIdx],
                 address: i % 2 === 0 ? JapanFamousPlacd[jpAddressIdx].name : KoreaFamousPlace[krAddressIdx].name,
                 address_coordinate: {
@@ -244,7 +244,8 @@ module.exports = {
                 head_count: head_count,
                 are_needed: ["you", "body", "head"],
                 are_required: ["inner", "peace"],
-                provide_food: 1,
+                provide_food: 0,
+                provide_trans_exp: 0,
                 prep_material: ["shose", "bike", "car"],
                 ...requestStatus,
             });
