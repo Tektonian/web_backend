@@ -4,14 +4,13 @@ import { DataTypes, Model, Optional } from "sequelize";
 export interface studentwithcurrentschoolAttributes {
     user_id: any;
     name_glb: object;
-    nationality: string;
     birth_date: string;
     student_phone_number: string;
     emergency_contact: string;
-    gender: string;
-    image?: string;
-    has_car?: number;
-    keyword_list?: object;
+    gender: number;
+    image: string;
+    has_car: number;
+    keyword_list: object;
     id: number;
     student_id: number;
     degree: string;
@@ -37,7 +36,6 @@ export type studentwithcurrentschoolId = studentwithcurrentschool[studentwithcur
 export type studentwithcurrentschoolOptionalAttributes =
     | "image"
     | "has_car"
-    | "keyword_list"
     | "id"
     | "school_email"
     | "is_attending"
@@ -55,14 +53,13 @@ export class studentwithcurrentschool
 {
     user_id!: any;
     name_glb!: object;
-    nationality!: string;
     birth_date!: string;
     student_phone_number!: string;
     emergency_contact!: string;
-    gender!: string;
-    image?: string;
-    has_car?: number;
-    keyword_list?: object;
+    gender!: number;
+    image!: string;
+    has_car!: number;
+    keyword_list!: object;
     id!: number;
     student_id!: number;
     degree!: string;
@@ -93,10 +90,6 @@ export class studentwithcurrentschool
                     type: DataTypes.JSON,
                     allowNull: false,
                 },
-                nationality: {
-                    type: DataTypes.STRING(4),
-                    allowNull: false,
-                },
                 birth_date: {
                     type: DataTypes.DATEONLY,
                     allowNull: false,
@@ -110,20 +103,22 @@ export class studentwithcurrentschool
                     allowNull: false,
                 },
                 gender: {
-                    type: DataTypes.STRING(8),
+                    type: DataTypes.TINYINT,
                     allowNull: false,
                 },
                 image: {
                     type: DataTypes.STRING(255),
-                    allowNull: true,
+                    allowNull: false,
+                    defaultValue: "",
                 },
                 has_car: {
                     type: DataTypes.TINYINT,
-                    allowNull: true,
+                    allowNull: false,
+                    defaultValue: 0,
                 },
                 keyword_list: {
                     type: DataTypes.JSON,
-                    allowNull: true,
+                    allowNull: false,
                 },
                 id: {
                     type: DataTypes.INTEGER,

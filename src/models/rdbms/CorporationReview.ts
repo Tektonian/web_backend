@@ -8,24 +8,17 @@ export interface CorporationReviewAttributes {
     corp_id: number;
     request_id: number;
     request_url: string;
-    review_text?: string;
-    prep_requirement?: string;
-    sense_of_achive?: number;
-    work_atmosphere?: number;
+    review_text: string;
+    prep_requirement: string;
+    sense_of_achive: number;
+    work_atmosphere: number;
     created_at?: Date;
     updated_at?: Date;
 }
 
 export type CorporationReviewPk = "id";
 export type CorporationReviewId = CorporationReview[CorporationReviewPk];
-export type CorporationReviewOptionalAttributes =
-    | "id"
-    | "review_text"
-    | "prep_requirement"
-    | "sense_of_achive"
-    | "work_atmosphere"
-    | "created_at"
-    | "updated_at";
+export type CorporationReviewOptionalAttributes = "id" | "created_at" | "updated_at";
 export type CorporationReviewCreationAttributes = Optional<
     CorporationReviewAttributes,
     CorporationReviewOptionalAttributes
@@ -41,10 +34,10 @@ export class CorporationReview
     corp_id!: number;
     request_id!: number;
     request_url!: string;
-    review_text?: string;
-    prep_requirement?: string;
-    sense_of_achive?: number;
-    work_atmosphere?: number;
+    review_text!: string;
+    prep_requirement!: string;
+    sense_of_achive!: number;
+    work_atmosphere!: number;
     created_at?: Date;
     updated_at?: Date;
 
@@ -79,19 +72,19 @@ export class CorporationReview
                 },
                 review_text: {
                     type: DataTypes.TEXT,
-                    allowNull: true,
+                    allowNull: false,
                 },
                 prep_requirement: {
                     type: DataTypes.STRING(255),
-                    allowNull: true,
+                    allowNull: false,
                 },
                 sense_of_achive: {
                     type: DataTypes.TINYINT,
-                    allowNull: true,
+                    allowNull: false,
                 },
                 work_atmosphere: {
                     type: DataTypes.TINYINT,
-                    allowNull: true,
+                    allowNull: false,
                 },
             },
             {

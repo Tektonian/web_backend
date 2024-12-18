@@ -12,12 +12,22 @@ export interface UserAttributes {
     created_at?: Date;
     updated_at?: Date;
     image?: string;
+    nationality?: string;
+    working_country?: string;
     roles?: object;
 }
 
 export type UserPk = "user_id";
 export type UserId = User[UserPk];
-export type UserOptionalAttributes = "user_id" | "username" | "created_at" | "updated_at" | "image" | "roles";
+export type UserOptionalAttributes =
+    | "user_id"
+    | "username"
+    | "created_at"
+    | "updated_at"
+    | "image"
+    | "nationality"
+    | "working_country"
+    | "roles";
 export type UserCreationAttributes = Optional<UserAttributes, UserOptionalAttributes>;
 
 export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
@@ -27,6 +37,8 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
     created_at?: Date;
     updated_at?: Date;
     image?: string;
+    nationality?: string;
+    working_country?: string;
     roles?: object;
 
     // User hasMany Account via user_id
@@ -85,6 +97,14 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
                 },
                 image: {
                     type: DataTypes.STRING(255),
+                    allowNull: true,
+                },
+                nationality: {
+                    type: DataTypes.STRING(2),
+                    allowNull: true,
+                },
+                working_country: {
+                    type: DataTypes.STRING(2),
                     allowNull: true,
                 },
                 roles: {

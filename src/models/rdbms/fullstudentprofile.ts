@@ -27,16 +27,15 @@ export interface fullstudentprofileAttributes {
     student_id: number;
     user_id: any;
     name_glb: object;
-    nationality: string;
     birth_date: string;
     created_at?: Date;
     email_verified?: Date;
     phone_number: string;
     emergency_contact: string;
-    gender: string;
-    image?: string;
-    has_car?: number;
-    keyword_list?: object;
+    gender: number;
+    image: string;
+    has_car: number;
+    keyword_list: object;
     academic?: AcademicType[];
     language?: LanguageType[];
 }
@@ -47,7 +46,6 @@ export type fullstudentprofileOptionalAttributes =
     | "email_verified"
     | "image"
     | "has_car"
-    | "keyword_list"
     | "academic"
     | "language";
 export type fullstudentprofileCreationAttributes = Optional<
@@ -62,18 +60,17 @@ export class fullstudentprofile
     student_id!: number;
     user_id!: any;
     name_glb!: object;
-    nationality!: string;
     birth_date!: string;
     created_at?: Date;
     email_verified?: Date;
     phone_number!: string;
     emergency_contact!: string;
-    gender!: string;
-    image?: string;
-    has_car?: number;
-    keyword_list?: object;
-    academic?: object;
-    language?: object;
+    gender!: number;
+    image!: string;
+    has_car!: number;
+    keyword_list!: object;
+    academic?: AcademicType[];
+    language?: LanguageType[];
 
     static initModel(sequelize: Sequelize.Sequelize): typeof fullstudentprofile {
         return fullstudentprofile.init(
@@ -89,10 +86,6 @@ export class fullstudentprofile
                 },
                 name_glb: {
                     type: DataTypes.JSON,
-                    allowNull: false,
-                },
-                nationality: {
-                    type: DataTypes.STRING(4),
                     allowNull: false,
                 },
                 birth_date: {
@@ -114,20 +107,22 @@ export class fullstudentprofile
                     allowNull: false,
                 },
                 gender: {
-                    type: DataTypes.STRING(8),
+                    type: DataTypes.TINYINT,
                     allowNull: false,
                 },
                 image: {
                     type: DataTypes.STRING(255),
-                    allowNull: true,
+                    allowNull: false,
+                    defaultValue: "",
                 },
                 has_car: {
                     type: DataTypes.TINYINT,
-                    allowNull: true,
+                    allowNull: false,
+                    defaultValue: 0,
                 },
                 keyword_list: {
                     type: DataTypes.JSON,
-                    allowNull: true,
+                    allowNull: false,
                 },
                 academic: {
                     type: DataTypes.JSON,
@@ -141,7 +136,9 @@ export class fullstudentprofile
             {
                 sequelize,
                 tableName: "fullstudentprofile",
-                timestamps: false,
+                timestamps: true,
+                createdAt: "created_at",
+                updatedAt: "updated_at",
             },
         );
     }
