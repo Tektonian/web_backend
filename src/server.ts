@@ -31,6 +31,6 @@ __initChat(io);
 // __initSchedule();
 
 // Listen server
-httpServer.listen(PORT, () => {
-    logger.info(`Server is running on port ${PORT}`);
+httpServer.listen(process.env.PORT, () => {
+    logger.info(`Server is running on port ${process.env.PORT}`);
 });
