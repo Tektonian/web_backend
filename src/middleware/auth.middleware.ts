@@ -1,6 +1,8 @@
 import { getSession } from "@auth/express";
 import { authConfig } from "../config/auth.config.js";
 import type { NextFunction, Request, Response } from "express";
+
+import { UserEnum } from "api_spec/enum";
 import logger from "../utils/logger.js";
 
 export const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -16,20 +18,26 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
 
 export const currentSession = async (req: Request, res: Response, next: NextFunction) => {
     const session = (await getSession(req, authConfig)) ?? undefined;
-    res.session = session;
+    res.session = undefined;
 
-    console.log("currentSession", session);
+    // console.log("currentSession", session);
     // encode JSON.stringfied Buffer to Buffer
     // https://stackoverflow.com/questions/34557889/how-to-deserialize-a-nested-buffer-using-json-parse
     if (session !== undefined && session.user !== undefined && session.user.id !== undefined) {
-        res.session.user.id = Buffer.from(session.user?.id);
-        req.id = Buffer.from(session.user.id);
+        res.session = {
+            user: {
+                ...session.user,
+                id: Buffer.from(session.user.id.data),
+            },
+        };
+        const str = Buffer.from(session.user.id.data).toString("hex");
+        req.uuid = `${str.slice(0, 8)}-${str.slice(8, 12)}-${str.slice(12, 16)}-${str.slice(16, 20)}-${str.slice(20)}`;
     }
 
     return next();
 };
 
-export const filterSessionByRBAC = async (roles: "normal" | "corp" | "orgn" | ""[]) => {
+export const filterSessionByRBAC = async (roles: UserEnum.USER_ROLE_ENUM[]) => {
     const callback = async (req: Request, res: Response, next: NextFunction) => {
         const sessionUser = res.session?.user;
         if (sessionUser === undefined) {
@@ -47,7 +55,7 @@ export const filterSessionByRBAC = async (roles: "normal" | "corp" | "orgn" | ""
             // throw new Error
             return;
         }
-        next();
+        return next();
     };
 
     return callback;

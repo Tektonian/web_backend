@@ -42,10 +42,10 @@ app.use(bodyParser.json());
 app.use(currentSession);
 app.use(
     rTracer.expressMiddleware({
-        requestIdFactory: (req) => ({
+        requestIdFactory: (req: Request) => ({
             id: crypto.randomUUID(),
             glbTraceId: req.headers["x-global-trace-id"] ?? "",
-            userId: req.id ?? "",
+            userId: req.uuid ?? "",
         }),
     }),
 );
