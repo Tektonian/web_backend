@@ -4,10 +4,10 @@
     "main": "index.js",
     "type": "module",
     "scripts": {
-        "start": "cross-env NODE_ENV=production node compiled/index.js",
+        "start": "cross-env NODE_ENV=test node compiled/index.js",
         "build": "tsx -p .",
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "dev": "cross-env NODE_ENV=development nodemon --watch \"src/**/*.ts\" --exec vite-node \"src/server.ts\" --options.deps.inline=\"dotenv/config dotenv_config_path=./.env.local\"",
+        "test": "cross-env NODE_ENV=test dotenv -e \"./.env.local\" vitest",
+        "dev": "cross-env NODE_ENV=development nodemon --watch \"src/**/*.ts\" --ignore *.test.ts --exec vite-node \"src/server.ts\" --options.deps.inline=\"dotenv/config dotenv_config_path=./.env.local\"",
         "production": "cross-env NODE_ENV=production vite-node \"src/server.ts\" --options.deps.inline=\"dotenv/config dotenv_config_path=./.env\""
     },
     "keywords": [],
@@ -15,6 +15,7 @@
     "license": "ISC",
     "description": "",
     "devDependencies": {
+        "@types/ajv": "^0.0.5",
         "@types/express": "^5.0.0",
         "@types/jest": "^29.5.14",
         "@types/multer": "^1.4.12",
@@ -22,12 +23,14 @@
         "@types/node-schedule": "^2.1.7",
         "@types/nodemailer": "^6.4.16",
         "@types/sequelize": "^4.28.20",
+        "@types/supertest": "^6.0.2",
+        "@vitest/coverage-v8": "^2.1.8",
+        "ajv": "^8.17.1",
         "cors": "^2.8.5",
         "dotenv": "^16.4.5",
         "eslint": "^9.13.0",
         "eslint-config-prettier": "^9.1.0",
         "i": "^0.3.7",
-        "jest": "^29.7.0",
         "nodemon": "^3.1.7",
         "prettier": "^3.3.3",
         "sequelize-cli": "^6.6.2",
@@ -36,7 +39,7 @@
         "ts-node": "^10.9.2",
         "tspec": "^0.1.116",
         "tsx": "^4.19.2",
-        "typescript": "^5.6.3"
+        "vitest": "^2.1.8"
     },
     "dependencies": {
         "@auth/express": "^0.8.2",
@@ -46,6 +49,7 @@
         "bullmq": "^5.25.3",
         "cls-rtracer": "^2.6.3",
         "cross-env": "^7.0.3",
+        "dotenv-cli": "^7.4.4",
         "meilisearch": "^0.45.0",
         "mongoose": "^8.7.3",
         "morgan": "^1.10.0",
