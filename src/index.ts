@@ -1,10 +1,12 @@
 import express, { NextFunction, Request, Response } from "express";
+// External libraries
 import bodyParser from "body-parser";
 import cors from "cors";
-import { sequelize } from "./models/rdbms";
 import { ExpressAuth } from "@auth/express";
 import { authConfig } from "./config/auth.config";
+// Middleware
 import { currentSession } from "./middleware/auth.middleware";
+import errorHandleMiddleware from "./middleware/error.middleware";
 // Router
 import RequestRouter from "./routes/wiip/RequestRouter";
 import StudentRouter from "./routes/wiip/StudentRouter";
@@ -17,16 +19,15 @@ import RecommendRouter from "./routes/recommend/Recommend";
 import VerificationRouter from "./routes/VerificationRouter";
 import ChatRouter from "./routes/chat/chatRouter";
 import SSEAlarmRouter from "./routes/chat/sseRouter";
+// Initialize other services
 import __initChat from "./routes/chat/webSocketRouter";
 import { __initSchedule } from "./utils/schedule";
+// Dummy chat data
 import { chatTest } from "./dummyChatData";
+// Utilities
+import { ServiceErrorBase } from "./errors";
 import * as rTracer from "cls-rtracer";
-
 import logger from "./utils/logger";
-const ErrorMiddleware = (err: Error, req: Request, res: Response, next: NextFunction) => {
-    logger.error(err.stack);
-    res.json();
-};
 
 Error.stackTraceLimit = 999;
 const app = express();
@@ -49,15 +50,6 @@ app.use(
         }),
     }),
 );
-
-sequelize
-    .sync({ force: false })
-    .then(() => {
-        logger.info("Database connection success");
-    })
-    .catch((err) => {
-        logger.error("Database connection failed:", err);
-    });
 
 /**
  * User Signin / Login
@@ -93,7 +85,14 @@ chatTest();
 // Alarm and Chat data
 app.use("/api/sse", SSEAlarmRouter);
 app.use("/api/message", ChatRouter);
+app.get("/", async (req, res) => {
+    throw new ServiceErrorBase("Test error");
+});
 
+/**
+ * Error handling
+ */
+app.use(errorHandleMiddleware);
 /*
     app.use(express.static(path.join(__dirname, "./../build")));
     app.get("/*", (req, res) => {
@@ -101,6 +100,9 @@ app.use("/api/message", ChatRouter);
         });
     */
 
-app.use(ErrorMiddleware);
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+    logger.error(err.stack);
+    res.json();
+});
 
 export default app;
