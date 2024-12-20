@@ -50,6 +50,8 @@
         "cls-rtracer": "^2.6.3",
         "cross-env": "^7.0.3",
         "dotenv-cli": "^7.4.4",
+        "joi": "^17.13.3",
+        "joi-extract-type": "^15.0.8",
         "meilisearch": "^0.45.0",
         "mongoose": "^8.7.3",
         "morgan": "^1.10.0",
