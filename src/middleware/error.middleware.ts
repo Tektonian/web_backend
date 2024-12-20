@@ -15,11 +15,20 @@ import { MongooseError } from "../errors";
 import { BullMqError } from "../errors";
 import { MulterError } from "../errors";
 import { MeiliSearchError } from "../errors";
-
+import { ValidationError } from "joi";
 import logger from "../utils/logger";
 
 const errorHandleMiddleware: ErrorRequestHandler = (err, req, res, next) => {
-    if (err instanceof JoiError) {
+    /**
+     * JoiError class is anonymous class (which means console.log(JoiError) === [class anonymous extends Error])
+     * So we can't use 'instanceof' here.
+     * use isJoi here (but leave code for code-readers)
+     */
+    if (err.isJoi || err instanceof JoiError) {
+        const joiError = err as JoiError;
+
+        logger.warn(JSON.stringify({ error: joiError, ip: req.ip, headers: req.headers, cookies: req.cookies }));
+        res.status(404).json("");
     } else if (err instanceof SSEError) {
     } else if (err instanceof ServiceExceptionBase) {
     } else if (err instanceof ServiceErrorBase) {
@@ -31,5 +40,7 @@ const errorHandleMiddleware: ErrorRequestHandler = (err, req, res, next) => {
     }
     next();
 };
+
+const JoiErrorHandler: ErrorRequestHandler = (err, req, res) => {};
 
 export default errorHandleMiddleware;

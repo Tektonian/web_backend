@@ -43,6 +43,7 @@ app.use(bodyParser.json());
 app.use(currentSession);
 app.use(
     rTracer.expressMiddleware({
+        /** Add TraceId properties for log tracking -> @see {@link utils/logger.ts} */
         requestIdFactory: (req: Request) => ({
             id: crypto.randomUUID(),
             glbTraceId: req.headers["x-global-trace-id"] ?? "",
