@@ -23,8 +23,6 @@ const errorHandleMiddleware: ErrorRequestHandler = (err, req, res, next) => {
     } else if (err instanceof SSEError) {
     } else if (err instanceof ServiceExceptionBase) {
     } else if (err instanceof ServiceErrorBase) {
-        logger.error(`Service error base ${err}`);
-        process.exit();
     } else if (err instanceof SequelizeError) {
     } else if (err instanceof MongooseError) {
     } else if (err instanceof MulterError) {
