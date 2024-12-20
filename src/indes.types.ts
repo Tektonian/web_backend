@@ -1,5 +1,6 @@
 import * as express from "express";
 import { DefaultSession } from "@auth/express";
+import "joi-extract-type"; // <- import joi-extract-type for type hint for router
 declare global {
     namespace Express {
         /** Extend Response types to add user session information */
