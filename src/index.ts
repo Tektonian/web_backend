@@ -55,7 +55,7 @@ app.use(
  * User Signin / Login
  */
 // Authenticate
-app.use("/api/auth/*", ExpressAuth(authConfig));
+app.use("/api/auth", ExpressAuth(authConfig));
 
 /**
  * For GET and POST of Request / Profile / Review
