@@ -50,6 +50,7 @@
         "cls-rtracer": "^2.6.3",
         "cross-env": "^7.0.3",
         "dotenv-cli": "^7.4.4",
+        "express": "^5.0.1",
         "joi": "^17.13.3",
         "joi-extract-type": "^15.0.8",
         "meilisearch": "^0.45.0",
