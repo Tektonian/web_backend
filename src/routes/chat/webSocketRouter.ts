@@ -111,12 +111,15 @@ const ResMessageFactory = (
     } else if (message.content_type === "alarm") {
         return {
             ...ret,
-            content: AlarmMessageGlb[message.content],
+            content: AlarmMessageGlb[message.content]?.kr?.content ?? "error",
             contentType: message.content_type,
         };
     }
 };
 
+/**
+ * @internal
+ */
 const ResMessagesFactory = (
     messages: ChatTypes.ChatContentType[],
     chatUser: HydratedDocument<ChatTypes.ChatUserType>,
@@ -171,7 +174,7 @@ async function __updateChatRoomHandler(io: Server, socket: Socket, req: any, cal
 
     if (!chatUser || !chatRoom) {
         logger.error("No chat user or chat room");
-        // throw new Error("Wrong data")
+        socket.disconnect(true);
         return;
     }
 
@@ -180,16 +183,8 @@ async function __updateChatRoomHandler(io: Server, socket: Socket, req: any, cal
 
     updateChatRoomEvent.on(eventName, ({ jobId, returnvalue }: any) => {
         const message: APIType.WebSocketType.UserSentEventReturn = JSON.parse(returnvalue).message;
-
-        const ret: APIType.WebSocketType.ResUpdateChatRoom = {
-            _id: message._id,
-            seq: message.seq,
-            chatRoomId: message.chatroom,
-            contentType: message.content_type,
-            content: message.content,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        };
+        const direction = Buffer.from(message.sender_id).equals(chatUser.user_id) === true ? "outgoing" : "inbound";
+        const ret: APIType.WebSocketType.ResMessage = ResMessageFactory(message, direction);
         logger.debug(`Update Room handler: ${ret}`);
         socket.emit("updateChatRoom", JSON.stringify(ret));
     });
@@ -201,7 +196,7 @@ async function __refreshChatRoomsHandler(io: Server, socket: Socket) {
 
     if (!chatUser || !chatRoom) {
         logger.error("No chat user or chat room");
-        // throw new Error("Wrong data")
+        socket.disconnect(true);
         return;
     }
 
@@ -242,12 +237,13 @@ async function __sendMessageHandler(
 
     if (!chatUser || !chatRoom) {
         logger.error("No chat user or chat room");
-        // throw new Error("Wrong data")
+        socket.disconnect(true);
         return;
     }
 
     if (req.senderId !== chatUser._id.toString()) {
         logger.error("Wrong chat user id");
+        socket.disconnect(true);
         return;
     }
 
@@ -266,7 +262,7 @@ async function __updateLastReadHandler(
 
     if (!chatUser || !chatRoom) {
         logger.error("No chat user or chat room");
-        // throw new Error("Wrong data")
+        socket.disconnect(true);
         return;
     }
 
@@ -299,7 +295,7 @@ async function __socketDisconnectHandler(io: Server, socket: Socket, reason: str
 
     logger.debug(`User disconnected: User: ${chatUser} Reason: ${reason}`);
     if (!chatUser) {
-        console.warn(`No Chat user`);
+        logger.warn(`No Chat user`);
         return;
     }
     const eventName = chatUser._id.toString();
@@ -394,7 +390,7 @@ async function __userTryJoinHandler(
 
     if (!chatUser || !chatRoom) {
         logger.error("No chat user or chat room");
-        // throw new Error("Wrong data")
+        socket.disconnect(true);
         return;
     }
 
@@ -412,12 +408,13 @@ async function __userTryJoinHandler(
         logger.warn(
             `Wrong user tried to enter a room. User:${JSON.stringify(chatUser)}, Room: ${JSON.stringify(chatRoom)} `,
         );
-        return;
+        socket.disconnect(true);
     }
 
     // Check ChatUser._id(==tempId) is valid
     if (id !== chatUser._id.toString()) {
         logger.error(`Wrong Chat Id: User: ${chatUser} Id: ${id}`);
+        socket.disconnect(true);
         return;
     }
 
@@ -451,7 +448,7 @@ async function __userTryJoinHandler(
     // Response to user and await ack message
     // If there is no ack it means user failed to join a room
     try {
-        const response = await socket.timeout(500).emitWithAck("userJoined", res);
+        const response = await socket.timeout(50000).emitWithAck("userJoined", res);
         // join user after acknowledgement
         logger.debug(`User joined: ChatRoomId: ${chatRoomId}, Status: ${response}`);
         socket.join(chatRoomId);
@@ -459,8 +456,9 @@ async function __userTryJoinHandler(
         // Emit users who participated in a room to update unread count
         io.in(chatRoom._id.toString()).emit("updateUnread", lastReadSequences);
     } catch (e) {
-        // should not reach here
-        throw new Error("User couldn't join the room");
+        logger.warn("User couldn't join the room");
+        socket.disconnect(true);
+        return;
     }
 }
 
@@ -486,14 +484,14 @@ export function __initChat(io: Server) {
         }
         // then send user ObjectId to a client, so we can identify user
         try {
+            logger.info(`User try connection: User: ${chatUser}`);
             const chatRooms = await chatRoomController.getAliveChatRoomsByUser(chatUser.user_id);
 
             const resChatRooms = await Promise.all(chatRooms.map(async (chatRoom) => ResChatRoomFactory(chatRoom)));
-            const is_connected = await socket.timeout(500).emitWithAck("connected", {
+            const is_connected = await socket.timeout(50000).emitWithAck("connected", {
                 id: chatUser._id.toString(),
                 chatRooms: resChatRooms,
             });
-            logger.info(`User try connection: User: ${chatUser}, Result: ${is_connected}`);
         } catch (e) {
             // if no response, disconnect
             socket.disconnect(true);
