@@ -1,8 +1,10 @@
+import type { NextFunction, Request, RequestHandler, Response } from "express";
+
 import { getSession } from "@auth/express";
 import { authConfig } from "../config/auth.config.js";
-import type { NextFunction, Request, Response } from "express";
 
 import { UserEnum } from "api_spec/enum";
+import * as Errors from "../errors";
 import logger from "../utils/logger.js";
 
 export const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -12,7 +14,6 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
     if (session) {
         return next();
     }
-
     res.status(401).json({ message: "Not Authenticated" });
 };
 
@@ -38,25 +39,30 @@ export const currentSession = async (req: Request, res: Response, next: NextFunc
     return next();
 };
 
-export const filterSessionByRBAC = async (roles: UserEnum.USER_ROLE_ENUM[]) => {
-    const callback = async (req: Request, res: Response, next: NextFunction) => {
+/**
+ * Filter logined user and user_roles.
+ * Non authorized access will be handled at error.middleware.ts
+ * @param roles - User roles. Ex) ['corp', 'normal'] / undefined means only check login session
+ */
+export const filterSessionByRBAC = (roles?: UserEnum.USER_ROLE_ENUM[]) => {
+    const callback: RequestHandler<any, any, any, any> = (req: Request, res: Response, next: NextFunction) => {
         const sessionUser = res.session?.user;
+        // Check session
         if (sessionUser === undefined) {
-            // TODO: log additional data such as IP
-            logger.warn(`Unlogined user tried to access`);
-            // throw new Error
-            return;
+            throw new Errors.ServiceExceptionBase("Un-Logined user tried to access");
+        }
+        if (roles === undefined) {
+            next();
         }
 
         const userRoleSet = new Set(sessionUser.roles);
         const authRoleSet = new Set(roles);
 
         if (userRoleSet.intersection(authRoleSet).size === 0) {
-            logger.warn(`User tried unathorized access: User: ${sessionUser}`);
-            // throw new Error
-            return;
+            throw new Errors.ServiceExceptionBase(`User tried unathorized access: User: ${sessionUser}`);
         }
-        return next();
+
+        next();
     };
 
     return callback;

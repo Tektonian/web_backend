@@ -5,16 +5,26 @@
 import { Router } from "express";
 import { models } from "../../models/rdbms";
 
+/**
+ * Controller
+ */
 import * as ChatRoomController from "../../controllers/chat/chatRoomController";
 import { getUserByConsumerId } from "../../controllers/UserController";
-import { getUnreadCountOfUser } from "../../controllers/chat/chatUnreadController";
 import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
 import { getChatRoomMessagesByContentType, sendMessage } from "../../controllers/chat/chatContentController";
 import { getStudentByUserId } from "../../controllers/wiip/StudentController";
 
-import logger from "../../utils/logger";
+/**
+ * middleware
+ */
+import { filterSessionByRBAC } from "../../middleware/auth.middleware";
 
+/**
+ * Enum / Util / Text
+ */
 import { RequestEnum } from "api_spec/enum";
+import * as Errors from "../../errors";
+import logger from "../../utils/logger";
 import { AlarmMessageGlb, AlarmMessageGlbEnum } from "../../global/text/chat/alarm";
 
 const ChatRouter = Router();
@@ -23,63 +33,50 @@ const { User, Request } = models;
 
 const { actionCompleteRecruit, createChatRoom, getChatRoomById, getAliveChatRoomsByUser } = ChatRoomController;
 
-/**
- * @deprecated
- */
-ChatRouter.post("/unread", async (req, res) => {
-    const sessionUser = res.session?.user;
-    if (sessionUser === undefined) res.json("No session");
+ChatRouter.post(
+    "/chatroom",
+    // Only student user can request participation as a provider
+    filterSessionByRBAC(["student"]),
+    async (req, res) => {
+        // TODO: add validation
+        const { request_id } = req.body;
 
-    const ret = await getUnreadCountOfUser(sessionUser.id);
+        logger.info(`START-Student want to participated in a request:${request_id}`);
+        const sessionUser = res.session!.user;
 
-    res.json({ unreadCount: ret });
-});
-
-ChatRouter.post("/chatroom", async (req, res) => {
-    const { request_id } = req.body;
-    const sessionUser = res.session?.user;
-
-    if (sessionUser === undefined) {
-        res.json({ status: "No session" });
-        return;
-    } else if (!sessionUser.roles.includes("student")) {
-        res.json({ status: "No student user" });
-        return;
-    }
-
-    const userInstance = (
-        await User.findOne({
+        const userInstance = await User.findOne({
             where: { user_id: sessionUser.id },
-        })
-    )?.get({ plain: true });
+            raw: true,
+        });
 
-    const reqeustInstance = (
-        await Request.findOne({
+        const reqeustInstance = await Request.findOne({
             where: { request_id: request_id },
-            include: {},
-        })
-    )?.get({ plain: true });
+            raw: true,
+        });
 
-    if (userInstance === undefined || reqeustInstance === undefined) {
-        res.json({ status: "Db error" });
+        if (!userInstance) {
+            throw new Errors.ServiceErrorBase("Something went wrong");
+        }
+        if (!reqeustInstance) {
+            throw new Errors.ServiceExceptionBase("User sent wrong request_id");
+        }
+
+        const consumerInstance = await getUserByConsumerId(reqeustInstance.consumer_id);
+
+        if (!consumerInstance) {
+            throw new Errors.ServiceErrorBase("Something went wrong");
+        }
+
+        const chatRoom = await createChatRoom(reqeustInstance.request_id, consumerInstance.user_id, [
+            consumerInstance.user_id,
+            userInstance.user_id,
+        ]);
+
+        logger.info("END-Student want to participated in a request");
+        res.json({ status: "ok" });
         return;
-    }
-
-    const consumerInstance = await getUserByConsumerId(reqeustInstance.consumer_id);
-
-    if (consumerInstance === undefined) {
-        res.json({ status: "Db error" });
-        return;
-    }
-
-    const chatRoom = await createChatRoom(reqeustInstance.request_id, consumerInstance.user_id, [
-        consumerInstance.user_id,
-        userInstance.user_id,
-    ]);
-
-    res.json({ status: "ok" });
-    return;
-});
+    },
+);
 
 /**
  * @deprecated
@@ -128,6 +125,8 @@ ChatRouter.delete("/chatroom", (req, res) => {
 /**
  * @deprecated
  */
+
+/*
 ChatRouter.put("/request", async (req, res) => {
     logger.info(`START-Approve request`);
     const sessionUser = res.session?.user;
@@ -160,13 +159,11 @@ ChatRouter.put("/request", async (req, res) => {
             res.json("Wrong request");
             return;
         }
-        /*
         TODO; add later
         if (![0, 1].includes(request.request_status ?? -1)){
             res.json("wrong request status");
             return;
         }
-        */
         const prevProviderIds = (request.provider_ids ?? []) as Buffer[];
 
         const newProviderId = chatRoom.participant_ids.find((id) => !id.equals(sessionUser.id as Buffer));
@@ -194,6 +191,7 @@ ChatRouter.put("/request", async (req, res) => {
 
     logger.info(`END-Approve request`);
 });
+*/
 
 // Upload file or image
 ChatRouter.post("/upload", async (req, res) => {
@@ -208,90 +206,86 @@ ChatRouter.post("/upload", async (req, res) => {
 });
 
 // Request check attending
-// TODO: Add RBAC middleware
-ChatRouter.post("/check-attending", async (req, res) => {
-    logger.info("START-Check attending request");
-    const { request_id } = req.body;
-    const sessionUser = res.session?.user;
+ChatRouter.post(
+    "/check-attending",
+    // Only provider can send check-attending message
+    filterSessionByRBAC(["student"]),
+    async (req, res) => {
+        // TODO: add validation
+        const { request_id } = req.body;
 
-    if (sessionUser === undefined) {
-        res.json("login first");
-        return;
-    }
-    // Start check validation
+        logger.info("START-Check attending request");
+        const sessionUser = res.session!.user;
 
-    const student = (await getStudentByUserId(sessionUser.id))?.get({
-        plain: true,
-    });
-    const request = (await getRequestByRequestId(request_id))?.get({
-        plain: true,
-    });
+        // Start check validation
+        const student = (await getStudentByUserId(sessionUser.id))?.get({
+            plain: true,
+        });
+        const request = (await getRequestByRequestId(request_id))?.get({
+            plain: true,
+        });
 
-    if (!student || !request) {
-        logger.warn(`No such data`);
-        res.json("wrong data");
-        return;
-    }
+        if (!student) {
+            throw new Errors.ServiceErrorBase("User with student role should have student identity");
+        }
+        if (!request) {
+            throw new Errors.ServiceExceptionBase("User sent non exists request_id");
+        }
 
-    if (request.request_status !== RequestEnum.REQUEST_STATUS_ENUM.CONTRACTED) {
-        logger.warn(`Only contracted request permitted`);
-        res.json("Wrong request");
-        return;
-    }
+        if (request.request_status !== RequestEnum.REQUEST_STATUS_ENUM.CONTRACTED) {
+            throw new Errors.ServiceExceptionBase("Only contracted request permitted");
+        }
 
-    // Provider ideas are saved with stringifed UUID
-    const stringfiedProviderIds = request.provider_ids;
+        const providerIds = request.provider_ids as Buffer[];
 
-    const providerIds = stringfiedProviderIds.map((id) => Buffer.from(id)) as Buffer[];
+        const isProvider = providerIds.find((id) => id.equals(sessionUser.id));
 
-    const isProvider = providerIds.find((id) => id.equals(sessionUser.id));
+        if (isProvider === undefined) {
+            throw new Errors.ServiceExceptionBase("None provider of a request tried to send check-attending");
+        }
 
-    if (isProvider === undefined) {
-        logger.warn(`Wrong provider`);
-        res.json(`Wrong provider`);
-        return;
-    }
+        const chatRoomAll = await ChatRoomController.getAliveChatRoomsByUser(sessionUser.id);
 
-    const chatRoomAll = await ChatRoomController.getAliveChatRoomsByUser(sessionUser.id);
+        if (chatRoomAll === undefined) {
+            throw new Errors.ServiceErrorBase(
+                `Something went wrong. Contracted request should have at least one chatroom`,
+            );
+        }
 
-    if (chatRoomAll === undefined) {
-        logger.warn(`Could be wrong input or db error`);
-        return;
-    }
+        const chatRoom = chatRoomAll.find(
+            (room) => room.request_id === request.request_id && room.participant_ids.length === 2,
+        );
 
-    const chatRoom = chatRoomAll.find(
-        (room) => room.request_id === request.request_id && room.participant_ids.length === 2,
-    );
+        if (chatRoom === undefined) {
+            throw new Errors.ServiceErrorBase(
+                `Something went wrong. Contracted request should have at least one 1:1 chatroom`,
+            );
+        }
 
-    if (chatRoom === undefined) {
-        logger.warn(`Could be wrong input`);
-        return;
-    }
+        // Check previously sended check arrived message
+        const messages = await getChatRoomMessagesByContentType(chatRoom._id, "alarm");
 
-    // Check previously sended check arrived message
-    const messages = await getChatRoomMessagesByContentType(chatRoom._id, "alarm");
+        const text: AlarmMessageGlbEnum = "checkArrived";
+        const prevMsg = messages.find((msg) => msg.content === text);
 
-    const text: AlarmMessageGlbEnum = "checkArrived";
-    const prevMsg = messages.find((msg) => msg.content === text);
+        if (prevMsg !== undefined) {
+            throw new Errors.ServiceExceptionBase(`Check-attendence-message has been sent already`);
+        }
+        // End check validation
 
-    if (prevMsg !== undefined) {
-        logger.warn(`Already requested attendence check`);
-        return;
-    }
-    // End check validation
+        const alarmMessage: AlarmMessageGlbEnum = "checkArrived";
 
-    const alarmMessage: AlarmMessageGlbEnum = "checkArrived";
+        await sendMessage(
+            {
+                contentType: "alarm",
+                content: alarmMessage,
+            },
+            chatRoom._id,
+            undefined,
+        );
 
-    await sendMessage(
-        {
-            contentType: "alarm",
-            content: alarmMessage,
-        },
-        chatRoom._id,
-        undefined,
-    );
-
-    logger.info("End-Check attending request");
-});
+        logger.info("End-Check attending request");
+    },
+);
 
 export default ChatRouter;
