@@ -194,6 +194,10 @@ if (process.env.NODE_ENV === "production") {
             }),
         ],
     };
+} else if (process.env.NODE_ENV === "test") {
+    loggerOption = {
+        silent: true,
+    };
 }
 
 const logger = winston.createLogger(loggerOption);
