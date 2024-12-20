@@ -18,8 +18,9 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
 
 export const currentSession = async (req: Request, res: Response, next: NextFunction) => {
     const session = (await getSession(req, authConfig)) ?? undefined;
+    // init as undefined
     res.session = undefined;
-
+    req.uuid = undefined;
     // console.log("currentSession", session);
     // encode JSON.stringfied Buffer to Buffer
     // https://stackoverflow.com/questions/34557889/how-to-deserialize-a-nested-buffer-using-json-parse
