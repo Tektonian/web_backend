@@ -125,5 +125,5 @@ const genPostedRequestChatData = async () => {
 export const chatTest = async () => {
     await genContractedRequestChatData();
     await genPostedRequestChatData();
-    await ChatUser.deleteMany();
+    await ChatUser.deleteMany({});
 };
