@@ -26,10 +26,11 @@ export default function SequelizeAdapter(client: Sequelize): Adapter {
                 const ret = await client.transaction(async (T) => {
                     const userInstance = await User.create(
                         {
-                            username: user.name,
+                            username: user.name ?? "",
                             email: user.email,
                             email_verified: user.emailVerified,
-                            image: user.image,
+                            image: user.image ?? "",
+                            roles: ["normal"], // insert empty normal role when email verified
                         },
                         { transaction: T },
                     );
@@ -41,22 +42,24 @@ export default function SequelizeAdapter(client: Sequelize): Adapter {
                             include: [["user_id", "id"]],
                         },
                         transaction: T,
+                        raw: true,
                     });
+
                     const consumerInstance = await Consumer.create(
                         {
-                            user_id: createdUser?.dataValues.id,
-                            consumer_email: createdUser?.dataValues.email,
+                            user_id: createdUser?.id,
+                            consumer_email: createdUser?.email,
                             consumer_type: "normal",
                             phone_number: "",
                         },
                         { transaction: T },
                     );
-                    return createdUser?.get({ plain: true }) ?? null;
+                    return createdUser;
                 });
                 return ret;
-            } catch (e) {
-                logger.error(e);
-                return null;
+            } catch (error) {
+                logger.error(`Create User failed: ${JSON.stringify(error)}`);
+                throw error;
             }
         },
         async gerUser(id) {
@@ -151,11 +154,12 @@ export default function SequelizeAdapter(client: Sequelize): Adapter {
 
             const tokenInstance = await VerificationToken.findOne({
                 where: { identifier, token },
+                raw: true,
             });
 
             await VerificationToken.destroy({ where: { identifier } });
 
-            return tokenInstance?.get({ plane: true }) ?? null;
+            return tokenInstance;
         },
     };
 }

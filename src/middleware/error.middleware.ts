@@ -33,12 +33,13 @@ const errorHandleMiddleware: ErrorRequestHandler = (err, req, res, next) => {
     } else if (err instanceof ServiceExceptionBase) {
     } else if (err instanceof ServiceErrorBase) {
     } else if (err instanceof SequelizeError) {
+        logger.error(`Sequelize error: ${JSON.stringify(err)}`);
     } else if (err instanceof MongooseError) {
     } else if (err instanceof MulterError) {
     } else if (err instanceof MeiliSearchError) {
     } else if (err instanceof BullMqError) {
     }
-    next();
+    return next();
 };
 
 const JoiErrorHandler: ErrorRequestHandler = (err, req, res) => {};
