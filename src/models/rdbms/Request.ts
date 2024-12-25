@@ -108,13 +108,12 @@ export class Request extends Model<RequestAttributes, RequestCreationAttributes>
                         return bufferUUIDs;
                     },
                     validate: {
-                        isArray: true,
                         isArrayOfUUID(value: any[]) {
                             // Value should be array of UUIDs
                             for (let userId of value) {
                                 const isBuffer = userId instanceof Buffer;
                                 const isStringfiedBuffer: string | undefined = userId.type;
-                                if (!isBuffer && !(isStringfiedBuffer === "buffer")) {
+                                if (!isBuffer && !(isStringfiedBuffer === "Buffer")) {
                                     throw new Error(`Not valid provider ids: ${value}`);
                                 }
                             }

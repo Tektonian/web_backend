@@ -13,6 +13,8 @@ import type { UserAttributes } from "../../models/rdbms/User";
 import { AlarmMessageGlb } from "../../global/text/chat/alarm";
 import logger from "../../utils/logger";
 import { getAliveChatRoomsByUser } from "../../controllers/chat/chatRoomController";
+import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
+import { RequestEnum } from "api_spec/enum";
 
 const { chatContentController, chatRoomController, chatUserController, chatUnreadController } = chatController;
 
@@ -64,6 +66,7 @@ const ResChatRoomFactory = async (chatRoom: HydratedDocument<ChatTypes.ChatRoomT
 
     const resChatroom: ResChatRoom = {
         title: chatRoom.title,
+        requestId: chatRoom.request_id,
         chatRoomId: chatRoom._id.toString(),
         messageSeq: chatRoom.message_seq,
         lastSenderId: createHash("sha256")
@@ -120,10 +123,7 @@ const ResMessageFactory = (
 /**
  * @internal
  */
-const ResMessagesFactory = (
-    messages: ChatTypes.ChatContentType[],
-    chatUser: HydratedDocument<ChatTypes.ChatUserType>,
-): APIType.WebSocketType.ResMessage[] => {
+const ResMessagesFactory = (messages: ChatTypes.ChatContentType[], chatUser: c): APIType.WebSocketType.ResMessage[] => {
     // TODO: bit wise operation later
     let ret = [];
     for (let message of messages) {
@@ -137,6 +137,63 @@ const ResMessagesFactory = (
         ret.push(ResMessageFactory(message, dir));
     }
     return ret;
+};
+
+/**
+ * @internal
+ */
+
+const ResRefreshFactory = async (chatUser: HydratedDocument<ChatTypes.ChatUserType>) => {
+    const aliveChatRooms = (await getAliveChatRoomsByUser(chatUser.user_id)) ?? [];
+
+    const resChatRooms = await Promise.all(aliveChatRooms.map(async (chatRoom) => ResChatRoomFactory(chatRoom)));
+
+    const uniqueRequestIds = Array.from(new Set(aliveChatRooms.map((room) => room.request_id)));
+    const requests = await Promise.all(uniqueRequestIds.map((reqId) => getRequestByRequestId(reqId)));
+
+    const resRequests = await Promise.all(
+        requests
+            .filter((req) => req !== null)
+            .map((req) => req.get({ plain: true }))
+            .map(async (req) => {
+                // List of chatroom id which selected provider is in
+                const providerChatRoomIds: string[] = [];
+                const isConsumer = aliveChatRooms
+                    .find((val) => val.request_id === req.request_id)
+                    ?.consumer_id.equals(chatUser.user_id);
+
+                // Send selected chatroom list only for consumer
+                // TODO: add PAID status and delete POSTED later
+                if (isConsumer && req.request_status === RequestEnum.REQUEST_STATUS_ENUM.POSTED) {
+                    const providerIds = req.provider_ids as Buffer[];
+                    const providerChatRoom = aliveChatRooms
+                        .filter((room) => room.request_id === req.request_id)
+                        .map((room) => {
+                            return room;
+                        })
+                        .filter(
+                            (room) =>
+                                providerIds.find(
+                                    (providerId) =>
+                                        room.participant_ids.find((partiId) => partiId.equals(providerId)) !==
+                                        undefined,
+                                ) !== undefined,
+                        );
+                    providerChatRoom.forEach((val) => providerChatRoomIds.push(val._id.toString()));
+                }
+
+                return {
+                    requestId: req.request_id,
+                    requestStatus: req.request_status,
+                    selected: providerChatRoomIds,
+                    title: req.title,
+                    image: "",
+                };
+            }),
+    );
+    logger.debug(`Refresh Room Factory: ${JSON.stringify(requests)} ${JSON.stringify(resRequests)}`);
+
+    return { chatRooms: resChatRooms, requests: resRequests };
 };
 
 /**
@@ -168,7 +225,7 @@ const ResMessagesFactory = (
  *      "__v":0}
  * }
  */
-async function __updateChatRoomHandler(io: Server, socket: Socket, req: any, callback: Function) {
+function __updateChatRoomHandler(io: Server, socket: Socket, req: any, callback: Function) {
     const chatUser: HydratedDocument<ChatTypes.ChatUserType> | undefined = socket.data.chatUser;
     const chatRoom: HydratedDocument<ChatTypes.ChatRoomType> | undefined = socket.data.chatRoom;
 
@@ -192,25 +249,21 @@ async function __updateChatRoomHandler(io: Server, socket: Socket, req: any, cal
 
 async function __refreshChatRoomsHandler(io: Server, socket: Socket) {
     const chatUser: HydratedDocument<ChatTypes.ChatUserType> | undefined = socket.data.chatUser;
-    const chatRoom: HydratedDocument<ChatTypes.ChatRoomType> | undefined = socket.data.chatRoom;
 
-    if (!chatUser || !chatRoom) {
-        logger.error("No chat user or chat room");
+    if (!chatUser) {
+        logger.error("Refresh ChatRoom: No chat user");
         socket.disconnect(true);
         return;
     }
-
     const refreshChatRooms = new QueueEvents("refreshChatRooms");
     const eventName = chatUser._id.toString();
 
     refreshChatRooms.on(eventName, async ({ jobId, returnvalue }: any) => {
-        const aliveChatRooms = (await getAliveChatRoomsByUser(chatUser.user_id)) ?? [];
-
-        const resChatRooms = await Promise.all(aliveChatRooms.map(async (chatRoom) => ResChatRoomFactory(chatRoom)));
-
-        logger.debug(`Refresh Room handler: ${resChatRooms}`);
-        socket.emit("refreshChatRooms", JSON.stringify({ chatRooms: resChatRooms }));
+        const res = await ResRefreshFactory(chatUser);
+        socket.emit("refreshChatRooms", res);
     });
+    logger.debug(`Refresh Event handler registered: ${eventName}`);
+    return;
 }
 
 /**
@@ -236,7 +289,7 @@ async function __sendMessageHandler(
     logger.debug(`Send message Handler: chatRoom: ${chatRoom}, chatUser: ${chatUser}, Message: ${JSON.stringify(req)}`);
 
     if (!chatUser || !chatRoom) {
-        logger.error("No chat user or chat room");
+        logger.error("Send Message: No chat user or chat room");
         socket.disconnect(true);
         return;
     }
@@ -247,7 +300,7 @@ async function __sendMessageHandler(
         return;
     }
 
-    await chatContentController.sendMessage(chatRoom._id, chatUser._id, req.message);
+    await chatContentController.sendMessage(req.message, chatRoom._id, chatUser._id);
 }
 
 async function __updateLastReadHandler(
@@ -261,7 +314,7 @@ async function __updateLastReadHandler(
     const chatRoom: HydratedDocument<ChatTypes.ChatRoomType> | undefined = socket.data.chatRoom;
 
     if (!chatUser || !chatRoom) {
-        logger.error("No chat user or chat room");
+        logger.error("Update Last Read: No chat user or chat room");
         socket.disconnect(true);
         return;
     }
@@ -285,7 +338,7 @@ async function __userTryUnJoinHandler(
         userSentEvent.removeAllListeners(eventName);
         socket.leave(chatRoom._id.toString());
     } else {
-        logger.warn(`Something went wrong`);
+        logger.warn(`Something went wrong User failed to try unjoin: chatRoom:${chatRoom} chatUser:${chatUser}`);
         return;
     }
 }
@@ -324,7 +377,7 @@ async function __userSentEventHandler(io: Server, socket: Socket) {
     const chatRoom: HydratedDocument<ChatTypes.ChatRoomType> | undefined = socket.data.chatRoom;
 
     if (!chatUser || !chatRoom) {
-        logger.error("No chat user or chat room");
+        logger.error("User Sent: No chat user or chat room");
         // throw new Error("Wrong data")
         return;
     }
@@ -376,6 +429,7 @@ async function __userSentEventHandler(io: Server, socket: Socket) {
             respondUserIds,
         );
     });
+    return;
 }
 
 async function __userTryJoinHandler(
@@ -389,7 +443,9 @@ async function __userTryJoinHandler(
     const chatRoom = await chatRoomController.getChatRoomById(chatRoomId);
 
     if (!chatUser || !chatRoom) {
-        logger.error("No chat user or chat room");
+        logger.error(
+            `User Try Join: No chat user or chat room: ChatUser:${JSON.stringify(chatUser)}, ChatRoom:${JSON.stringify(chatRoom)}`,
+        );
         socket.disconnect(true);
         return;
     }
@@ -456,7 +512,7 @@ async function __userTryJoinHandler(
         // Emit users who participated in a room to update unread count
         io.in(chatRoom._id.toString()).emit("updateUnread", lastReadSequences);
     } catch (e) {
-        logger.warn("User couldn't join the room");
+        logger.warn(`User couldn't join the room: ChatUser:${chatUser}, Error:${JSON.stringify(e)}`);
         socket.disconnect(true);
         return;
     }
@@ -485,12 +541,13 @@ export function __initChat(io: Server) {
         // then send user ObjectId to a client, so we can identify user
         try {
             logger.info(`User try connection: User: ${chatUser}`);
-            const chatRooms = await chatRoomController.getAliveChatRoomsByUser(chatUser.user_id);
 
-            const resChatRooms = await Promise.all(chatRooms.map(async (chatRoom) => ResChatRoomFactory(chatRoom)));
-            const is_connected = await socket.timeout(50000).emitWithAck("connected", {
+            const refresh = await ResRefreshFactory(chatUser);
+
+            // Send Chatuser's ObjectId to user, and user will use this as a temporary id.
+            const is_connected = await socket.timeout(500).emitWithAck("connected", {
                 id: chatUser._id.toString(),
-                chatRooms: resChatRooms,
+                ...refresh,
             });
         } catch (e) {
             // if no response, disconnect
@@ -499,13 +556,17 @@ export function __initChat(io: Server) {
             logger.warn(`User failed to connect: Error: ${e}`);
             return;
         }
+
         socket.data.chatUser = chatUser;
-        initSocketEvents(io, socket);
-        __refreshChatRoomsHandler(io, socket);
+        // Register rest events
+        await initSocketEvents(io, socket);
+        // Register refresh chatroom event
+        await __refreshChatRoomsHandler(io, socket);
+        return;
     });
 }
 
-function initSocketEvents(io: Server, socket: Socket) {
+async function initSocketEvents(io: Server, socket: Socket) {
     socket.on("userTryJoin", async (req, callback) => {
         await __userTryJoinHandler(io, socket, req, callback);
         await __userSentEventHandler(io, socket);
@@ -527,6 +588,7 @@ function initSocketEvents(io: Server, socket: Socket) {
     socket.on("disconnecting", async (reason: string) => {
         await __socketDisconnectHandler(io, socket, reason);
     });
+    return;
 }
 
 export default __initChat;

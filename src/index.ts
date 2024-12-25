@@ -87,7 +87,7 @@ chatTest();
 app.use("/api/sse", SSEAlarmRouter);
 app.use("/api/message", ChatRouter);
 app.get("/", async (req, res) => {
-    throw new ServiceErrorBase("Test error");
+    throw new ServiceErrorBase("This is for testing error");
 });
 
 /**
@@ -100,10 +100,5 @@ app.use(errorHandleMiddleware);
         res.sendFile(path.join(__dirname, "./../build/index.html"));
         });
     */
-
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-    logger.error(err.stack);
-    res.json();
-});
 
 export default app;
