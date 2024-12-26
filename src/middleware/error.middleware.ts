@@ -31,14 +31,20 @@ const errorHandleMiddleware: ErrorRequestHandler = (err, req, res, next) => {
         res.status(404).json("");
     } else if (err instanceof SSEError) {
     } else if (err instanceof ServiceExceptionBase) {
+        logger.warn(`Server exception occured: ${JSON.stringify(err)} ${err.message}`);
+        res.status(err.responseCode).end();
     } else if (err instanceof ServiceErrorBase) {
+        logger.error(`Server error thrown: ${JSON.stringify(err)} ${err.message}`);
+        res.status(404).end();
     } else if (err instanceof SequelizeError) {
+        logger.error(`Sequelize error: ${JSON.stringify(err)}`);
     } else if (err instanceof MongooseError) {
     } else if (err instanceof MulterError) {
     } else if (err instanceof MeiliSearchError) {
     } else if (err instanceof BullMqError) {
     }
-    next();
+    logger.error(`Stack: ${err.stack}`);
+    return next();
 };
 
 const JoiErrorHandler: ErrorRequestHandler = (err, req, res) => {};

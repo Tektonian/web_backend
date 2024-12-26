@@ -102,6 +102,23 @@ export class Request extends Model<RequestAttributes, RequestCreationAttributes>
                     type: DataTypes.JSON,
                     allowNull: true,
                     comment: "Provider ids of students",
+                    get() {
+                        const stringfiedUUIDs = this.getDataValue("provider_ids") as any[];
+                        const bufferUUIDs = stringfiedUUIDs.map((uuid) => Buffer.from(uuid));
+                        return bufferUUIDs;
+                    },
+                    validate: {
+                        isArrayOfUUID(value: any[]) {
+                            // Value should be array of UUIDs
+                            for (let userId of value) {
+                                const isBuffer = userId instanceof Buffer;
+                                const isStringfiedBuffer: string | undefined = userId.type;
+                                if (!isBuffer && !(isStringfiedBuffer === "Buffer")) {
+                                    throw new Error(`Not valid provider ids: ${value}`);
+                                }
+                            }
+                        },
+                    },
                 },
                 title: {
                     type: DataTypes.STRING(255),

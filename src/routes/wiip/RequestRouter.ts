@@ -13,7 +13,7 @@ import {
     updateRequestStatus,
 } from "../../controllers/wiip/RequestController";
 import { getUserByConsumerId } from "../../controllers/UserController";
-import { getChatUsersByUUID } from "../../controllers/chat/chatUserController";
+import { getChatUserByUUID, getChatUsersByUUID } from "../../controllers/chat/chatUserController";
 import {
     actionCompleteRecruit,
     getChatRoomById,
@@ -228,14 +228,12 @@ RequestRouter.post(
 
         const chatRoom = await getChatRoomById(chatroom_id);
 
-        if (
-            !chatRoom ||
-            // Only for 1:1 chatroom
-            chatRoom.participant_ids.length !== 2 ||
-            // Only consumer of request can update status of request
-            chatRoom.consumer_id !== sessionUser.id
-        ) {
-            throw new Errors.ServiceExceptionBase("User requets wrong chatroom id");
+        if (!chatRoom) {
+            throw new Errors.ServiceExceptionBase("User requested Non-exist chatroom");
+        } else if (chatRoom.participant_ids.length !== 2) {
+            throw new Errors.ServiceExceptionBase("Updating provider ids is exclusively allowed for 1:1 chatroom");
+        } else if (!chatRoom.consumer_id.equals(sessionUser.id)) {
+            throw new Errors.ServiceExceptionBase("Non consumer user tried to update provider list");
         }
 
         const request = (await getRequestByRequestId(chatRoom.request_id))?.get({
@@ -274,11 +272,21 @@ RequestRouter.post(
             const newProviderIds = prevProviderIds.filter((user_id) => !user_id.equals(selectedProviderId));
             await updateRequestProviderIds(newProviderIds, request.request_id);
         } else {
+            console.log(selectedProviderId);
             const newProviderIds = [...prevProviderIds, selectedProviderId];
             await updateRequestProviderIds(newProviderIds, request.request_id);
         }
 
+        const chatUser = await getChatUserByUUID(sessionUser.id);
+
+        if (chatUser) {
+            logger.info("INTER-Update provider_ids succeed send chatUser to update chatrooms");
+            sendRefreshChatRooms(chatUser._id);
+        }
+
+        res.status(202).end();
         logger.info("END-Update provider_ids of Request table");
+        return;
     },
 );
 

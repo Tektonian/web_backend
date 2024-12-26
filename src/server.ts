@@ -3,7 +3,7 @@ import { createServer } from "http";
 import { Server as SocketServer } from "socket.io";
 import { currentSession } from "./middleware/auth.middleware";
 import __initChat from "./routes/chat/webSocketRouter";
-
+import errorHandleMiddleware from "./middleware/error.middleware";
 import logger from "./utils/logger";
 
 const httpServer = createServer(app);
@@ -26,7 +26,6 @@ io.use((socket, next) => {
     socket.request.protocol = "ws";
     currentSession(socket.request, socket.request, next);
 });
-
 __initChat(io);
 // __initSchedule();
 

@@ -52,7 +52,7 @@ export const filterSessionByRBAC = (roles?: UserEnum.USER_ROLE_ENUM[]) => {
             throw new Errors.ServiceExceptionBase("Un-Logined user tried to access");
         }
         if (roles === undefined) {
-            next();
+            return next();
         }
 
         const userRoleSet = new Set(sessionUser.roles);
@@ -62,7 +62,7 @@ export const filterSessionByRBAC = (roles?: UserEnum.USER_ROLE_ENUM[]) => {
             throw new Errors.ServiceExceptionBase(`User tried unathorized access: User: ${sessionUser}`);
         }
 
-        next();
+        return next();
     };
 
     return callback;

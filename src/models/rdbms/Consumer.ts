@@ -108,13 +108,13 @@ export class Consumer extends Model<ConsumerAttributes, ConsumerCreationAttribut
                     type: DataTypes.STRING(255),
                     allowNull: false,
                     validate: {
-                        isValidType(value: string[]) {
+                        isValidType(value: string) {
                             const validTypeSet = new Set(Object.values(ConsumerEnum.CONSUMER_ENUM));
 
-                            const valueSet = new Set(value);
-
-                            if (valueSet.difference(validTypeSet).size !== 0) {
-                                throw new Error("Wrong type input");
+                            if (validTypeSet.has(value) === false) {
+                                throw new Error(
+                                    `Wrong Comsuper type input: Value:${value}, Expect:${ConsumerEnum.CONSUMER_ENUM}`,
+                                );
                             }
                         },
                     },

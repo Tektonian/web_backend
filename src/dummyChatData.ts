@@ -60,70 +60,74 @@ async function createAliveChatRoom(request_id: number, consumerUserId: Buffer, p
     }
 }
 
-const allUsers = await User.findAll({ raw: true });
-const allRequests = await Request.findAll({ raw: true });
-
 const genCompleteRequestChatData = async () => {
+    const allRequests = await Request.findAll({ raw: true });
     const completedRequests = allRequests.filter(
         (val) => val.request_status === RequestEnum.REQUEST_STATUS_ENUM.FINISHED,
     );
 };
 
 const genContractedRequestChatData = async () => {
+    const allRequests = await Request.findAll({ raw: true });
     const contractedRequests = allRequests.filter(
         (val) => val.request_status === RequestEnum.REQUEST_STATUS_ENUM.CONTRACTED,
     );
-    contractedRequests.map(async (req) => {
-        const participantIds = req.provider_ids;
-        const consumer = await Consumer.findOne({ where: { consumer_id: req.consumer_id }, raw: true });
+    await Promise.all(
+        contractedRequests.map(async (req) => {
+            const participantIds = req.provider_ids;
+            const consumer = await Consumer.findOne({ where: { consumer_id: req.consumer_id }, raw: true });
 
-        const studentUsers = await User.findAll({ where: { user_id: participantIds }, raw: true });
+            const studentUsers = await User.findAll({ where: { user_id: participantIds }, raw: true });
 
-        const restStudent = (
-            await User.findAll({ where: { user_id: { [Op.notIn]: participantIds } }, raw: true })
-        ).filter((val) => val.email.startsWith("student"));
+            const restStudent = (
+                await User.findAll({ where: { user_id: { [Op.notIn]: participantIds } }, raw: true })
+            ).filter((val) => val.email.startsWith("student"));
 
-        const providerUsers = [...studentUsers, ...randPick(restStudent, 2)];
+            const providerUsers = [...studentUsers, ...randPick(restStudent, 2)];
 
-        await Promise.all(
-            providerUsers.map(async (provider) => {
-                createAliveChatRoom(req.request_id, consumer!.user_id, provider.user_id);
-            }),
-        );
+            await Promise.all(
+                providerUsers.map(async (provider) => {
+                    createAliveChatRoom(req.request_id, consumer!.user_id, provider.user_id);
+                }),
+            );
 
-        await chatRoomController.actionCompleteRecruit(
-            req.request_id,
-            consumer!.user_id,
-            studentUsers.map((val) => val.user_id),
-        );
-    });
+            await chatRoomController.actionCompleteRecruit(
+                req.request_id,
+                consumer!.user_id,
+                studentUsers.map((val) => val.user_id),
+            );
+        }),
+    );
 };
 
 const genPostedRequestChatData = async () => {
+    const allRequests = await Request.findAll({ raw: true });
     const postedRequests = allRequests.filter((val) => val.request_status === RequestEnum.REQUEST_STATUS_ENUM.POSTED);
 
-    postedRequests.map(async (req) => {
-        const participantIds = req.provider_ids;
-        const consumer = await Consumer.findOne({ where: { consumer_id: req.consumer_id }, raw: true });
+    await Promise.all(
+        postedRequests.map(async (req) => {
+            // Don't know but getter of provider_ids in Request model doens't work here...
+            const providerIds = req.provider_ids.map((id) => Buffer.from(id));
+            const consumer = await Consumer.findOne({ where: { consumer_id: req.consumer_id }, raw: true });
 
-        const studentUsers = await User.findAll({ where: { user_id: participantIds }, raw: true });
+            const studentUsers = await User.findAll({ where: { user_id: { [Op.in]: providerIds } }, raw: true });
+            const restStudent = (
+                await User.findAll({ where: { user_id: { [Op.notIn]: providerIds } }, raw: true })
+            ).filter((val) => val.email.startsWith("student"));
 
-        const restStudent = (
-            await User.findAll({ where: { user_id: { [Op.notIn]: participantIds } }, raw: true })
-        ).filter((val) => val.email.startsWith("student"));
+            const providerUsers = [...studentUsers, ...randPick(restStudent, 2)];
 
-        const providerUsers = [...studentUsers, ...randPick(restStudent, 2)];
-
-        await Promise.all(
-            providerUsers.map(async (provider) => {
-                createAliveChatRoom(req.request_id, consumer!.user_id, provider.user_id);
-            }),
-        );
-    });
+            await Promise.all(
+                providerUsers.map(async (provider) => {
+                    createAliveChatRoom(req.request_id, consumer!.user_id, provider.user_id);
+                }),
+            );
+        }),
+    );
 };
 
 export const chatTest = async () => {
     await genContractedRequestChatData();
     await genPostedRequestChatData();
-    await ChatUser.deleteMany();
+    await ChatUser.deleteMany({});
 };

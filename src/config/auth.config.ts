@@ -7,15 +7,10 @@ import SequelizeAdapter from "./auth.adapter-sequelize";
 
 import logger from "../utils/logger";
 
-const sequelize = new Sequelize(
-    process.env.MYSQL_DATABASE,
-    process.env.MYSQL_USER,
-    process.env.MYSQL_PASSWORD,
-    {
-        dialect: "mysql",
-        logging: (msg) => logger.debug(msg),
-    },
-);
+const sequelize = new Sequelize(process.env.MYSQL_DATABASE, process.env.MYSQL_USER, process.env.MYSQL_PASSWORD, {
+    dialect: "mysql",
+    logging: (msg) => logger.debug(msg),
+});
 
 /**
  * Most of the codes are from https://github.com/nextauthjs/next-auth/blob/main/packages/core/src/lib/actions/callback/handle-login.ts#L26
@@ -46,12 +41,7 @@ export async function customSendVerificationRequest(params) {
     }
 }
 
-function html(params: {
-    url: string;
-    host: string;
-    theme: Theme;
-    token: string;
-}) {
+function html(params: { url: string; host: string; theme: Theme; token: string }) {
     const { url, host, theme, token } = params;
 
     const escapedHost = host.replace(/\./g, "&#8203;.");
@@ -148,9 +138,7 @@ export const authConfig: ExpressAuthConfig = {
             },
             authorize: async (credentials) => {
                 const adapter = SequelizeAdapter(sequelize);
-                const userInstance = await adapter.getUserByEmail(
-                    credentials.email,
-                );
+                const userInstance = await adapter.getUserByEmail(credentials.email);
                 logger.debug(`User credential authorization: ${userInstance}`);
                 return userInstance;
             },
@@ -199,7 +187,7 @@ export const authConfig: ExpressAuthConfig = {
             }
             // TOOD: for debugging
             else if (
-                process.env.NODE_ENV === "development" &&
+                process.env.NODE_ENV !== "production" &&
                 trigger === "signIn" &&
                 account?.provider === "credentials"
             ) {
@@ -211,7 +199,6 @@ export const authConfig: ExpressAuthConfig = {
                 token.roles = userInstance.roles;
             } else if (trigger === "signIn") {
                 token.name = user.username;
-                token.email = user.email ?? null;
                 token.email = user.email ?? "";
                 token.id = Buffer.from(user?.id ?? []);
                 token.roles = user?.roles ?? [];
@@ -222,8 +209,7 @@ export const authConfig: ExpressAuthConfig = {
             const adapter = SequelizeAdapter(sequelize) ?? undefined;
 
             // ALERT: For development environment
-            if (account !== null && account.provider === "credentials")
-                return true;
+            if (account !== null && account.provider === "credentials") return true;
 
             // console.log(user, account, profile, email);
             // Google Oauth2
@@ -244,9 +230,7 @@ export const authConfig: ExpressAuthConfig = {
             // Pass JWT token info to session
             // https://authjs.dev/guides/extending-the-session#with-jwt
             // console.log("Session: ", session, token, user);
-            logger.debug(
-                `Session: ${JSON.stringify(session)} - ${JSON.stringify(token)} - ${user}`,
-            );
+            logger.debug(`Session: ${JSON.stringify(session)} - ${JSON.stringify(token)} - ${user}`);
             session.user.id = token.id ?? undefined;
             session.user.email = token.email ?? undefined;
             session.user.name = token.name;
