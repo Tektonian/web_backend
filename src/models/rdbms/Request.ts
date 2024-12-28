@@ -104,7 +104,7 @@ export class Request extends Model<RequestAttributes, RequestCreationAttributes>
                     comment: "Provider ids of students",
                     get() {
                         const stringfiedUUIDs = this.getDataValue("provider_ids") as any[];
-                        const bufferUUIDs = stringfiedUUIDs.map((uuid) => Buffer.from(uuid));
+                        const bufferUUIDs = stringfiedUUIDs?.map((uuid) => Buffer.from(uuid));
                         return bufferUUIDs;
                     },
                     validate: {
