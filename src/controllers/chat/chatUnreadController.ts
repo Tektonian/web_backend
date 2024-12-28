@@ -56,13 +56,13 @@ export const whetherSendAlarm = async (
 ) => {
     participantIds.map(async (uuid) => {
         const chatUser = await ChatUser.findOne({ user_id: uuid });
-        logger.debug(`WhethersendAlarm: ${chatUser}:${message}`);
+        logger.debug(`WhethersendAlarm: ${chatUser}:${JSON.stringify(message)}`);
 
         if (chatUser !== null) {
             const isParticipated = chatUsersIds.find((userId) => userId.toString() === chatUser._id.toString());
 
-            logger.debug(`push update chat room:, ${chatUser}`);
             if (isParticipated === undefined) {
+                logger.debug(`push update chat room:, ${chatUser}`);
                 pushUpdateChatRoom(message, chatRoomId, chatUser._id);
             }
         } else {

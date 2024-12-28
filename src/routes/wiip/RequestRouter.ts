@@ -224,66 +224,67 @@ RequestRouter.post(
         const sessionUser = res.session!.user;
 
         // TODO: add schema
-        const { chatroom_id } = req.body;
+        const { chatroom_ids } = req.body;
 
-        const chatRoom = await getChatRoomById(chatroom_id);
+        for (const chatroom_id of chatroom_ids) {
+            const chatRoom = await getChatRoomById(chatroom_id);
 
-        if (!chatRoom) {
-            throw new Errors.ServiceExceptionBase("User requested Non-exist chatroom");
-        } else if (chatRoom.participant_ids.length !== 2) {
-            throw new Errors.ServiceExceptionBase("Updating provider ids is exclusively allowed for 1:1 chatroom");
-        } else if (!chatRoom.consumer_id.equals(sessionUser.id)) {
-            throw new Errors.ServiceExceptionBase("Non consumer user tried to update provider list");
+            if (!chatRoom) {
+                throw new Errors.ServiceExceptionBase("User requested Non-exist chatroom");
+            } else if (chatRoom.participant_ids.length !== 2) {
+                throw new Errors.ServiceExceptionBase("Updating provider ids is exclusively allowed for 1:1 chatroom");
+            } else if (!chatRoom.consumer_id.equals(sessionUser.id)) {
+                throw new Errors.ServiceExceptionBase("Non consumer user tried to update provider list");
+            }
+
+            const request = (await getRequestByRequestId(chatRoom.request_id))?.get({
+                plain: true,
+            });
+
+            if (!request) {
+                throw new Errors.ServiceErrorBase("Something went wrong. request should exist");
+            }
+
+            // TODO: remove POSTED status after payment system is implemented
+            if (
+                request.request_status !== RequestEnum.REQUEST_STATUS_ENUM.POSTED &&
+                request.request_status !== RequestEnum.REQUEST_STATUS_ENUM.PAID
+            ) {
+                throw new Errors.ServiceExceptionBase("Illigal request, Only paid-request can be updated");
+            }
+            // TODO: Check head count
+
+            /**
+             * provider_ids are saved as Stringfied Buffer but Sequelize model getter
+             * will change ids into Buffer type
+             * @see {@link models/rdbms/Request}
+             */
+            const prevProviderIds = request.provider_ids as Buffer[];
+
+            // counterpart of a consumer in 1:1 chatroom is provider
+            const selectedProviderId = chatRoom.participant_ids.find((user_id) => !user_id.equals(sessionUser.id));
+
+            if (!selectedProviderId) {
+                throw new Errors.ServiceExceptionBase("Something wrong, No provider id found");
+            }
+
+            // Boolean flipping here -> JS do not support Set<Buffer> so we have to filter one by one
+            if (prevProviderIds.find((user_id) => user_id.equals(selectedProviderId))) {
+                const newProviderIds = prevProviderIds.filter((user_id) => !user_id.equals(selectedProviderId));
+                await updateRequestProviderIds(newProviderIds, request.request_id);
+            } else {
+                console.log(selectedProviderId);
+                const newProviderIds = [...prevProviderIds, selectedProviderId];
+                await updateRequestProviderIds(newProviderIds, request.request_id);
+            }
+
+            const chatUser = await getChatUserByUUID(sessionUser.id);
+
+            if (chatUser) {
+                logger.info("INTER-Update provider_ids succeed send chatUser to update chatrooms");
+                sendRefreshChatRooms(chatUser._id);
+            }
         }
-
-        const request = (await getRequestByRequestId(chatRoom.request_id))?.get({
-            plain: true,
-        });
-
-        if (!request) {
-            throw new Errors.ServiceErrorBase("Something went wrong. request should exist");
-        }
-
-        // TODO: remove POSTED status after payment system is implemented
-        if (
-            request.request_status !== RequestEnum.REQUEST_STATUS_ENUM.POSTED &&
-            request.request_status !== RequestEnum.REQUEST_STATUS_ENUM.PAID
-        ) {
-            throw new Errors.ServiceExceptionBase("Illigal request, Only paid-request can be updated");
-        }
-        // TODO: Check head count
-
-        /**
-         * provider_ids are saved as Stringfied Buffer but Sequelize model getter
-         * will change ids into Buffer type
-         * @see {@link models/rdbms/Request}
-         */
-        const prevProviderIds = request.provider_ids as Buffer[];
-
-        // counterpart of a consumer in 1:1 chatroom is provider
-        const selectedProviderId = chatRoom.participant_ids.find((user_id) => !user_id.equals(sessionUser.id));
-
-        if (!selectedProviderId) {
-            throw new Errors.ServiceExceptionBase("Something wrong, No provider id found");
-        }
-
-        // Boolean flipping here -> JS do not support Set<Buffer> so we have to filter one by one
-        if (prevProviderIds.find((user_id) => user_id.equals(selectedProviderId))) {
-            const newProviderIds = prevProviderIds.filter((user_id) => !user_id.equals(selectedProviderId));
-            await updateRequestProviderIds(newProviderIds, request.request_id);
-        } else {
-            console.log(selectedProviderId);
-            const newProviderIds = [...prevProviderIds, selectedProviderId];
-            await updateRequestProviderIds(newProviderIds, request.request_id);
-        }
-
-        const chatUser = await getChatUserByUUID(sessionUser.id);
-
-        if (chatUser) {
-            logger.info("INTER-Update provider_ids succeed send chatUser to update chatrooms");
-            sendRefreshChatRooms(chatUser._id);
-        }
-
         res.status(202).end();
         logger.info("END-Update provider_ids of Request table");
         return;

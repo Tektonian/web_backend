@@ -49,7 +49,7 @@ export const getChatRoomLastMessage = async (chatRoomId: Types.ObjectId) => {
         return undefined;
     }
     const message = await ChatContent.findOne({
-        $and: [{ chatroom: chatRoom }, { seq: chatRoom.message_seq }],
+        $and: [{ chatroom: chatRoom }, { seq: chatRoom.message_seq - 1 }],
     });
 
     return message;

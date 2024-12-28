@@ -82,7 +82,7 @@ app.use("/api/recommend", RecommendRouter);
  * For chatting
  */
 // Init dummy chat data
-chatTest();
+new Promise((resolve, reject) => chatTest());
 // Alarm and Chat data
 app.use("/api/sse", SSEAlarmRouter);
 app.use("/api/message", ChatRouter);

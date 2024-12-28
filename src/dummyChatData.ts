@@ -48,16 +48,18 @@ async function createAliveChatRoom(request_id: number, consumerUserId: Buffer, p
     const consumer = await chatUserController.createChatUser(consumerUserId);
     const provider = await chatUserController.createChatUser(providerUserId);
 
-    for (let i = 0; i < Math.floor(Math.random() * 13); i++) {
-        await chatContentController.sendMessage(
-            {
-                contentType: "text",
-                content: randPickOne(dummyMessage),
-            },
-            chatRoom!._id,
-            randPickOne([consumer!, provider!])._id,
-        );
-    }
+    await Promise.all(
+        Array.from({ length: Math.floor(Math.random() * 13) }).map(() => {
+            return chatContentController.sendMessage(
+                {
+                    contentType: "text",
+                    content: randPickOne(dummyMessage),
+                },
+                chatRoom!._id,
+                randPickOne([consumer!, provider!])._id,
+            );
+        }),
+    );
 }
 
 const genCompleteRequestChatData = async () => {
@@ -87,7 +89,7 @@ const genContractedRequestChatData = async () => {
 
             await Promise.all(
                 providerUsers.map(async (provider) => {
-                    createAliveChatRoom(req.request_id, consumer!.user_id, provider.user_id);
+                    return createAliveChatRoom(req.request_id, consumer!.user_id, provider.user_id);
                 }),
             );
 
@@ -119,7 +121,7 @@ const genPostedRequestChatData = async () => {
 
             await Promise.all(
                 providerUsers.map(async (provider) => {
-                    createAliveChatRoom(req.request_id, consumer!.user_id, provider.user_id);
+                    return createAliveChatRoom(req.request_id, consumer!.user_id, provider.user_id);
                 }),
             );
         }),
