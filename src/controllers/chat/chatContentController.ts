@@ -14,7 +14,7 @@ export const sendMessage = async (
     logger.debug(`Send message: ChatRoomId: ${chatRoomId}, Sender: ${senderId}, Message: ${message}`);
 
     if (message.contentType === "text" && senderId !== undefined) {
-        await pushMessageQueue(message, chatRoomId, senderId);
+        return pushMessageQueue(message, chatRoomId, senderId);
     }
 };
 

@@ -304,7 +304,13 @@ async function __sendMessageHandler(
         return;
     }
 
-    await chatContentController.sendMessage(req.message, chatRoom._id, chatUser._id);
+    const job = await chatContentController.sendMessage(req.message, chatRoom._id, chatUser._id);
+
+    const jobState = await job?.getState();
+
+    callback({
+        state: jobState,
+    });
 }
 
 async function __updateLastReadHandler(
