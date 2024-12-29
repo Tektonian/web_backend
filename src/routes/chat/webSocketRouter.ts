@@ -596,4 +596,48 @@ async function initSocketEvents(io: Server, socket: Socket) {
     return;
 }
 
-export default __initChat;
+export function __initChatTest(io: Server, user: Awaited<ReturnType<typeof UserController.getUserByName>>) {
+    return new Promise((resolve) => {
+        io.on("connection", async (socket) => {
+            const sessionUser = user;
+            let chatUser = await chatUserController.getChatUserByUUID(sessionUser.user_id);
+
+            if (chatUser === null) {
+                chatUser = await chatUserController.createChatUser(sessionUser.user_id);
+            }
+
+            if (chatUser === null) {
+                return;
+                throw new Error("User not created");
+            }
+            // then send user ObjectId to a client, so we can identify user
+            try {
+                // console.log(`User try connection: User: ${chatUser}`);
+
+                const refresh = await ResRefreshFactory(chatUser);
+
+                // Send Chatuser's ObjectId to user, and user will use this as a temporary id.
+                const is_connected = await socket.timeout(5000).emitWithAck("connected", {
+                    id: chatUser._id.toString(),
+                    ...refresh,
+                });
+            } catch (e) {
+                // if no response, disconnect
+                socket.disconnect(true);
+                await chatUserController.delChatUserById(chatUser._id);
+                console.log(`User failed to connect: Error: ${e}`);
+                throw new Error("error");
+            }
+
+            socket.data.chatUser = chatUser;
+            // Register rest events
+            await initSocketEvents(io, socket);
+            // Register refresh chatroom event
+            await __refreshChatRoomsHandler(io, socket);
+            // Register update chatroom event
+            await __updateChatRoomHandler(io, socket);
+
+            resolve(socket);
+        });
+    });
+}

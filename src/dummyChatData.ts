@@ -1,6 +1,6 @@
 import { models } from "./models/rdbms";
 import { chatController } from "./controllers/chat";
-import { ChatUser } from "./models/chat";
+import { ChatContent, ChatRoom, ChatUser, Unread } from "./models/chat";
 import { Request } from "./models/rdbms/Request";
 
 import { RequestEnum } from "api_spec/enum";
@@ -128,8 +128,15 @@ const genPostedRequestChatData = async () => {
     );
 };
 
-export const chatTest = async () => {
+export const generateChatDummyData = async () => {
     await genContractedRequestChatData();
     await genPostedRequestChatData();
     await ChatUser.deleteMany({});
+};
+
+export const cleanChatData = async () => {
+    await ChatUser.deleteMany({});
+    await ChatContent.deleteMany({});
+    await Unread.deleteMany({});
+    await ChatRoom.deleteMany({});
 };

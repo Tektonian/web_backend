@@ -40,7 +40,6 @@ export const createChatRoom = async (requestId: number, consumerId: Buffer, part
             participant_ids: participantIds,
             message_seq: 1, // Default message will be added below
         });
-        console.log("chatroominstance", chatRoomInstance);
         const res = await Promise.all(
             participants.map(async (parti) => {
                 await Unread.create({
@@ -64,8 +63,6 @@ export const createChatRoom = async (requestId: number, consumerId: Buffer, part
     } catch (e) {
         logger.warn(`Failed chatroom created ${e}`);
         throw new Error("Create room failed");
-    } finally {
-        logger.info("ChatRoom created");
     }
 };
 
@@ -132,7 +129,7 @@ export const delChatRoom = async (chatRoomId: Types.ObjectId) => {
 };
 
 export const sendRefreshChatRooms = async (chatUserId: Types.ObjectId) => {
-    pushRefreshChatRooms(chatUserId);
+    return await pushRefreshChatRooms(chatUserId);
 };
 
 // Not clean code
