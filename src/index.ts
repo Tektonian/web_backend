@@ -20,10 +20,9 @@ import VerificationRouter from "./routes/VerificationRouter";
 import ChatRouter from "./routes/chat/chatRouter";
 import SSEAlarmRouter from "./routes/chat/sseRouter";
 // Initialize other services
-import __initChat from "./routes/chat/webSocketRouter";
 import { __initSchedule } from "./utils/schedule";
 // Dummy chat data
-import { chatTest } from "./dummyChatData";
+import { generateChatDummyData } from "./dummyChatData";
 // Utilities
 import { ServiceErrorBase } from "./errors";
 import * as rTracer from "cls-rtracer";
@@ -82,7 +81,7 @@ app.use("/api/recommend", RecommendRouter);
  * For chatting
  */
 // Init dummy chat data
-chatTest();
+new Promise((resolve, reject) => generateChatDummyData());
 // Alarm and Chat data
 app.use("/api/sse", SSEAlarmRouter);
 app.use("/api/message", ChatRouter);

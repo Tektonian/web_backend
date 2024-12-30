@@ -17,7 +17,9 @@ import { getRequestByRequestId } from "../../controllers/wiip/RequestController"
 import { RequestEnum } from "api_spec/enum";
 
 const { chatContentController, chatRoomController, chatUserController, chatUnreadController } = chatController;
-
+const userSentEvent = new QueueEvents("userSentMessage");
+const updateChatRoomEvent = new QueueEvents("updateChatRoom");
+const refreshChatRoomsEvent = new QueueEvents("refreshChatRooms");
 type ResSomeoneSent = APIType.WebSocketType.ResSomeoneSent;
 type ResChatRoom = APIType.ChatRoomType.ResChatRoom;
 
@@ -225,24 +227,22 @@ const ResRefreshFactory = async (chatUser: HydratedDocument<ChatTypes.ChatUserTy
  *      "__v":0}
  * }
  */
-function __updateChatRoomHandler(io: Server, socket: Socket, req: any, callback: Function) {
+function __updateChatRoomHandler(io: Server, socket: Socket) {
     const chatUser: HydratedDocument<ChatTypes.ChatUserType> | undefined = socket.data.chatUser;
-    const chatRoom: HydratedDocument<ChatTypes.ChatRoomType> | undefined = socket.data.chatRoom;
 
-    if (!chatUser || !chatRoom) {
-        logger.error("No chat user or chat room");
+    if (!chatUser) {
+        logger.error("No chat user");
         socket.disconnect(true);
         return;
     }
 
-    const updateChatRoomEvent = new QueueEvents("updateChatRoom");
     const eventName = chatUser._id.toString();
 
     updateChatRoomEvent.on(eventName, ({ jobId, returnvalue }: any) => {
         const message: APIType.WebSocketType.UserSentEventReturn = JSON.parse(returnvalue).message;
         const direction = Buffer.from(message.sender_id).equals(chatUser.user_id) === true ? "outgoing" : "inbound";
         const ret: APIType.WebSocketType.ResMessage = ResMessageFactory(message, direction);
-        logger.debug(`Update Room handler: ${ret}`);
+        logger.debug(`Update Room handler: ${JSON.stringify(ret)}, User: ${JSON.stringify(chatUser)}`);
         socket.emit("updateChatRoom", JSON.stringify(ret));
     });
 }
@@ -255,10 +255,9 @@ async function __refreshChatRoomsHandler(io: Server, socket: Socket) {
         socket.disconnect(true);
         return;
     }
-    const refreshChatRooms = new QueueEvents("refreshChatRooms");
     const eventName = chatUser._id.toString();
 
-    refreshChatRooms.on(eventName, async ({ jobId, returnvalue }: any) => {
+    refreshChatRoomsEvent.on(eventName, async ({ jobId, returnvalue }: any) => {
         const res = await ResRefreshFactory(chatUser);
         socket.emit("refreshChatRooms", res);
     });
@@ -294,13 +293,24 @@ async function __sendMessageHandler(
         return;
     }
 
+    if (socket.disconnected) {
+        logger.error("Disconnected User try to send a message");
+        return;
+    }
+
     if (req.senderId !== chatUser._id.toString()) {
         logger.error("Wrong chat user id");
         socket.disconnect(true);
         return;
     }
 
-    await chatContentController.sendMessage(req.message, chatRoom._id, chatUser._id);
+    const job = await chatContentController.sendMessage(req.message, chatRoom._id, chatUser._id);
+
+    const jobState = await job?.getState();
+
+    callback({
+        state: jobState,
+    });
 }
 
 async function __updateLastReadHandler(
@@ -333,12 +343,12 @@ async function __userTryUnJoinHandler(
 
     if (chatRoom && chatUser) {
         logger.debug(`User leave room: User: ${chatUser}, ChatRoom: ${chatRoom}`);
-        const userSentEvent = new QueueEvents("userSentMessage");
         const eventName = EVENT_NAME_FACTORY(chatUser, chatRoom);
         userSentEvent.removeAllListeners(eventName);
         socket.leave(chatRoom._id.toString());
     } else {
         logger.warn(`Something went wrong User failed to try unjoin: chatRoom:${chatRoom} chatUser:${chatUser}`);
+        socket.disconnect(true);
         return;
     }
 }
@@ -352,8 +362,7 @@ async function __socketDisconnectHandler(io: Server, socket: Socket, reason: str
         return;
     }
     const eventName = chatUser._id.toString();
-    const updateChatRoomEvent = new QueueEvents("updateChatRoom");
-    const refreshChatRoomsEvent = new QueueEvents("refreshChatRooms");
+
     updateChatRoomEvent.removeAllListeners(eventName);
     refreshChatRoomsEvent.removeAllListeners(eventName);
     await chatUserController.delChatUserById(chatUser._id);
@@ -382,7 +391,6 @@ async function __userSentEventHandler(io: Server, socket: Socket) {
         return;
     }
 
-    const userSentEvent = new QueueEvents("userSentMessage");
     const eventName = EVENT_NAME_FACTORY(chatUser, chatRoom);
 
     userSentEvent.on(eventName, async ({ jobId, returnvalue }: any) => {
@@ -504,15 +512,17 @@ async function __userTryJoinHandler(
     // Response to user and await ack message
     // If there is no ack it means user failed to join a room
     try {
-        const response = await socket.timeout(50000).emitWithAck("userJoined", res);
+        callback(res);
+        socket.join(chatRoomId);
+        const response = await socket.timeout(500).emitWithAck("userJoined");
         // join user after acknowledgement
         logger.debug(`User joined: ChatRoomId: ${chatRoomId}, Status: ${response}`);
-        socket.join(chatRoomId);
 
         // Emit users who participated in a room to update unread count
         io.in(chatRoom._id.toString()).emit("updateUnread", lastReadSequences);
-    } catch (e) {
-        logger.warn(`User couldn't join the room: ChatUser:${chatUser}, Error:${JSON.stringify(e)}`);
+        return;
+    } catch (error) {
+        logger.warn(`User couldn't join the room: ChatUser:${chatUser}, Error:${error}`);
         socket.disconnect(true);
         return;
     }
@@ -562,6 +572,8 @@ export function __initChat(io: Server) {
         await initSocketEvents(io, socket);
         // Register refresh chatroom event
         await __refreshChatRoomsHandler(io, socket);
+        // Register update chatroom event
+        await __updateChatRoomHandler(io, socket);
         return;
     });
 }
@@ -582,7 +594,6 @@ async function initSocketEvents(io: Server, socket: Socket) {
 
     socket.on("sendMessage", async (req, callback) => {
         await __sendMessageHandler(io, socket, req, callback);
-        await __updateChatRoomHandler(io, socket, req, callback);
     });
 
     socket.on("disconnecting", async (reason: string) => {
@@ -591,4 +602,48 @@ async function initSocketEvents(io: Server, socket: Socket) {
     return;
 }
 
-export default __initChat;
+export function __initChatTest(io: Server, user: Awaited<ReturnType<typeof UserController.getUserByName>>) {
+    return new Promise((resolve) => {
+        io.on("connection", async (socket) => {
+            const sessionUser = user;
+            let chatUser = await chatUserController.getChatUserByUUID(sessionUser.user_id);
+
+            if (chatUser === null) {
+                chatUser = await chatUserController.createChatUser(sessionUser.user_id);
+            }
+
+            if (chatUser === null) {
+                return;
+                throw new Error("User not created");
+            }
+            // then send user ObjectId to a client, so we can identify user
+            try {
+                // console.log(`User try connection: User: ${chatUser}`);
+
+                const refresh = await ResRefreshFactory(chatUser);
+
+                // Send Chatuser's ObjectId to user, and user will use this as a temporary id.
+                const is_connected = await socket.timeout(5000).emitWithAck("connected", {
+                    id: chatUser._id.toString(),
+                    ...refresh,
+                });
+            } catch (e) {
+                // if no response, disconnect
+                socket.disconnect(true);
+                await chatUserController.delChatUserById(chatUser._id);
+                console.log(`User failed to connect: Error: ${e}`);
+                throw new Error("error");
+            }
+
+            socket.data.chatUser = chatUser;
+            // Register rest events
+            await initSocketEvents(io, socket);
+            // Register refresh chatroom event
+            await __refreshChatRoomsHandler(io, socket);
+            // Register update chatroom event
+            await __updateChatRoomHandler(io, socket);
+
+            resolve(socket);
+        });
+    });
+}

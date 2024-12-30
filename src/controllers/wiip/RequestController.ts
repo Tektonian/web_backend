@@ -19,6 +19,7 @@ const requestSearch = client.index("request");
 const StudentWithCurrentSchool = models.studentwithcurrentschool;
 const RequestModel = models.Request;
 const ConsumerModel = models.Consumer;
+const StudentModel = models.Student;
 const UserModel = models.User;
 
 export const getRecommendedRequestByStudentId = async (student_id: number) => {
@@ -38,11 +39,29 @@ export const getRecommendedRequestByStudentId = async (student_id: number) => {
     return searchRet;
 };
 
-export const getRequestByRequestId = async (request_id: number) => {
+export const getRequestByRequestId = async (requestId: number) => {
     const request = await RequestModel.findOne({
-        where: { request_id: request_id },
+        where: { request_id: requestId },
     });
     return request;
+};
+
+export const getRequestByStudentId = async (studentId: number) => {
+    throw new Error("");
+};
+
+export const getRequestsByOrgnId = async (orgnId: number) => {
+    const requests = await RequestModel.findAll({
+        where: { orgn_id: orgnId },
+    });
+    return requests;
+};
+
+export const getRequestsByCorpId = async (corpId: number) => {
+    const requests = await RequestModel.findAll({
+        where: { corp_id: corpId },
+    });
+    return requests;
 };
 
 export const getRequestsByUserId = async (userId: Buffer, as: "consumer" | "provider" | undefined = undefined) => {

@@ -2,7 +2,7 @@ import app from ".";
 import { createServer } from "http";
 import { Server as SocketServer } from "socket.io";
 import { currentSession } from "./middleware/auth.middleware";
-import __initChat from "./routes/chat/webSocketRouter";
+import { __initChat } from "./routes/chat/webSocketRouter";
 import errorHandleMiddleware from "./middleware/error.middleware";
 import logger from "./utils/logger";
 

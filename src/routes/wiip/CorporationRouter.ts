@@ -3,6 +3,11 @@ import { Consumer } from "../../models/rdbms/Consumer";
 import { Corporation } from "../../models/rdbms/Corporation";
 import * as CorpController from "../../global/corpInfo/kr/CorpInfoController";
 
+import { APISpec } from "api_spec";
+import {} from "api_spec/enum";
+import * as Errors from "../../errors";
+import logger from "../../utils/logger";
+
 const CorporationRouter = express.Router();
 
 CorporationRouter.get("/", async (req: Request, res: Response) => {
@@ -52,14 +57,30 @@ CorporationRouter.post("/corpProfile", async (req: Request, res: Response) => {
     res.json(createdCorpProfile);
 });
 
-CorporationRouter.get("/:corp_id", async (req: Request, res: Response) => {
-    // TODO: add review data later
-    const corpId = req.params.corp_id;
+CorporationRouter.get("/:corp_id" satisfies keyof APISpec.CorporationAPISpec, (async (req, res) => {
+    logger.info("START-Get Corporation profile");
+    const corpId: number | undefined = req.params.corp_id;
 
-    const ret = await CorpController.findCorpProfileByCorpId(Number(corpId));
-    console.log(ret);
+    if (!corpId) {
+        throw new Errors.ServiceExceptionBase(`User requested wrong corporation id: ${corpId}`);
+    }
+    const corpProfile = await CorpController.findCorpProfileByCorpId(Number(corpId));
 
-    res.json(ret);
-});
+    if (!corpProfile) {
+        throw new Errors.ServiceExceptionBase(`User requested wrong corporation id: ${corpId}`);
+    }
+    res.json({
+        corp_id: corpProfile.corp_id,
+        corp_name: corpProfile.corp_name,
+        nationality: corpProfile.nationality,
+        ceo_name: corpProfile.ceo_name,
+        biz_type: corpProfile.biz_type,
+        logo_image: corpProfile.logo_image,
+        site_url: corpProfile.site_url,
+        corp_domain: corpProfile.corp_domain,
+        phone_number: corpProfile.phone_number,
+    });
+    logger.info("END-Get Corporation profile");
+}) as APISpec.CorporationAPISpec["/:corp_id"]["get"]["handler"]);
 
 export default CorporationRouter;

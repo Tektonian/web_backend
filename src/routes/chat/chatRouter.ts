@@ -211,10 +211,10 @@ ChatRouter.post(
     // Only provider can send check-attending message
     filterSessionByRBAC(["student"]),
     async (req, res) => {
+        logger.info("START-Check attending request");
         // TODO: add validation
         const { request_id } = req.body;
 
-        logger.info("START-Check attending request");
         const sessionUser = res.session!.user;
 
         // Start check validation
@@ -231,7 +231,6 @@ ChatRouter.post(
         if (!request) {
             throw new Errors.ServiceExceptionBase("User sent non exists request_id");
         }
-
         if (request.request_status !== RequestEnum.REQUEST_STATUS_ENUM.CONTRACTED) {
             throw new Errors.ServiceExceptionBase("Only contracted request permitted");
         }

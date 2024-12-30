@@ -14,7 +14,7 @@ export const sendMessage = async (
     logger.debug(`Send message: ChatRoomId: ${chatRoomId}, Sender: ${senderId}, Message: ${message}`);
 
     if (message.contentType === "text" && senderId !== undefined) {
-        await pushMessageQueue(message, chatRoomId, senderId);
+        return pushMessageQueue(message, chatRoomId, senderId);
     }
 };
 
@@ -49,7 +49,7 @@ export const getChatRoomLastMessage = async (chatRoomId: Types.ObjectId) => {
         return undefined;
     }
     const message = await ChatContent.findOne({
-        $and: [{ chatroom: chatRoom }, { seq: chatRoom.message_seq }],
+        $and: [{ chatroom: chatRoom }, { seq: chatRoom.message_seq - 1 }],
     });
 
     return message;
