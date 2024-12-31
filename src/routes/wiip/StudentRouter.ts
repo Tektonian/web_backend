@@ -8,8 +8,10 @@ import {
 import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
 import { Corporation } from "../../models/rdbms/Corporation";
 
-import { APISpec, APIType } from "api_spec";
+import * as Errors from "../../errors";
+import { APISpec } from "api_spec";
 import logger from "../../utils/logger";
+import { getUserByStudentId } from "../../controllers/UserController";
 
 const StudentRouter = express.Router();
 
@@ -40,77 +42,45 @@ StudentRouter.post("/", async (req: Request, res: Response) => {
     }
 });
 
+// TODO: Response 타입 정확한지 확인 필요
 StudentRouter.get("/:student_id" satisfies keyof APISpec.StudentAPISpec, (async (req, res) => {
     const { student_id } = req.params;
-    const roles: string[] | null = res.session?.user?.roles ?? null;
-    // TODO: add response type
-    let ret: APIType.StudentType.ResGetStudentProfile = {
-        profile: undefined,
-        review: [],
-    };
+    const sessionUser = res.session?.user;
 
     if (!student_id) {
-        res.json(ret);
-        return;
+        throw new Errors.ServiceExceptionBase(`User sent wrong student id: ${student_id}`);
     }
 
     const studentFullProfile = (await getStudentFullProfileByStudentId(Number(student_id)))?.get({ plain: true });
-
-    if (studentFullProfile === undefined) {
-        res.json(ret);
-        return;
+    if (!studentFullProfile) {
+        throw new Errors.ServiceExceptionBase(`User sent wrong student id: ${student_id}`);
     }
 
-    ret.profile = {
-        name_glb: studentFullProfile.name_glb,
-        nationality: studentFullProfile.nationality,
-        birth_date: new Date(studentFullProfile.birth_date),
+    const studentUser = (await getUserByStudentId(Number(student_id)))?.get({ plain: true });
+
+    if (!studentUser) {
+        throw new Errors.ServiceErrorBase(`Something went wrong, Student user should exist ${student_id}`);
+    }
+
+    const contact = {
         phone_number: studentFullProfile.phone_number,
         emergency_contact: studentFullProfile.emergency_contact,
-        email_verified: studentFullProfile.email_verified,
-        gender: Number(studentFullProfile.gender),
-        image: studentFullProfile.image ?? "",
-        has_car: studentFullProfile.has_car,
-        keyword_list: studentFullProfile.keyword_list,
-        academic_history: studentFullProfile.academic ?? [],
-        exam_history: studentFullProfile.language ?? [],
     };
-    if (roles !== null && (roles.includes("corp") || roles.includes("orgn"))) {
-        const reviews = await getInstReviewOfStudentByStudentId(Number(student_id));
 
-        await Promise.all(
-            reviews.map(async (model) => {
-                const review = model.get({ plain: true });
-                const request = (await getRequestByRequestId(review.request_id))?.get({ plain: true });
-                if (!review || !request) return;
-                let logo_image = "";
-                if (request.corp_id !== undefined) {
-                    logo_image =
-                        (
-                            await Corporation.findOne({
-                                where: {
-                                    corp_id: request.corp_id,
-                                },
-                            })
-                        )?.get("logo_image", { plain: true }) ?? "";
-                }
-                ret.review.push({
-                    ...review,
-                    request: {
-                        request_id: request.request_id,
-                        title: request.title,
-                        reward_price: request.reward_price,
-                        currency: request.currency,
-                        address: request.address ?? "",
-                        start_date: request.start_date ?? "",
-                        logo_image: logo_image,
-                    },
-                });
-            }),
-        );
-    }
-
-    res.json(ret);
+    res.json({
+        profile: {
+            ...studentFullProfile,
+            name_glb: studentFullProfile.name_glb as { KR: string },
+            has_car: studentFullProfile.has_car as 0,
+            gender: studentFullProfile.gender as 0,
+            major: studentFullProfile.academic?.at(-1)?.faculty ?? "",
+            nationality: studentUser.nationality as "KR",
+            keyword_list: studentFullProfile.keyword_list as string[],
+            academic_history: studentFullProfile.academic ?? [],
+            // exam_history: studentFullProfile.language ?? [],
+        },
+        contact: sessionUser?.id.equals(studentUser.user_id as Buffer) ? contact : undefined,
+    });
 }) as APISpec.StudentAPISpec["/:student_id"]["get"]["__handler"]);
 
 export default StudentRouter;
