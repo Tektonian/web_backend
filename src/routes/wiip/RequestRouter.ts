@@ -37,7 +37,7 @@ import { RequestEnum } from "api_spec/enum";
 import * as Errors from "../../errors";
 import { ValidateSchema } from "../../utils/validation.joi";
 import logger from "../../utils/logger";
-
+import { omit } from "es-toolkit";
 const RequestRouter = express.Router();
 
 RequestRouter.post(
@@ -64,11 +64,11 @@ RequestRouter.post(
         }
 
         res.json({ request_id: request_id });
-        logger.info("START-User creating RequestModel data");
+        logger.info("END-User creating RequestModel data");
     }) as APISpec.RequestAPISpec["/"]["post"]["handler"],
 );
 
-RequestRouter.get(
+RequestRouter.post(
     "/list" satisfies keyof APISpec.RequestAPISpec,
     // Check session
     filterSessionByRBAC(["normal", "student", "corp", "orgn"]),
@@ -90,7 +90,7 @@ RequestRouter.get(
             const chatRooms = await ChatRoom.find({
                 $and: [
                     // Finished Requests are set to be less than 0
-                    { request_id: { $le: 0 } },
+                    { request_id: { $lte: 0 } },
                     // Student user participated in a finished request
                     { participant_ids: { $in: [studentUser.user_id] } },
                     // And student user is not a consumer
@@ -161,10 +161,10 @@ RequestRouter.get("/:request_id" satisfies keyof APISpec.RequestAPISpec, (async 
         throw new Errors.ServiceExceptionBase("User sent non exist request_id");
     }
 
-    res.json({ data: request, status: "ok" });
+    res.json(omit(request, ["provider_ids"]));
 
     logger.info("END-User requested RequestModel data");
-}) as APISpec.RequestAPISpec["/:request_id"]["get"]["__handler"]);
+}) as APISpec.RequestAPISpec["/:request_id"]["get"]["handler"]);
 
 RequestRouter.post(
     "/status/contract",
@@ -409,7 +409,7 @@ RequestRouter.put(
         }
 
         logger.info(`END-Update request status`);
-    }) as APISpec.RequestAPISpec["/update"]["patch"]["__handler"],
+    }) as APISpec.RequestAPISpec["/update"]["put"]["__handler"],
 );
 
 export default RequestRouter;
