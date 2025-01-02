@@ -21,7 +21,7 @@ export interface RequestAttributes {
     provide_food: any;
     provide_trans_exp: any;
     prep_material?: object;
-    request_status?: number;
+    request_status?: RequestEnum.REQUEST_STATUS_ENUM;
     start_time: string;
     end_time: string;
     created_at?: Date;
@@ -67,7 +67,7 @@ export class Request extends Model<RequestAttributes, RequestCreationAttributes>
     provide_food!: any;
     provide_trans_exp!: any;
     prep_material?: object;
-    request_status?: number;
+    request_status?: RequestEnum.REQUEST_STATUS_ENUM;
     start_time!: string;
     end_time!: string;
     created_at?: Date;

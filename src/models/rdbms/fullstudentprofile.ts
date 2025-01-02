@@ -136,9 +136,7 @@ export class fullstudentprofile
             {
                 sequelize,
                 tableName: "fullstudentprofile",
-                timestamps: true,
-                createdAt: "created_at",
-                updatedAt: "updated_at",
+                timestamps: false,
             },
         );
     }
