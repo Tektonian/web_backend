@@ -101,7 +101,7 @@ export const updateRequestProviderIds = async (newProviderIds: Buffer[], request
 };
 
 // api_spec 문서 보고 데이터 타비 맞춰서 리턴하도록 수정
-export const createRequest = async (uuid: typeof DataTypes.UUID, role: "corp" | "orgn" | "normal", data) => {
+export const createRequest = async (uuid: Buffer, role: "corp" | "orgn" | "normal", data) => {
     try {
         const ret = await sequelize.transaction(async (t) => {
             logger.info("Start: Transaction-[Create Request]");
