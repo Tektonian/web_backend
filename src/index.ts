@@ -2,6 +2,7 @@ import express, { NextFunction, Request, Response } from "express";
 // External libraries
 import bodyParser from "body-parser";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { ExpressAuth } from "@auth/express";
 import { authConfig } from "./config/auth.config";
 // Middleware
@@ -39,6 +40,7 @@ app.set("port", PORT);
 app.use(cors({ origin: true, credentials: true }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(cookieParser());
 app.use(currentSession);
 app.use(
     rTracer.expressMiddleware({
@@ -46,6 +48,7 @@ app.use(
         requestIdFactory: (req: Request) => ({
             id: crypto.randomUUID(),
             glbTraceId: req.headers["x-global-trace-id"] ?? "",
+            platform: req.headers["wiip-platform"] ?? "",
             userId: req.uuid ?? "",
         }),
     }),
@@ -86,7 +89,44 @@ new Promise((resolve, reject) => generateChatDummyData());
 app.use("/api/sse", SSEAlarmRouter);
 app.use("/api/message", ChatRouter);
 app.get("/", async (req, res) => {
+    res.redirect(`wiip://callback?session=${JSON.stringify(cookie.parse(req.headers.cookie ?? ""))}`);
+    console.log(req.headers);
     throw new ServiceErrorBase("This is for testing error");
+});
+app.get("/redirect", async (req, res) => {
+    logger.info(`${JSON.stringify(req.headers)} / ${JSON.stringify(req.query)}`);
+
+    const { redirectType, redirectUrl } = req.query;
+
+    const cookieUrl: string | undefined = req.cookies["authjs.callback-url"];
+    logger.info(`Cookie url: ${cookieUrl}`);
+    if (!cookieUrl) {
+        logger.error(`Cookie url not exist`);
+        res.redirect("http://localhost:3000/home");
+        return;
+    }
+
+    const callbackUrl = new URL(cookieUrl);
+    logger.info(`callbackUrl: ${callbackUrl}`);
+
+    if (!callbackUrl || callbackUrl.host !== req.host) {
+        logger.error(`Wrong callback url ${req.originalUrl} - ${req.baseUrl}`);
+        res.redirect("http://localhost:3000/home");
+        return;
+    }
+
+    const cookieRedirectType = callbackUrl.searchParams.get("redirectType");
+    const cookieRedirectUrl = callbackUrl.searchParams.get("redirectUrl");
+    logger.info(`cookie values: ${cookieRedirectType} / ${cookieRedirectUrl}`);
+    if (cookieRedirectType !== redirectType || cookieRedirectUrl !== redirectUrl) {
+        logger.error(`Wrong cookie value`);
+        res.redirect("http://localhost:3000/home");
+        return;
+    }
+
+    if (redirectType === "signin") {
+        res.redirect(`${redirectUrl}?session=${req.cookies["authjs.session-token"]}`);
+    }
 });
 
 /**
