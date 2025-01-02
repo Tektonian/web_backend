@@ -6,8 +6,7 @@ import type { UserAttributes } from "../../models/rdbms/User";
 export const createChatUser = async (user_id: Buffer) => {
     const user = await User.findByPk(user_id, { raw: true });
     if (user === null) {
-        throw new Error("No such user");
-        return;
+        return undefined;
     }
     return await ChatUser.create({
         user_id: user.user_id,

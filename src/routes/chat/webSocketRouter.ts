@@ -562,7 +562,9 @@ export function __initChat(io: Server) {
         } catch (e) {
             // if no response, disconnect
             socket.disconnect(true);
-            await chatUserController.delChatUserById(chatUser._id);
+            if (chatUser) {
+                await chatUserController.delChatUserById(chatUser._id);
+            }
             logger.warn(`User failed to connect: Error: ${e}`);
             return;
         }
