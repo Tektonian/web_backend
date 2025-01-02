@@ -76,11 +76,11 @@ const genContractedRequestChatData = async () => {
     );
     await Promise.all(
         contractedRequests.map(async (req) => {
-            const participantIds = req.provider_ids;
+            // Getter doesn't work!! should transform to Buffer
+            const participantIds = req.provider_ids.map((id) => Buffer.from(id));
             const consumer = await Consumer.findOne({ where: { consumer_id: req.consumer_id }, raw: true });
 
             const studentUsers = await User.findAll({ where: { user_id: participantIds }, raw: true });
-
             const restStudent = (
                 await User.findAll({ where: { user_id: { [Op.notIn]: participantIds } }, raw: true })
             ).filter((val) => val.email.startsWith("student"));
@@ -98,6 +98,7 @@ const genContractedRequestChatData = async () => {
                 consumer!.user_id,
                 studentUsers.map((val) => val.user_id),
             );
+            return;
         }),
     );
 };
