@@ -16,7 +16,7 @@ export interface StudentAttributes {
     gender: number;
     image: string;
     has_car: number;
-    keyword_list: object;
+    keyword_list: string[];
     created_at?: Date;
     updated_at?: Date;
 }
@@ -43,7 +43,7 @@ export class Student extends Model<StudentAttributes, StudentCreationAttributes>
     gender!: number;
     image!: string;
     has_car!: number;
-    keyword_list!: object;
+    keyword_list!: string[];
     created_at?: Date;
     updated_at?: Date;
 

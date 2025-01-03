@@ -16,7 +16,7 @@ export interface UserAttributes {
     image?: string;
     nationality?: CountryCodeEnum.COUNTRY_CODE_ENUM;
     working_country?: CountryCodeEnum.COUNTRY_CODE_ENUM;
-    roles?: object;
+    roles?: UserEnum.USER_ROLE_ENUM[];
 }
 
 export type UserPk = "user_id";
@@ -41,7 +41,7 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
     image?: string;
     nationality?: CountryCodeEnum.COUNTRY_CODE_ENUM;
     working_country?: CountryCodeEnum.COUNTRY_CODE_ENUM;
-    roles?: object;
+    roles?: UserEnum.USER_ROLE_ENUM[];
 
     // User hasMany Account via user_id
     Accounts!: Account[];
