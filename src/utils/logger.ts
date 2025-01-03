@@ -196,6 +196,13 @@ if (process.env.NODE_ENV === "production") {
     };
 } else if (process.env.NODE_ENV === "test") {
     loggerOption = {
+        transports: [
+            new winston.transports.Console({
+                level: "error",
+            }),
+        ],
+        exceptionHandlers: [new winston.transports.Console({})],
+        rejectionHandlers: [new winston.transports.Console({})],
         silent: true,
     };
 }

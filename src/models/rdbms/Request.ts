@@ -18,8 +18,8 @@ export interface RequestAttributes {
     end_date: string;
     address?: string;
     address_coordinate?: any;
-    provide_food: any;
-    provide_trans_exp: any;
+    provide_food: boolean;
+    provide_trans_exp: boolean;
     prep_material?: string[];
     request_status?: RequestEnum.REQUEST_STATUS_ENUM;
     start_time: string;
@@ -62,8 +62,8 @@ export class Request extends Model<RequestAttributes, RequestCreationAttributes>
     end_date!: string;
     address?: string;
     address_coordinate?: any;
-    provide_food!: any;
-    provide_trans_exp!: any;
+    provide_food!: boolean;
+    provide_trans_exp!: boolean;
     prep_material?: string[];
     request_status?: RequestEnum.REQUEST_STATUS_ENUM;
     start_time!: string;
@@ -149,18 +149,18 @@ export class Request extends Model<RequestAttributes, RequestCreationAttributes>
                     allowNull: true,
                 },
                 address_coordinate: {
-                    type: "POINT",
+                    type: DataTypes.GEOMETRY,
                     allowNull: true,
                 },
                 provide_food: {
-                    type: DataTypes.BLOB,
+                    type: DataTypes.BOOLEAN,
                     allowNull: false,
-                    defaultValue: "0x30",
+                    defaultValue: false,
                 },
                 provide_trans_exp: {
-                    type: DataTypes.BLOB,
+                    type: DataTypes.BOOLEAN,
                     allowNull: false,
-                    defaultValue: "0x30",
+                    defaultValue: false,
                 },
                 prep_material: {
                     type: DataTypes.JSON,

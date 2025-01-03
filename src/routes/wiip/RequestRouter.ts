@@ -53,12 +53,16 @@ RequestRouter.post(
         logger.info("START-User creating RequestModel data");
         // TODO: add validataion later
         const { data, role } = req.body;
+        //const { data, role } = ValidateSchema(RequestSchema.ReqCreateRequestSchema, req.body);
 
         const user = res.session!.user;
 
         if (!user.roles.includes(role)) {
             throw new Errors.ServiceExceptionBase("User tried to write a request with unauthorized identity");
         }
+
+        const cord = data.address_coordinate;
+        data.address_coordinate = { type: "Point", coordinates: [cord?.lat ?? 0, cord?.lng ?? 0] };
 
         const request_id = await createRequest(user.id, role, data);
 
@@ -127,7 +131,7 @@ RequestRouter.post(
         );
 
         // If is not my data, only show finished requests
-        if (isMyData !== true) {
+        if (isMyData === false) {
             requestList = requestList.filter((req) => req.request_status === RequestEnum.REQUEST_STATUS_ENUM.FINISHED);
 
             // If user is not corp or orgn, than filter corp or orgn requests

@@ -221,6 +221,14 @@ module.exports = {
                 case 2: // outdated
                 case 4: // finish
                 case 5: // failed
+                    // create provider
+                    randPick(allStudentData, head_count).forEach((val) => {
+                        providerDataList.push({
+                            student_id: val.student_id,
+                            user_id: val.user_id,
+                            request_id: i,
+                        });
+                    });
                     requestStatus.request_status = i % 5;
                     requestStatus.start_date = new Date(Date.now() - ONE_DAY * 30).toISOString(); // format: 12/12/2024
                     requestStatus.end_date = new Date(Date.now() - ONE_DAY * 30).toISOString(); // format: 12/12/2024
