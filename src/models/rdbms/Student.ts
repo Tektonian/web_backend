@@ -2,6 +2,7 @@ import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
 import type { AcademicHistory, AcademicHistoryId } from "./AcademicHistory";
 import type { ExamHistory, ExamHistoryId } from "./ExamHistory";
+import type { Provider, ProviderId } from "./Provider";
 import type { User, UserId } from "./User";
 
 export interface StudentAttributes {
@@ -70,6 +71,18 @@ export class Student extends Model<StudentAttributes, StudentCreationAttributes>
     hasExamHistory!: Sequelize.HasManyHasAssociationMixin<ExamHistory, ExamHistoryId>;
     hasExamHistories!: Sequelize.HasManyHasAssociationsMixin<ExamHistory, ExamHistoryId>;
     countExamHistories!: Sequelize.HasManyCountAssociationsMixin;
+    // Student hasMany Provider via student_id
+    Providers!: Provider[];
+    getProviders!: Sequelize.HasManyGetAssociationsMixin<Provider>;
+    setProviders!: Sequelize.HasManySetAssociationsMixin<Provider, ProviderId>;
+    addProvider!: Sequelize.HasManyAddAssociationMixin<Provider, ProviderId>;
+    addProviders!: Sequelize.HasManyAddAssociationsMixin<Provider, ProviderId>;
+    createProvider!: Sequelize.HasManyCreateAssociationMixin<Provider>;
+    removeProvider!: Sequelize.HasManyRemoveAssociationMixin<Provider, ProviderId>;
+    removeProviders!: Sequelize.HasManyRemoveAssociationsMixin<Provider, ProviderId>;
+    hasProvider!: Sequelize.HasManyHasAssociationMixin<Provider, ProviderId>;
+    hasProviders!: Sequelize.HasManyHasAssociationsMixin<Provider, ProviderId>;
+    countProviders!: Sequelize.HasManyCountAssociationsMixin;
     // Student belongsTo User via user_id
     user!: User;
     getUser!: Sequelize.BelongsToGetAssociationMixin<User>;
