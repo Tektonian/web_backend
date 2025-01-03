@@ -49,27 +49,23 @@ StudentReviewRouter.post(
 
         const checkAlreadyExist = await StudentReview.count({
             where: { [Op.and]: [{ request_id: request.request_id }, { student_id: studentProvider.student_id }] },
+            // Ignore deleted item
+            paranoid: true,
         });
 
-        if (checkAlreadyExist !== 0) {
-            throw new Errors.ServiceExceptionBase("Review of student already created");
+        if (checkAlreadyExist) {
+            throw new Errors.ServiceExceptionBase(`Review of student already created: ${checkAlreadyExist}`);
         }
 
-        try {
-            const createdReview = await StudentReview.create({
-                consumer_id,
-                student_id,
-                request_id,
-                request_url: "",
-                ...reviewData,
-            });
-            res.status(200).end();
-            logger.info("End-Create student review");
-        } catch (error) {
-            logger.error(`Error creating student review: ${error}`);
-            res.json({ status: "failed" });
-        }
-        return;
+        const createdReview = await StudentReview.create({
+            consumer_id,
+            student_id,
+            request_id,
+            request_url: "",
+            ...reviewData,
+        });
+        res.status(200).end();
+        logger.info("End-Create student review");
     }) as APISpec.StudentReviewAPISpec["/"]["post"]["__handler"],
 );
 
