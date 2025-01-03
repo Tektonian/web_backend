@@ -110,14 +110,35 @@ module.exports = {
             },
         ];
 
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 30; i++) {
+            const country = ["kr", "jp"].at(Math.floor(Math.random() * 2));
+            const workingCountry = ["kr", "jp"].filter((val) => val !== country).at(0);
             userData.push({
                 username: `student_${i}`,
                 email: `student${i}@test.com`,
                 email_verified: new Date(),
-                nationality: "kr",
-                working_country: "jp",
-                roles: ["student", "normal"],
+                nationality: country,
+                working_country: workingCountry,
+                roles: ["normal", "student"],
+            });
+        }
+        for (let i = 0; i < 5; i++) {
+            const country = ["kr", "jp"].at(Math.floor(Math.random() * 2));
+            userData.push({
+                username: `orgn_${i}_user`,
+                email: `orgn${i}@test.com`,
+                email_verified: new Date(),
+                nationality: country,
+                working_country: country,
+                roles: ["normal", "orgn"],
+            });
+            userData.push({
+                username: `corp_${i}_user`,
+                email: `corp${i}@test.com`,
+                email_verified: new Date(),
+                nationality: country,
+                working_country: country,
+                roles: ["normal", "corp"],
             });
         }
         await User.bulkCreate(userData);

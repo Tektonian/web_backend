@@ -1,17 +1,22 @@
 "use strict";
 
+function randPickOne(ids) {
+    return ids[Math.floor(Math.random() * ids.length)];
+}
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
         const DataTypes = require("sequelize").DataTypes;
 
         const db = require("../models");
-        const School = db.sequelize.models.School;
         const User = db.sequelize.models.User;
-        const Student = db.sequelize.models.Student;
         const Consumer = db.sequelize.models.Consumer;
-        const AcademicHistory = db.sequelize.models.AcademicHistory;
+        const Corporation = db.sequelize.models.Corporation;
+        const Organization = db.sequelize.models.Organization;
 
+        const allCorporation = await Corporation.findAll();
+        const allOrganization = await Organization.findAll();
         const allUsers = await User.findAll();
         const allConsumerData = [];
 
@@ -21,7 +26,7 @@ module.exports = {
                 allConsumerData.push({
                     consumer_id: consumer_id++,
                     user_id: user.user_id,
-                    corp_id: 1,
+                    corp_id: randPickOne(allCorporation).corp_id,
                     consumer_type: "corp",
                     consumer_email: user.email,
                     phone_number: "01011111111",
@@ -31,7 +36,7 @@ module.exports = {
                 allConsumerData.push({
                     consumer_id: consumer_id++,
                     user_id: user.user_id,
-                    orgn_id: 1,
+                    orgn_id: randPickOne(allOrganization).orgn_id,
                     consumer_type: "orgn",
                     consumer_email: user.email,
                     phone_number: "01033333333",

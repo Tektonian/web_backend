@@ -1,11 +1,12 @@
 import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
+import { CountryCodeEnum } from "api_spec/enum";
 
 export interface requestofuserAttributes {
     user_id: any;
     username?: string;
     image?: string;
-    nationality?: string;
+    nationality?: CountryCodeEnum.COUNTRY_CODE_ENUM;
     working_country?: string;
     consumer_type: string;
     consumer_email: string;
@@ -57,7 +58,7 @@ export class requestofuser
     user_id!: any;
     username?: string;
     image?: string;
-    nationality?: string;
+    nationality?: CountryCodeEnum.COUNTRY_CODE_ENUM;
     working_country?: string;
     consumer_type!: string;
     consumer_email!: string;
@@ -102,6 +103,9 @@ export class requestofuser
                 nationality: {
                     type: DataTypes.STRING(2),
                     allowNull: true,
+                    validate: {
+                        isIn: [Object.values(CountryCodeEnum.COUNTRY_CODE_ENUM)],
+                    },
                 },
                 working_country: {
                     type: DataTypes.STRING(2),

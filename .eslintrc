@@ -49,12 +49,10 @@
                 class member(변수, 함수)는 무조건 한 줄 씩 띄워져야 한다.
                 exceptAfterSingleLine => 한 줄은 허용 (memeber variable 때문에)
             */,
-        "lines-between-class-members": [
-            "error",
-            "always",
-            { "exceptAfterSingleLine": true },
-        ],
+        "lines-between-class-members": ["error", "always", { "exceptAfterSingleLine": true }],
         "no-explicit-any": false,
+        /* 'return' 표시 강제*/
+        "consistent-return": ["error", { "treatUndefinedAsUnspecified": false }],
     },
     "settings": {
         "import/resolver": {

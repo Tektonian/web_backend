@@ -1,11 +1,12 @@
 import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
 import type { Consumer, ConsumerId } from "./Consumer";
+import { CountryCodeEnum } from "api_spec/enum";
 
 export interface OrganizationAttributes {
     orgn_id: number;
     orgn_code?: number;
-    nationality: string;
+    nationality: CountryCodeEnum.COUNTRY_CODE_ENUM;
     full_name: string;
     short_name?: string;
     orgn_status?: string;
@@ -32,7 +33,7 @@ export class Organization
 {
     orgn_id!: number;
     orgn_code?: number;
-    nationality!: string;
+    nationality!: CountryCodeEnum.COUNTRY_CODE_ENUM;
     full_name!: string;
     short_name?: string;
     orgn_status?: string;
@@ -69,6 +70,9 @@ export class Organization
                 nationality: {
                     type: DataTypes.STRING(4),
                     allowNull: false,
+                    validate: {
+                        isIn: [Object.values(CountryCodeEnum.COUNTRY_CODE_ENUM)],
+                    },
                 },
                 full_name: {
                     type: DataTypes.STRING(255),

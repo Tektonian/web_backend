@@ -175,8 +175,9 @@ module.exports = {
         const Request = db.sequelize.models.Request;
         const Consumer = db.sequelize.models.Consumer;
         const Student = db.sequelize.models.Student;
+        const Provider = db.sequelize.models.Provider;
 
-        const allStudentDataIds = (await Student.findAll({ raw: true })).map((val) => val.user_id);
+        const allStudentData = await Student.findAll({ raw: true });
 
         const corpConsumer = (await Consumer.findOne({ where: { consumer_type: "corp" } })).get({ plain: true });
         const orgnConsumer = (await Consumer.findOne({ where: { consumer_type: "orgn" } })).get({ plain: true });
@@ -186,7 +187,7 @@ module.exports = {
         const allConsumer = [corpConsumer, orgnConsumer, ...testConsumer];
         const dummyRequests = [];
 
-        for (let i = 0; i < 30; i++) {
+        for (let i = 1; i <= 50; i++) {
             const taskIdx = Math.floor(Math.random() * Task.length);
             const krAddressIdx = Math.floor(Math.random() * KoreaFamousPlace.length);
             const jpAddressIdx = Math.floor(Math.random() * JapanFamousPlacd.length);
@@ -196,15 +197,20 @@ module.exports = {
 
             let requestStatus = {};
             let head_count = Math.floor(Math.random() * 4 + 1);
-            let provider_ids = [];
+            let providerDataList = [];
             switch (i % 5) {
                 // On preceeding requests
                 case 0: // posted
-                    // insert one provider
-                    requestStatus.provider_ids = randPickOne(allStudentDataIds);
                 case 1: // paid
                 case 3: // contracted
-                    requestStatus.provider_ids = randPick(allStudentDataIds, head_count);
+                    // create provider
+                    randPick(allStudentData, head_count).forEach((val) => {
+                        providerDataList.push({
+                            student_id: val.student_id,
+                            user_id: val.user_id,
+                            request_id: i,
+                        });
+                    });
                     requestStatus.request_status = i % 5;
                     requestStatus.start_date = new Date(Date.now() + ONE_DAY * 30).toISOString(); // format: "2011-10-05T14:48:00.000Z"
                     requestStatus.end_date = new Date(Date.now() + ONE_DAY * 30).toISOString(); // format: "2011-10-05T14:48:00.000Z"
@@ -215,6 +221,14 @@ module.exports = {
                 case 2: // outdated
                 case 4: // finish
                 case 5: // failed
+                    // create provider
+                    randPick(allStudentData, head_count).forEach((val) => {
+                        providerDataList.push({
+                            student_id: val.student_id,
+                            user_id: val.user_id,
+                            request_id: i,
+                        });
+                    });
                     requestStatus.request_status = i % 5;
                     requestStatus.start_date = new Date(Date.now() - ONE_DAY * 30).toISOString(); // format: 12/12/2024
                     requestStatus.end_date = new Date(Date.now() - ONE_DAY * 30).toISOString(); // format: 12/12/2024
@@ -227,7 +241,7 @@ module.exports = {
 
             const randConsumer = randPickOne(allConsumer);
 
-            dummyRequests.push({
+            await Request.create({
                 request_id: i,
                 consumer_id: randConsumer.consumer_id,
                 corp_id: randConsumer.corp_id ?? null,
@@ -252,14 +266,15 @@ module.exports = {
                 prep_material: ["shose", "bike", "car"],
                 ...requestStatus,
             });
+            await Provider.bulkCreate(providerDataList);
         }
-
-        await Request.bulkCreate(dummyRequests);
+        // await Request.bulkCreate(dummyRequests);
 
         return;
     },
 
     async down(queryInterface, Sequelize) {
+        await queryInterface.bulkDelete("Provider", null, {});
         await queryInterface.bulkDelete("Request", null, {});
 
         /**

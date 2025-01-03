@@ -138,6 +138,7 @@ module.exports = {
         const Consumer = db.sequelize.models.Consumer;
         const Request = db.sequelize.models.Request;
         const Student = db.sequelize.models.Student;
+        const Provider = db.sequelize.models.Provider;
 
         const allStudentData = await Student.findAll({ raw: true });
 
@@ -169,11 +170,13 @@ module.exports = {
 
         await Promise.all(
             completedRequests.map(async (req) => {
-                const randStudentIds = [];
                 for (let i = 0; i < req.head_count; i++) {
                     const randStudent = allStudentData[Math.floor(Math.random() * allStudentData.length)];
-
-                    randStudentIds.push(randStudent.user_id);
+                    await Provider.create({
+                        student_id: randStudent.student_id,
+                        user_id: randStudent.user_id,
+                        request_id: req.request_id,
+                    });
                     if (req.corp_id) {
                         const studentReview = {
                             corp_id: req.corp_id,
@@ -182,18 +185,17 @@ module.exports = {
                             student_id: randStudent.student_id,
                             request_id: req.request_id,
                             request_url: "",
-                            was_late: Math.floor(Math.random() * 5),
-                            was_proactive: Math.floor(Math.random() * 5),
-                            was_diligent: Math.floor(Math.random() * 5),
-                            commu_ability: Math.floor(Math.random() * 5),
-                            lang_fluent: Math.floor(Math.random() * 5),
-                            goal_fulfillment: Math.floor(Math.random() * 5),
-                            want_cowork: Math.floor(Math.random() * 5),
+                            was_late: Math.floor(Math.random() * 10),
+                            was_proactive: Math.floor(Math.random() * 10),
+                            was_diligent: Math.floor(Math.random() * 10),
+                            commu_ability: Math.floor(Math.random() * 10),
+                            lang_fluent: Math.floor(Math.random() * 10),
+                            goal_fulfillment: Math.floor(Math.random() * 10),
+                            want_cowork: Math.floor(Math.random() * 10),
                             praise: EvalDummyTextx[Math.floor(Math.random() * EvalDummyTextx.length)],
                             need_improve: EvalDummyTextx[Math.floor(Math.random() * EvalDummyTextx.length)],
                         };
-
-                        await StudentReview.bulkCreate([studentReview]);
+                        await StudentReview.create(studentReview);
                         const corpReview = {
                             corp_id: req.corp_id,
                             consumer_id: req.consumer_id,
@@ -206,11 +208,9 @@ module.exports = {
                             work_atmosphere: Math.floor(Math.random() * 5),
                         };
 
-                        await CorporationReview.bulkCreate([corpReview]);
+                        await CorporationReview.create(corpReview);
                     }
                 }
-                await Request.update({ provider_ids: randStudentIds }, { where: { request_id: req.request_id } });
-
                 return;
             }),
         );

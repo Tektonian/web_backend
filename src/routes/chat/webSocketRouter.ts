@@ -14,6 +14,7 @@ import { AlarmMessageGlb } from "../../global/text/chat/alarm";
 import logger from "../../utils/logger";
 import { getAliveChatRoomsByUser } from "../../controllers/chat/chatRoomController";
 import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
+import { getProvidersByRequest } from "../../controllers/wiip/ProviderController";
 import { RequestEnum } from "api_spec/enum";
 
 const { chatContentController, chatRoomController, chatUserController, chatUnreadController } = chatController;
@@ -167,7 +168,9 @@ const ResRefreshFactory = async (chatUser: HydratedDocument<ChatTypes.ChatUserTy
                 // Send selected chatroom list only for consumer
                 // TODO: add PAID status and delete POSTED later
                 if (isConsumer && req.request_status === RequestEnum.REQUEST_STATUS_ENUM.POSTED) {
-                    const providerIds = req.provider_ids as Buffer[];
+                    const providerIds = (await getProvidersByRequest(req.request_id)).map((val) =>
+                        val.getDataValue("user_id"),
+                    );
                     const providerChatRoom = aliveChatRooms
                         .filter((room) => room.request_id === req.request_id)
                         .map((room) => {

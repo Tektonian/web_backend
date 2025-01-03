@@ -6,9 +6,10 @@ import { models as RDBModels } from "../../models/rdbms";
 import { AlarmMessageGlbEnum } from "../../global/text/chat/alarm";
 import logger from "../../utils/logger";
 import { pushRefreshChatRooms } from "./messageQueue";
+import { Op } from "sequelize";
 
 const { ChatRoom, ChatUser, Unread, ChatContent } = ChatModels;
-const { Request, User } = RDBModels;
+const { Request, User, Provider } = RDBModels;
 
 // TODO: should be transactional!! -> Need new MongoDB setting
 export const createChatRoom = async (requestId: number, consumerId: Buffer, participantIds: Buffer[]) => {
@@ -42,7 +43,7 @@ export const createChatRoom = async (requestId: number, consumerId: Buffer, part
         });
         const res = await Promise.all(
             participants.map(async (parti) => {
-                await Unread.create({
+                return await Unread.create({
                     chatroom: chatRoomInstance,
                     user_id: parti.user_id,
                 });
@@ -142,6 +143,13 @@ export const actionCompleteRecruit = async (requestId: number, consumerId: Buffe
         toDelChatRooms.map(async (room) => {
             return await delChatRoom(room._id);
         }),
+    );
+
+    const nowTime = new Date(Date.now());
+
+    await Provider.update(
+        { contracted_at: nowTime },
+        { where: { [Op.and]: [{ request_id: requestId }, { user_id: { [Op.in]: providerIds } }] } },
     );
 
     // Won't create unnecessary group　chat room

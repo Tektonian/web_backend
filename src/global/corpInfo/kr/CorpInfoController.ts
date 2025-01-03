@@ -103,6 +103,7 @@ export const externReqCorpProfile = async (corpNum: number) => {
     }
 };
 
+// TODO: add type later
 export const createCorpProfile = async (corpProfile) => {
     const createdProfile = (await Corporation.create(corpProfile)).get({
         plain: true,
@@ -112,13 +113,13 @@ export const createCorpProfile = async (corpProfile) => {
 };
 
 export const findCorpProfileByCorpNum = async (corpNum: number) => {
-    const corpProfile = (await Corporation.findOne({ where: { corp_num: corpNum } }))?.get({ plain: true });
+    const corpProfile = await Corporation.findOne({ where: { corp_num: corpNum } });
 
     return corpProfile;
 };
 
 export const findCorpProfileByCorpId = async (corpId: number) => {
-    const corpProfile = (await Corporation.findOne({ where: { corp_id: corpId } }))?.get({ plain: true });
+    const corpProfile = await Corporation.findOne({ where: { corp_id: corpId } });
 
     return corpProfile;
 };

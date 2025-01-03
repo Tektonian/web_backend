@@ -14,24 +14,28 @@ module.exports = {
                     corp_name: "SaSUNG",
                     nationality: "kr",
                     corp_num: 123,
+                    logo_image: "https://picsum.photos/id/111/200/300",
                 },
                 {
                     corp_id: 2,
                     corp_name: "Onasonic",
                     nationality: "jp",
                     corp_num: 54,
+                    logo_image: "https://picsum.photos/id/222/200/300",
                 },
                 {
                     corp_id: 3,
                     corp_name: "Nonedai",
                     nationality: "kr",
                     corp_num: 928,
+                    logo_image: "https://picsum.photos/id/237/200/300",
                 },
                 {
                     corp_id: 4,
                     corp_name: "Yuyota",
                     nationality: "jp",
                     corp_num: 83,
+                    logo_image: "https://picsum.photos/id/123/200/300",
                 },
             ]);
         } catch (error) {

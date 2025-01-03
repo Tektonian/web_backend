@@ -13,7 +13,7 @@ import { getUserByConsumerId } from "../../controllers/UserController";
 import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
 import { getChatRoomMessagesByContentType, sendMessage } from "../../controllers/chat/chatContentController";
 import { getStudentByUserId } from "../../controllers/wiip/StudentController";
-
+import { getProvidersByRequest } from "../../controllers/wiip/ProviderController";
 /**
  * middleware
  */
@@ -61,7 +61,7 @@ ChatRouter.post(
             throw new Errors.ServiceExceptionBase("User sent wrong request_id");
         }
 
-        const consumerInstance = await getUserByConsumerId(reqeustInstance.consumer_id);
+        const consumerInstance = (await getUserByConsumerId(reqeustInstance.consumer_id))?.get({ plain: true });
 
         if (!consumerInstance) {
             throw new Errors.ServiceErrorBase("Something went wrong");
@@ -235,7 +235,7 @@ ChatRouter.post(
             throw new Errors.ServiceExceptionBase("Only contracted request permitted");
         }
 
-        const providerIds = request.provider_ids as Buffer[];
+        const providerIds = (await getProvidersByRequest(request.request_id)).map((val) => val.getDataValue("user_id"));
 
         const isProvider = providerIds.find((id) => id.equals(sessionUser.id));
 

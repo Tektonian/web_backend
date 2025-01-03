@@ -1,10 +1,11 @@
 import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
+import { CountryCodeEnum } from "api_spec/enum";
 
 export interface fullreviewinfoofcorpAttributes {
     corp_id: number;
     corp_name: string;
-    nationality: string;
+    nationality: CountryCodeEnum.COUNTRY_CODE_ENUM;
     corp_domain?: string;
     ceo_name?: string;
     corp_address?: string;
@@ -45,7 +46,7 @@ export class fullreviewinfoofcorp
 {
     corp_id!: number;
     corp_name!: string;
-    nationality!: string;
+    nationality!: CountryCodeEnum.COUNTRY_CODE_ENUM;
     corp_domain?: string;
     ceo_name?: string;
     corp_address?: string;
@@ -75,6 +76,9 @@ export class fullreviewinfoofcorp
                 nationality: {
                     type: DataTypes.STRING(4),
                     allowNull: false,
+                    validate: {
+                        isIn: [Object.values(CountryCodeEnum.COUNTRY_CODE_ENUM)],
+                    },
                 },
                 corp_domain: {
                     type: DataTypes.STRING(255),
