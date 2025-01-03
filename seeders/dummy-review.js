@@ -195,8 +195,7 @@ module.exports = {
                             praise: EvalDummyTextx[Math.floor(Math.random() * EvalDummyTextx.length)],
                             need_improve: EvalDummyTextx[Math.floor(Math.random() * EvalDummyTextx.length)],
                         };
-
-                        await StudentReview.bulkCreate([studentReview]);
+                        await StudentReview.create(studentReview);
                         const corpReview = {
                             corp_id: req.corp_id,
                             consumer_id: req.consumer_id,
@@ -209,10 +208,9 @@ module.exports = {
                             work_atmosphere: Math.floor(Math.random() * 5),
                         };
 
-                        await CorporationReview.bulkCreate([corpReview]);
+                        await CorporationReview.create(corpReview);
                     }
                 }
-
                 return;
             }),
         );
