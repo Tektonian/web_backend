@@ -115,7 +115,7 @@ module.exports = {
                     emergency_contact: "01044444444",
                     keyword_list: [],
                     gender: 0,
-                    image: "",
+                    image: "https://picsum.photos/200/300",
                     has_car: 0,
                 });
             }
