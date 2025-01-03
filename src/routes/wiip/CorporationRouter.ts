@@ -3,13 +3,26 @@ import { Consumer } from "../../models/rdbms/Consumer";
 import { Corporation } from "../../models/rdbms/Corporation";
 import * as CorpController from "../../global/corpInfo/kr/CorpInfoController";
 
+/**
+ * Types, middleware, and validator
+ */
+import { filterSessionByRBAC } from "../../middleware/auth.middleware";
+import { CorporationSchema } from "api_spec/joi";
+import { ValidateSchema } from "../../utils/validation.joi";
 import { APISpec } from "api_spec";
-import {} from "api_spec/enum";
+
+/**
+ * Utils
+ */
+import { pick } from "es-toolkit";
 import * as Errors from "../../errors";
 import logger from "../../utils/logger";
 
 const CorporationRouter = express.Router();
 
+/**
+ * @deprecated
+ */
 CorporationRouter.get("/", async (req: Request, res: Response) => {
     try {
         const consumer_id = req.query.consumer_id;
@@ -31,6 +44,9 @@ CorporationRouter.get("/", async (req: Request, res: Response) => {
     }
 });
 
+/**
+ * @deprecated
+ */
 CorporationRouter.get("/corpProfile", async (req: Request, res: Response) => {
     const corpNum = req.query.corpNum;
 
@@ -49,37 +65,47 @@ CorporationRouter.get("/corpProfile", async (req: Request, res: Response) => {
     }
 });
 
-CorporationRouter.post("/corpProfile", async (req: Request, res: Response) => {
-    const corpData = req.body;
+CorporationRouter.post(
+    "/" satisfies keyof APISpec.CorporationAPISpec,
+    // Logined and validated
+    filterSessionByRBAC(["normal"]),
+    (async (req, res) => {
+        logger.info("START-Create corporation profile");
+        const corpData = ValidateSchema(CorporationSchema.ReqCreateCorpProfileSchema, req.body);
 
-    const createdCorpProfile = await CorpController.createCorpProfile(corpData);
+        const createdCorpProfile = await CorpController.createCorpProfile(corpData);
 
-    res.json(createdCorpProfile);
-});
+        res.status(200).json({ corp_id: String(createdCorpProfile.corp_id) });
+        logger.info("END-Create corporation profile");
+    }) as APISpec.CorporationAPISpec["/"]["post"]["handler"],
+);
 
 CorporationRouter.get("/:corp_id" satisfies keyof APISpec.CorporationAPISpec, (async (req, res) => {
     logger.info("START-Get Corporation profile");
-    const corpId: number | undefined = req.params.corp_id;
+    const corpId: number | string | undefined = req.params.corp_id;
 
     if (!corpId) {
         throw new Errors.ServiceExceptionBase(`User requested wrong corporation id: ${corpId}`);
     }
-    const corpProfile = await CorpController.findCorpProfileByCorpId(Number(corpId));
+    const corpProfile = (await CorpController.findCorpProfileByCorpId(Number(corpId)))?.get({ plain: true });
 
     if (!corpProfile) {
         throw new Errors.ServiceExceptionBase(`User requested wrong corporation id: ${corpId}`);
     }
-    res.json({
-        corp_id: corpProfile.corp_id,
-        corp_name: corpProfile.corp_name,
-        nationality: corpProfile.nationality,
-        ceo_name: corpProfile.ceo_name,
-        biz_type: corpProfile.biz_type,
-        logo_image: corpProfile.logo_image,
-        site_url: corpProfile.site_url,
-        corp_domain: corpProfile.corp_domain,
-        phone_number: corpProfile.phone_number,
-    });
+    res.json(
+        pick(corpProfile, [
+            "corp_id",
+            "corp_name",
+            "nationality",
+            "ceo_name",
+            "corp_address",
+            "biz_type",
+            "logo_image",
+            "site_url",
+            "corp_domain",
+            "phone_number",
+        ]),
+    );
     logger.info("END-Get Corporation profile");
 }) as APISpec.CorporationAPISpec["/:corp_id"]["get"]["handler"]);
 
