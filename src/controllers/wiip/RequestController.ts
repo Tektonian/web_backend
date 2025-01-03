@@ -1,12 +1,12 @@
 import { models, sequelize } from "../../models/rdbms";
 import { MeiliSearch } from "meilisearch";
 import { Op } from "sequelize";
-import { DataTypes } from "sequelize";
-import { APIType } from "api_spec";
 import logger from "../../utils/logger";
-import { Consumer } from "../../models/rdbms/Consumer";
 import { ChatRoom } from "../../models/chat";
 
+import { APIType } from "api_spec";
+import * as Errors from "../../errors";
+import { RequestEnum } from "api_spec/enum";
 const client = new MeiliSearch({
     host: "http://127.0.0.1:7700",
     apiKey: "1zBmtAMDjgWPGLcTPAhEy-kRZv44BzxywQ1UHPkIYE0",
@@ -19,8 +19,9 @@ const requestSearch = client.index("request");
 const StudentWithCurrentSchool = models.studentwithcurrentschool;
 const RequestModel = models.Request;
 const ConsumerModel = models.Consumer;
-const StudentModel = models.Student;
 const UserModel = models.User;
+const StudentModel = models.Student;
+const ProviderModel = models.Provider;
 
 export const getRecommendedRequestByStudentId = async (student_id: number) => {
     const student = (
@@ -93,11 +94,44 @@ export const getRequestsByUserId = async (userId: Buffer, as: "consumer" | "prov
 };
 
 export const updateRequestProviderIds = async (newProviderIds: Buffer[], requestId: number) => {
-    return await RequestModel.update(
-        // Buffer type UUID will be stringfied
-        { provider_ids: newProviderIds },
-        { where: { request_id: requestId } },
-    );
+    try {
+        const ret = await sequelize.transaction(async (t) => {
+            logger.info("Start: Transaction-[Change provider ids]");
+            await Promise.all(
+                newProviderIds.map(async (providerId) => {
+                    const student = await StudentModel.findOne({ where: { user_id: providerId }, raw: true });
+                    if (!student) {
+                        throw new Errors.ServiceErrorBase(
+                            "updateRequestProviderIds called non-exist user - something went wrong",
+                        );
+                    }
+                    return ProviderModel.findOrCreate({
+                        where: {
+                            [Op.and]: [{ request_id: requestId }, { user_id: providerId }],
+                        },
+                        defaults: {
+                            request_id: requestId,
+                            user_id: student.user_id,
+                            student_id: student.student_id,
+                        },
+                        transaction: t,
+                    });
+                }),
+            );
+
+            await ProviderModel.destroy({
+                where: { [Op.and]: [{ request_id: requestId }, { user_id: { [Op.notIn]: newProviderIds } }] },
+                transaction: t,
+            });
+
+            logger.info("END: Transaction-[Change provider ids]");
+            return newProviderIds;
+        });
+        return ret;
+    } catch (error) {
+        logger.error(`FAILED: Transaction-[Change provider ids], ${error}`);
+        throw new Errors.ServiceErrorBase(`updateRequestProviderIds failed transaction: ${error}`);
+    }
 };
 
 // api_spec 문서 보고 데이터 타비 맞춰서 리턴하도록 수정
@@ -158,7 +192,7 @@ export const createRequest = async (uuid: Buffer, role: "corp" | "orgn" | "norma
     }
 };
 
-export const updateRequestStatus = async (requestId: number, status: APIType.RequestType.REQUEST_STATUS_ENUM) => {
+export const updateRequestStatus = async (requestId: number, status: RequestEnum.REQUEST_STATUS_ENUM) => {
     const request = await RequestModel.findOne({
         where: { request_id: requestId },
         raw: true,
