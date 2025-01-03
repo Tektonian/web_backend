@@ -61,7 +61,7 @@ ChatRouter.post(
             throw new Errors.ServiceExceptionBase("User sent wrong request_id");
         }
 
-        const consumerInstance = await getUserByConsumerId(reqeustInstance.consumer_id);
+        const consumerInstance = (await getUserByConsumerId(reqeustInstance.consumer_id))?.get({ plain: true });
 
         if (!consumerInstance) {
             throw new Errors.ServiceErrorBase("Something went wrong");

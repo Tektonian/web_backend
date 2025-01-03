@@ -4,6 +4,7 @@ import type { Account, AccountId } from "./Account";
 import type { Consumer, ConsumerId } from "./Consumer";
 import type { Student, StudentId } from "./Student";
 import { UserEnum } from "api_spec/enum";
+import { CountryCodeEnum } from "api_spec/enum";
 
 export interface UserAttributes {
     user_id: any;
@@ -12,8 +13,8 @@ export interface UserAttributes {
     created_at?: Date;
     updated_at?: Date;
     image?: string;
-    nationality?: string;
-    working_country?: string;
+    nationality?: CountryCodeEnum.COUNTRY_CODE_ENUM;
+    working_country?: CountryCodeEnum.COUNTRY_CODE_ENUM;
     roles?: object;
 }
 
@@ -37,8 +38,8 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
     created_at?: Date;
     updated_at?: Date;
     image?: string;
-    nationality?: string;
-    working_country?: string;
+    nationality?: CountryCodeEnum.COUNTRY_CODE_ENUM;
+    working_country?: CountryCodeEnum.COUNTRY_CODE_ENUM;
     roles?: object;
 
     // User hasMany Account via user_id
@@ -102,6 +103,9 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
                 nationality: {
                     type: DataTypes.STRING(2),
                     allowNull: true,
+                    validate: {
+                        isIn: [Object.values(CountryCodeEnum.COUNTRY_CODE_ENUM)],
+                    },
                 },
                 working_country: {
                     type: DataTypes.STRING(2),

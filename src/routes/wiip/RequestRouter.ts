@@ -380,6 +380,9 @@ RequestRouter.post(
     },
 );
 
+/**
+ * @deprecated
+ */
 RequestRouter.put(
     "/update" satisfies keyof APISpec.RequestAPISpec,
     // Check login

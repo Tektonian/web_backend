@@ -1,17 +1,18 @@
 import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
+import { CountryCodeEnum } from "api_spec/enum";
 
 export interface userofcorporationAttributes {
     user_id: any;
     username?: string;
     email: string;
     image?: string;
-    user_nationality?: string;
+    user_nationality?: CountryCodeEnum.COUNTRY_CODE_ENUM;
     user_working_country?: string;
     roles?: object;
     corp_id: number;
     corp_name: string;
-    corp_nationality: string;
+    corp_nationality: CountryCodeEnum.COUNTRY_CODE_ENUM;
     corp_domain?: string;
     ceo_name?: string;
     corp_address?: string;
@@ -56,12 +57,12 @@ export class userofcorporation
     username?: string;
     email!: string;
     image?: string;
-    user_nationality?: string;
+    user_nationality?: CountryCodeEnum.COUNTRY_CODE_ENUM;
     user_working_country?: string;
     roles?: object;
     corp_id!: number;
     corp_name!: string;
-    corp_nationality!: string;
+    corp_nationality!: CountryCodeEnum.COUNTRY_CODE_ENUM;
     corp_domain?: string;
     ceo_name?: string;
     corp_address?: string;
@@ -97,6 +98,9 @@ export class userofcorporation
                 user_nationality: {
                     type: DataTypes.STRING(2),
                     allowNull: true,
+                    validate: {
+                        isIn: [Object.values(CountryCodeEnum.COUNTRY_CODE_ENUM)],
+                    },
                 },
                 user_working_country: {
                     type: DataTypes.STRING(2),
@@ -120,6 +124,9 @@ export class userofcorporation
                 corp_nationality: {
                     type: DataTypes.STRING(4),
                     allowNull: false,
+                    validate: {
+                        isIn: [Object.values(CountryCodeEnum.COUNTRY_CODE_ENUM)],
+                    },
                 },
                 corp_domain: {
                     type: DataTypes.STRING(255),
