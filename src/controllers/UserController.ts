@@ -23,11 +23,12 @@ export const getUsersById = async (uuids: Buffer[]) => {
 };
 
 export const getUserByStudentId = async (studentId: number) => {
-    const student = await Student.findOne({ where: { student_id: studentId } });
+    const student = (await Student.findOne({ where: { student_id: studentId } }))?.get({ plain: true });
 
     if (!student) {
         return undefined;
     }
+
     const user = await User.findOne({ where: { user_id: student.user_id } });
 
     return user;

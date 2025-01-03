@@ -65,6 +65,16 @@ export const getRequestsByCorpId = async (corpId: number) => {
     return requests;
 };
 
+export const getRequestsByProviderUserId = async (userId: Buffer) => {
+    const providerList = await ProviderModel.findAll({ where: { user_id: userId }, raw: true });
+
+    const uniqueRequestIds = Array.from(new Set(providerList.map((val) => val.request_id)));
+
+    const requests = await RequestModel.findAll({ where: { request_id: { [Op.in]: uniqueRequestIds } } });
+
+    return requests;
+};
+
 export const getRequestsByUserId = async (userId: Buffer, as: "consumer" | "provider" | undefined = undefined) => {
     /**
      * We can search chatrooms to identify all users related with request

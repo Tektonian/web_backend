@@ -13,6 +13,8 @@ import {
     updateRequestProviderIds,
     updateRequestStatus,
     getRequestsByOrgnId,
+    getRequestsByUserId,
+    getRequestsByProviderUserId,
 } from "../../controllers/wiip/RequestController";
 import { getUserByConsumerId, getUserByStudentId } from "../../controllers/UserController";
 import { getChatUserByUUID, getChatUsersByUUID } from "../../controllers/chat/chatUserController";
@@ -21,6 +23,7 @@ import {
     getChatRoomById,
     sendRefreshChatRooms,
 } from "../../controllers/chat/chatRoomController";
+import { getProvidersByRequest } from "../../controllers/wiip/ProviderController";
 import { sendMessage } from "../../controllers/chat/chatContentController";
 
 /**
@@ -37,7 +40,9 @@ import { RequestEnum } from "api_spec/enum";
 import * as Errors from "../../errors";
 import { ValidateSchema } from "../../utils/validation.joi";
 import logger from "../../utils/logger";
-import { omit } from "es-toolkit";
+import { omit, pick } from "es-toolkit";
+import { checkUserIsCorpnWorker, getCorpByCorpId } from "../../controllers/wiip/CorporationController";
+import { checkUserIsOrgnWorker, getOrgnByOrgnId } from "../../controllers/wiip/OrganizationController";
 const RequestRouter = express.Router();
 
 RequestRouter.post(
@@ -68,84 +73,170 @@ RequestRouter.post(
     }) as APISpec.RequestAPISpec["/"]["post"]["handler"],
 );
 
+RequestRouter.get(
+    "/list/mypage" satisfies keyof APISpec.RequestAPISpec,
+    // Need login
+    filterSessionByRBAC(),
+    (async (req, res) => {
+        logger.info("START-Get mypage request card");
+        const sessionUser = res.session!.user;
+
+        // Get request list of consumer identity
+        const requestList = (await getRequestsByUserId(sessionUser.id)).map((req) => req.get({ plain: true }));
+
+        // Get request list of provider identity
+        (await getRequestsByProviderUserId(sessionUser.id)).forEach((req) => {
+            requestList.push(req.get({ plain: true }));
+        });
+
+        const requestCards = requestList.map((req) =>
+            pick(req, ["request_id", "title", "reward_price", "currency", "address", "start_date", "request_status"]),
+        );
+
+        res.status(200).json({ requests: requestCards });
+        logger.info("END-Get mypage request card");
+    }) as APISpec.RequestAPISpec["/list/mypage"]["get"]["handler"],
+);
+
+/**
+ * For student profile page
+ */
 RequestRouter.post(
-    "/list" satisfies keyof APISpec.RequestAPISpec,
+    "/list/student" satisfies keyof APISpec.RequestAPISpec,
     // Check session
     filterSessionByRBAC(["normal", "student", "corp", "orgn"]),
     (async (req, res) => {
-        logger.info("START-Request card list");
-        const { student_id, corp_id, orgn_id } = ValidateSchema(RequestSchema.ReqAllRequestCardSchema, req.body);
+        logger.info("START-Get student request card list");
 
+        const { student_id } = ValidateSchema(RequestSchema.ReqAllRequestCardSchema, req.body);
+        const sessionUser = res.session!.user;
+        const userRoles = new Set(sessionUser.roles);
+        if (!student_id) {
+            throw new Errors.ServiceExceptionBase("User requested wrong student_id");
+        }
+
+        const studentUser = (await getUserByStudentId(student_id))?.get({ plain: true });
+        if (!studentUser) {
+            throw new Errors.ServiceExceptionBase("User requested wrong student_id");
+        }
+
+        const isMyData = sessionUser.id.equals(studentUser.user_id);
+
+        let requestList = (await getRequestsByProviderUserId(studentUser.user_id)).map((req) =>
+            req.get({ plain: true }),
+        );
+
+        // If is not my data, only show finished requests
+        if (isMyData !== true) {
+            requestList = requestList.filter((req) => req.request_status === RequestEnum.REQUEST_STATUS_ENUM.FINISHED);
+
+            // If user is not corp or orgn, than filter corp or orgn requests
+            if (!userRoles.has("corp") || !userRoles.has("orgn")) {
+                requestList = requestList.filter((req) => req.corp_id !== undefined || req.orgn_id !== undefined);
+            }
+        }
+
+        const requestCards = requestList.map((req) =>
+            pick(req, ["request_id", "title", "reward_price", "currency", "address", "start_date", "request_status"]),
+        );
+
+        res.status(200).json({ requests: requestCards });
+
+        logger.info("END-Get student request card list");
+    }) as APISpec.RequestAPISpec["/list/student"]["post"]["handler"],
+);
+/*
+ * For corp profile page
+ */
+RequestRouter.post(
+    "/list/corp" satisfies keyof APISpec.RequestAPISpec,
+    // Check session
+    filterSessionByRBAC(["student", "corp", "orgn"]),
+    (async (req, res) => {
+        logger.info("START-Get corp request card list");
+
+        const { corp_id } = ValidateSchema(RequestSchema.ReqAllRequestCardSchema, req.body);
         const sessionUser = res.session!.user;
         const userRoles = new Set(sessionUser.roles);
 
-        let requestList: RequestAttributes[] = [];
-        // For student profile page
-        if (student_id) {
-            const studentUser = await getUserByStudentId(student_id);
-            if (!studentUser) {
-                throw new Errors.ServiceExceptionBase("User requested wrong student_id");
-            }
-            // TODO: need provider table -> we will use MongoDB data for now
-            const chatRooms = await ChatRoom.find({
-                $and: [
-                    // Finished Requests are set to be less than 0
-                    { request_id: { $lte: 0 } },
-                    // Student user participated in a finished request
-                    { participant_ids: { $in: [studentUser.user_id] } },
-                    // And student user is not a consumer
-                    { consumer_id: { $ne: studentUser.user_id } },
-                ],
-            });
-            const requestIds = chatRooms.map((room) => room.request_id * -1);
-
-            requestList = (await Promise.all(requestIds.map((id) => getRequestByRequestId(id))))
-                .filter((val) => val !== null)
-                .map((req) => req.get({ plain: true }));
-
-            // If user is not orgn or corp
-            // filter requests posted by orgn or corp
-            if (userRoles.intersection(new Set(["orgn", "corp"])).size === 0) {
-                requestList.filter((val) => {
-                    if (val.corp_id === undefined && val.orgn_id === undefined) {
-                        return false;
-                    }
-                    return true;
-                });
-            }
-            requestList.filter((req) => req.request_status === RequestEnum.REQUEST_STATUS_ENUM.FINISHED);
-        }
-        // For Orgn or Corp profile page
-        else {
-            if (userRoles.intersection(new Set(["orgn", "corp", "student"])).size === 0) {
-                requestList = [];
-            } else if (corp_id) {
-                requestList = (await getRequestsByCorpId(corp_id)).map((req) => req.get({ plain: true }));
-            } else if (orgn_id) {
-                requestList = (await getRequestsByOrgnId(orgn_id)).map((req) => req.get({ plain: true }));
-            }
-            requestList.filter(
-                (req) =>
-                    req.request_status === RequestEnum.REQUEST_STATUS_ENUM.POSTED ||
-                    req.request_status === RequestEnum.REQUEST_STATUS_ENUM.PAID ||
-                    req.request_status === RequestEnum.REQUEST_STATUS_ENUM.FINISHED,
-            );
+        if (!corp_id) {
+            throw new Errors.ServiceExceptionBase("User requested wrong corp_id");
         }
 
-        res.json({
-            requests: requestList.map((req) => ({
-                request_id: req.request_id,
-                title: req.title,
-                reward_price: req.reward_price,
-                currency: req.currency,
-                address: req.address,
-                start_date: req.start_date,
-                request_status: req.request_status as RequestEnum.REQUEST_STATUS_ENUM,
-            })),
-        });
+        const corporation = await getCorpByCorpId(corp_id);
 
-        logger.info("END-Request card list");
-    }) as APISpec.RequestAPISpec["/list"]["get"]["handler"],
+        if (!corporation) {
+            throw new Errors.ServiceExceptionBase("User requested non-exist corp_id");
+        }
+        const isMyCompany = await checkUserIsCorpnWorker(sessionUser.id, corporation.corp_id);
+
+        let requestList = (await getRequestsByCorpId(corporation.corp_id)).map((req) => req.get({ plain: true }));
+
+        // If user is not a company worker, only show finished request
+        if (isMyCompany === undefined) {
+            requestList = requestList.filter((req) => req.request_status === RequestEnum.REQUEST_STATUS_ENUM.FINISHED);
+
+            // If user is not corp nor orgn, than filter corp or orgn requests
+            if (!userRoles.has("corp") && !userRoles.has("orgn")) {
+                requestList = requestList.filter((req) => req.corp_id !== undefined || req.orgn_id !== undefined);
+            }
+        }
+
+        const requestCards = requestList.map((req) =>
+            pick(req, ["request_id", "title", "reward_price", "currency", "address", "start_date", "request_status"]),
+        );
+
+        res.status(200).json({ requests: requestCards });
+
+        logger.info("END-Get corp request card list");
+    }) as APISpec.RequestAPISpec["/list/corp"]["post"]["handler"],
+);
+
+/*
+ * For orgn profile page
+ */
+RequestRouter.post(
+    "/list/orgn" satisfies keyof APISpec.RequestAPISpec,
+    // Check session
+    filterSessionByRBAC(["student", "corp", "orgn"]),
+    (async (req, res) => {
+        logger.info("START-Get orgn request card list");
+
+        const { orgn_id } = ValidateSchema(RequestSchema.ReqAllRequestCardSchema, req.body);
+        const sessionUser = res.session!.user;
+        const userRoles = new Set(sessionUser.roles);
+
+        if (!orgn_id) {
+            throw new Errors.ServiceExceptionBase("User requested wrong corp_id");
+        }
+
+        const organization = await getOrgnByOrgnId(orgn_id);
+
+        if (!organization) {
+            throw new Errors.ServiceExceptionBase("User requested non-exist corp_id");
+        }
+        const isMyCompany = await checkUserIsOrgnWorker(sessionUser.id, organization.orgn_id);
+
+        let requestList = (await getRequestsByOrgnId(organization.orgn_id)).map((req) => req.get({ plain: true }));
+
+        // If user is not a company worker, only show finished request
+        if (isMyCompany === undefined) {
+            requestList = requestList.filter((req) => req.request_status === RequestEnum.REQUEST_STATUS_ENUM.FINISHED);
+
+            // If user is not corp nor orgn, than filter corp or orgn requests
+            if (!userRoles.has("corp") && !userRoles.has("orgn")) {
+                requestList = requestList.filter((req) => req.corp_id !== undefined || req.orgn_id !== undefined);
+            }
+        }
+
+        const requestCards = requestList.map((req) =>
+            pick(req, ["request_id", "title", "reward_price", "currency", "address", "start_date", "request_status"]),
+        );
+
+        res.status(200).json({ requests: requestCards });
+
+        logger.info("END-Get orgn request card list");
+    }) as APISpec.RequestAPISpec["/list/orgn"]["post"]["handler"],
 );
 
 RequestRouter.get("/:request_id" satisfies keyof APISpec.RequestAPISpec, (async (req, res) => {
@@ -161,7 +252,7 @@ RequestRouter.get("/:request_id" satisfies keyof APISpec.RequestAPISpec, (async 
         throw new Errors.ServiceExceptionBase("User sent non exist request_id");
     }
 
-    res.json(omit(request, ["provider_ids"]));
+    res.json(request);
 
     logger.info("END-User requested RequestModel data");
 }) as APISpec.RequestAPISpec["/:request_id"]["get"]["handler"]);
@@ -224,13 +315,12 @@ RequestRouter.post(
          *      4. To sum up, we should schedule 2 alarms, one for student and one for request_status checking
          */
 
-        const chatRoomAll = await actionCompleteRecruit(
-            request.request_id,
-            sessionUser.id as Buffer,
-            request.provider_ids as Buffer[],
+        const providerIds = (await getProvidersByRequest(request.request_id)).map((provider) =>
+            provider.getDataValue("user_id"),
         );
 
-        const providerIds = request.provider_ids as Buffer[];
+        const chatRoomAll = await actionCompleteRecruit(request.request_id, sessionUser.id as Buffer, providerIds);
+
         const chatUsers = await getChatUsersByUUID([consumerUser.user_id, ...providerIds]);
 
         await Promise.all(
@@ -310,7 +400,7 @@ RequestRouter.post(
     // Login first
     filterSessionByRBAC(),
     async (req, res) => {
-        logger.info("START-Update provider_ids of Request table");
+        logger.info("START-Update provider list of Request");
 
         const sessionUser = res.session!.user;
 
@@ -349,13 +439,6 @@ RequestRouter.post(
             }
             // TODO: Check head count
 
-            /**
-             * provider_ids are saved as Stringfied Buffer but Sequelize model getter
-             * will change ids into Buffer type
-             * @see {@link models/rdbms/Request}
-             */
-            const prevProviderIds = request.provider_ids as Buffer[];
-
             // counterpart of a consumer in 1:1 chatroom is provider
             const selectedProviderId = chatRoom.participant_ids.find((user_id) => !user_id.equals(sessionUser.id));
 
@@ -370,12 +453,12 @@ RequestRouter.post(
         const chatUser = await getChatUserByUUID(sessionUser.id);
 
         if (chatUser) {
-            logger.info("INTER-Update provider_ids succeed send chatUser to update chatrooms");
+            logger.info("INTER-Update provider list succeed send chatUser to update chatrooms");
             sendRefreshChatRooms(chatUser._id);
         }
 
         res.status(202).end();
-        logger.info("END-Update provider_ids of Request table");
+        logger.info("END-Update provider list of Request");
         return;
     },
 );
