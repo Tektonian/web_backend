@@ -1,8 +1,12 @@
 import express, { Request, Response } from "express";
-import { createCorporationReview } from "../../controllers/CorporationReveiwController";
-import { getStudentByUserId } from "../../controllers/wiip/StudentController";
+import { createCorpReview, getCorpReviewsByCorpId } from "../../controllers/CorporationReveiwController";
+import { getStudentByStudentId, getStudentByUserId } from "../../controllers/wiip/StudentController";
 import { getUserByName } from "../../controllers/UserController";
-
+import * as Errors from "../../errors";
+import { APISpec } from "api_spec";
+import { filterSessionByRBAC } from "../../middleware/auth.middleware";
+import { pick } from "es-toolkit";
+import logger from "../../utils/logger";
 const CorporationReviewRouter = express.Router();
 
 CorporationReviewRouter.post("/", async (req: Request, res: Response) => {
@@ -27,7 +31,7 @@ CorporationReviewRouter.post("/", async (req: Request, res: Response) => {
 
     console.log(fullreview);
 
-    const ret = await createCorporationReview(fullreview);
+    const ret = await createCorpReview(fullreview);
 
     if (ret === null) {
         res.status(500).json({ message: "Internal Server Error" });
@@ -38,5 +42,45 @@ CorporationReviewRouter.post("/", async (req: Request, res: Response) => {
         });
     }
 });
+
+CorporationReviewRouter.get(
+    "/:corp_id" satisfies keyof APISpec.CorporationReviewAPISpec,
+    // Only student can request corp review
+    filterSessionByRBAC(["student"]),
+    (async (req, res) => {
+        logger.info("START-Get Corporation review card");
+        const corp_id = req.params.corp_id;
+        const sessionUser = res.session!.user;
+
+        if (!corp_id) {
+            throw new Errors.ServiceExceptionBase(`User requested wrong corp_id ${corp_id}`);
+        }
+
+        const reviews = (await getCorpReviewsByCorpId(corp_id)).map((val) => val.get({ plain: true }));
+
+        const reviewCard = await Promise.all(
+            reviews.map(async (review) => {
+                const student = (await getStudentByStudentId(review.student_id))?.get({ plain: true });
+                if (!student) {
+                    throw new Errors.ServiceExceptionBase(`User requested wrong corp_id ${corp_id}`);
+                }
+                return {
+                    request_id: review.request_id,
+                    review_text: review.review_text,
+                    prep_requirement: review.prep_requirement,
+                    work_atmosphere: String(review.work_atmosphere),
+                    sense_of_achive: review.sense_of_achive,
+                    student_id: String(review.student_id),
+                    student_name: JSON.stringify(student.name_glb),
+                    student_image: student.image,
+                };
+            }),
+        );
+
+        res.status(200).json({ review: reviewCard });
+
+        logger.info("END-Get Corporation review card");
+    }) as APISpec.CorporationReviewAPISpec["/:corp_id"]["get"]["handler"],
+);
 
 export default CorporationReviewRouter;

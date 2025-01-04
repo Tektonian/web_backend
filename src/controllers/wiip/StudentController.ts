@@ -64,6 +64,10 @@ export const getStudentFullProfileByStudentId = async (student_id: number) => {
     return studentProfile;
 };
 
+export const getStudentByStudentId = async (studentId) => {
+    return await Student.findOne({ where: { student_id: studentId } });
+};
+
 export const getStudentByUserId = async (user_id: Buffer | null) => {
     if (!user_id) {
         console.error("userid is null");
