@@ -1,10 +1,11 @@
 import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
 import type { ExamHistory, ExamHistoryId } from "./ExamHistory";
+import { CountryCodeEnum } from "api_spec/enum";
 
 export interface LanguageExamAttributes {
     exam_id: number;
-    exam_name_glb: object;
+    exam_name_glb: { [country_code in CountryCodeEnum.COUNTRY_CODE_ENUM]?: string };
     exam_results: object;
     lang_country_code: string;
 }
@@ -18,7 +19,7 @@ export class LanguageExam
     implements LanguageExamAttributes
 {
     exam_id!: number;
-    exam_name_glb!: object;
+    exam_name_glb!: { [country_code in CountryCodeEnum.COUNTRY_CODE_ENUM]?: string };
     exam_results!: object;
     lang_country_code!: string;
 

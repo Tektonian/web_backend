@@ -1,11 +1,12 @@
 import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
 import type { AcademicHistory, AcademicHistoryId } from "./AcademicHistory";
+import { CountryCodeEnum } from "api_spec/enum";
 
 export interface SchoolAttributes {
     school_id: number;
     school_name: string;
-    school_name_glb: object;
+    school_name_glb: { [country_code in CountryCodeEnum.COUNTRY_CODE_ENUM]?: string };
     country_code: string;
     address: string;
     coordinate: any;
@@ -22,7 +23,7 @@ export type SchoolCreationAttributes = Optional<SchoolAttributes, SchoolOptional
 export class School extends Model<SchoolAttributes, SchoolCreationAttributes> implements SchoolAttributes {
     school_id!: number;
     school_name!: string;
-    school_name_glb!: object;
+    school_name_glb!: { [country_code in CountryCodeEnum.COUNTRY_CODE_ENUM]?: string };
     country_code!: string;
     address!: string;
     coordinate!: any;

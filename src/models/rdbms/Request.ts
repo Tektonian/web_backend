@@ -131,10 +131,30 @@ export class Request extends Model<RequestAttributes, RequestCreationAttributes>
                 are_needed: {
                     type: DataTypes.JSON,
                     allowNull: true,
+                    validate: {
+                        isStringArray(value) {
+                            const jsonfied = JSON.parse(value);
+                            for (const item of jsonfied) {
+                                if (typeof item !== "string") {
+                                    throw new Error("Wrong item founded");
+                                }
+                            }
+                        },
+                    },
                 },
                 are_required: {
                     type: DataTypes.JSON,
                     allowNull: true,
+                    validate: {
+                        isStringArray(value) {
+                            const jsonfied = JSON.parse(value);
+                            for (const item of jsonfied) {
+                                if (typeof item !== "string") {
+                                    throw new Error("Wrong item founded");
+                                }
+                            }
+                        },
+                    },
                 },
                 start_date: {
                     type: DataTypes.DATEONLY,
@@ -165,6 +185,16 @@ export class Request extends Model<RequestAttributes, RequestCreationAttributes>
                 prep_material: {
                     type: DataTypes.JSON,
                     allowNull: true,
+                    validate: {
+                        isStringArray(value) {
+                            const jsonfied = JSON.parse(value);
+                            for (const item of jsonfied) {
+                                if (typeof item !== "string") {
+                                    throw new Error("Wrong item founded");
+                                }
+                            }
+                        },
+                    },
                 },
                 request_status: {
                     type: DataTypes.TINYINT,

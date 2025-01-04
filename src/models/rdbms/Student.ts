@@ -4,11 +4,11 @@ import type { AcademicHistory, AcademicHistoryId } from "./AcademicHistory";
 import type { ExamHistory, ExamHistoryId } from "./ExamHistory";
 import type { Provider, ProviderId } from "./Provider";
 import type { User, UserId } from "./User";
-
+import { CountryCodeEnum } from "api_spec/enum";
 export interface StudentAttributes {
     student_id: number;
     user_id: any;
-    name_glb: object;
+    name_glb: { [country_code in CountryCodeEnum.COUNTRY_CODE_ENUM]?: string };
     birth_date: string;
     email_verified?: Date;
     phone_number: string;
@@ -35,7 +35,7 @@ export type StudentCreationAttributes = Optional<StudentAttributes, StudentOptio
 export class Student extends Model<StudentAttributes, StudentCreationAttributes> implements StudentAttributes {
     student_id!: number;
     user_id!: any;
-    name_glb!: object;
+    name_glb!: { [country_code in CountryCodeEnum.COUNTRY_CODE_ENUM]?: string };
     birth_date!: string;
     email_verified?: Date;
     phone_number!: string;
@@ -145,6 +145,16 @@ export class Student extends Model<StudentAttributes, StudentCreationAttributes>
                 keyword_list: {
                     type: DataTypes.JSON,
                     allowNull: false,
+                    validate: {
+                        isStringArray(value) {
+                            const jsonfied = JSON.parse(value);
+                            for (const item of jsonfied) {
+                                if (typeof item !== "string") {
+                                    throw new Error("Wrong item founded");
+                                }
+                            }
+                        },
+                    },
                 },
             },
             {

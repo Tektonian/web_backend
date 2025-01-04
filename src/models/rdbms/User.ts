@@ -123,6 +123,9 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
                 working_country: {
                     type: DataTypes.STRING(2),
                     allowNull: true,
+                    validate: {
+                        isIn: [Object.values(CountryCodeEnum.COUNTRY_CODE_ENUM)],
+                    },
                 },
                 roles: {
                     type: DataTypes.JSON,
