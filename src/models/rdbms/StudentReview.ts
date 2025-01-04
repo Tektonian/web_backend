@@ -136,6 +136,23 @@ export class StudentReview
                         fields: [{ name: "id" }],
                     },
                 ],
+                hooks: {
+                    beforeCreate: async (review, option) => {
+                        const consumer = await sequelize.models.Consumer.findOne({
+                            where: { consumer_id: review.getDataValue("consumer_id") },
+                            raw: true,
+                        });
+                        if (!consumer) {
+                            throw new Error("Error occured during create corporation review");
+                        }
+                        if (!consumer.corp_id && review.getDataValue("corp_id") === undefined) {
+                            throw new Error("Do not forget to fill corp_id area");
+                        }
+                        if (!consumer.orgn_id && review.getDataValue("orgn_id") === undefined) {
+                            throw new Error("Do not forget to fill orgn_id area");
+                        }
+                    },
+                },
             },
         );
     }
