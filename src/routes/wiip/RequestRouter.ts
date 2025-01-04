@@ -33,7 +33,6 @@ import { ChatRoom } from "../../models/chat";
 /**
  * Enums / Utils / etc...
  */
-import type { RequestAttributes } from "../../models/rdbms/Request";
 import { APISpec } from "api_spec";
 import { RequestSchema } from "api_spec/joi";
 import { RequestEnum } from "api_spec/enum";
@@ -51,13 +50,11 @@ RequestRouter.post(
     filterSessionByRBAC(),
     (async (req, res) => {
         logger.info("START-User creating RequestModel data");
-        // TODO: add validataion later
-        const { data, role } = req.body;
-        //const { data, role } = ValidateSchema(RequestSchema.ReqCreateRequestSchema, req.body);
+        const { data, role } = ValidateSchema(RequestSchema.ReqCreateRequestSchema, req.body);
 
         const user = res.session!.user;
 
-        if (!user.roles.includes(role)) {
+        if (!user.roles.includes(role) || data === undefined) {
             throw new Errors.ServiceExceptionBase("User tried to write a request with unauthorized identity");
         }
 
@@ -66,13 +63,15 @@ RequestRouter.post(
 
         const request_id = await createRequest(user.id, role, data);
 
+        // TODO: add exception handler depend on error type later.
+        // ex) pay server error
         if (!request_id) {
             throw new Errors.ServiceErrorBase(
                 "Something went wrong. Data should be created or error must be thrown at controller level",
             );
         }
 
-        res.json({ request_id: request_id });
+        res.status(200).json({ request_id: request_id });
         logger.info("END-User creating RequestModel data");
     }) as APISpec.RequestAPISpec["/"]["post"]["handler"],
 );

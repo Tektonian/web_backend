@@ -7,6 +7,8 @@ import { ChatRoom } from "../../models/chat";
 import { APIType } from "api_spec";
 import * as Errors from "../../errors";
 import { RequestEnum } from "api_spec/enum";
+import { ConsumerEnum } from "api_spec/enum";
+import type { RequestAttributes } from "../../models/rdbms/Request";
 const client = new MeiliSearch({
     host: "http://127.0.0.1:7700",
     apiKey: "1zBmtAMDjgWPGLcTPAhEy-kRZv44BzxywQ1UHPkIYE0",
@@ -75,6 +77,7 @@ export const getRequestsByProviderUserId = async (userId: Buffer) => {
     return requests;
 };
 
+// TODO: need refactoring
 export const getRequestsByUserId = async (userId: Buffer, as: "consumer" | "provider" | undefined = undefined) => {
     /**
      * We can search chatrooms to identify all users related with request
@@ -145,41 +148,46 @@ export const updateRequestProviderIds = async (newProviderIds: Buffer[], request
 };
 
 // api_spec 문서 보고 데이터 타비 맞춰서 리턴하도록 수정
-export const createRequest = async (uuid: Buffer, role: "corp" | "orgn" | "normal", data) => {
+export const createRequest = async (
+    userId: Buffer,
+    role: ConsumerEnum.CONSUMER_ENUM,
+    data: Omit<RequestAttributes, "consumer_id" | "request_id">,
+) => {
     try {
         const ret = await sequelize.transaction(async (t) => {
             logger.info("Start: Transaction-[Create Request]");
+
             const consumerIdentity = (
                 await ConsumerModel.findOne({
                     where: {
-                        [Op.and]: [{ user_id: uuid }, { consumer_type: role }],
+                        [Op.and]: [{ user_id: userId }, { consumer_type: role }],
                     },
                     transaction: t,
                 })
             )?.get({ plain: true });
 
             if (consumerIdentity === undefined) {
-                throw new Error("No consumer identity exist");
+                throw new Errors.ServiceExceptionBase("No consumer identity exist");
             }
-            // TODO: should add corp_id or orgn_id according to consumer identity
             const createdRequest = await RequestModel.create(
                 {
                     ...data,
+                    corp_id: consumerIdentity.corp_id,
+                    orgn_id: consumerIdentity.orgn_id,
                     consumer_id: consumerIdentity.consumer_id,
                 },
                 { transaction: t },
             );
 
-            logger.info(`Request created: ${createRequest}`);
+            logger.info(`INTER-Request created: ${JSON.stringify(createdRequest.toJSON())}`);
 
-            const coordinate = JSON.parse(JSON.stringify(createdRequest.dataValues.address_coordinate)).coordinates;
+            const coordinates = createdRequest.toJSON().address_coordinate.coordinates;
 
             const searchRet = await requestSearch.addDocuments(
                 [
                     {
                         ...createdRequest.dataValues,
-                        request_id: createdRequest.request_id,
-                        _geo: { lat: coordinate[0], lng: coordinate[1] },
+                        _geo: { lat: coordinates[0], lng: coordinates[1] },
                     },
                 ],
                 { primaryKey: "request_id" },
@@ -188,12 +196,13 @@ export const createRequest = async (uuid: Buffer, role: "corp" | "orgn" | "norma
             const searchTask = await client.waitForTask(searchRet.taskUid);
 
             if (searchTask.status !== "succeeded") {
-                throw new Error("No record created! " + JSON.stringify(searchTask));
+                throw new Errors.ServiceExceptionBase("No record created! " + JSON.stringify(searchTask));
             }
-            logger.info("Request has been added to Search Engine");
+            logger.info("INTER-Request has been added to Search Engine");
             return createdRequest.request_id;
         });
-        logger.info("End: Transaction-[Create request]");
+
+        logger.info("End-Transaction-[Create request]");
         return ret;
     } catch (error) {
         // transaction failed
