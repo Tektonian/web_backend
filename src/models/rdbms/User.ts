@@ -108,6 +108,9 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
                 email: {
                     type: DataTypes.STRING(255),
                     allowNull: false,
+                    validate: {
+                        isEmail: true,
+                    },
                 },
                 image: {
                     type: DataTypes.STRING(255),

@@ -115,6 +115,9 @@ export class Consumer extends Model<ConsumerAttributes, ConsumerCreationAttribut
                 consumer_email: {
                     type: DataTypes.STRING(255),
                     allowNull: false,
+                    validate: {
+                        isEmail: true,
+                    },
                 },
                 consumer_verified: {
                     type: DataTypes.DATE,
