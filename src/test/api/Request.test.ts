@@ -5,7 +5,7 @@ import { Request } from "../../models/rdbms/Request";
 import { Organization } from "../../models/rdbms/Organization";
 import { Corporation } from "../../models/rdbms/Corporation";
 import { Provider } from "../../models/rdbms/Provider";
-
+import { omit } from "es-toolkit";
 import { RequestEnum } from "api_spec/enum";
 const corpAgent = request.agent(app);
 beforeAll(async () => {
@@ -40,24 +40,30 @@ describe("Request card 획득 요청", () => {
 
 describe("Request Post 요청", () => {
     test("기업 유저의 Request Post 요청", async () => {
-        const completedRequest = (await Request.findAll({ raw: true })).find(
-            (req) => req.request_status === RequestEnum.REQUEST_STATUS_ENUM.FINISHED,
-        );
-
-        expect(completedRequest).toBeDefined();
-        const address_coordinate = completedRequest?.address_coordinate;
-
-        console.log(completedRequest);
-        completedRequest!.address_coordinate = {
-            lat: address_coordinate.coordinates[0],
-            lng: address_coordinate.coordinates[1],
+        const dummy = {
+            data: {
+                title: "신재생에너지 사업 개발부문, 관리부문 직원 채용",
+                head_count: 2,
+                reward_price: 21712,
+                currency: "JP",
+                content: "신재생에너지 사업 개발부문, 관리부문 직원 채용",
+                are_needed: ["you", "body", "head"],
+                are_required: ["inner", "peace"],
+                start_date: "2024-12-04",
+                end_date: "2024-12-04",
+                address: "Kitakyushu, Fukuoka Prefecture, Japan",
+                address_coordinate: { lat: 33.883331, lng: 130.883331 },
+                provide_food: true,
+                provide_trans_exp: true,
+                prep_material: ["shose", "bike", "car"],
+                start_time: "20:27:25",
+                end_time: "01:27:25",
+            },
+            role: "corp",
         };
-        completedRequest!.request_id = null;
-        completedRequest!.provide_food = true;
-        completedRequest!.provide_trans_exp = true;
-        const res = await corpAgent.post("/api/requests/").send({ data: completedRequest, role: "corp" });
+        const res = await corpAgent.post("/api/requests").send(dummy);
+
         expect(res.statusCode).toEqual(200);
-        const request_id = res.body.request_id;
-        await Request.destroy({ where: { request_id: request_id } });
+        expect(res.body.request_id).toBeDefined();
     });
 });

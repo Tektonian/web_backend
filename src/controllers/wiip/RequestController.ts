@@ -187,6 +187,8 @@ export const createRequest = async (
                 [
                     {
                         ...createdRequest.dataValues,
+                        // Primary key value is in model value
+                        request_id: createdRequest.request_id,
                         _geo: { lat: coordinates[0], lng: coordinates[1] },
                     },
                 ],

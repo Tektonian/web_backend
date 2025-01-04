@@ -50,8 +50,8 @@ RequestRouter.post(
     filterSessionByRBAC(),
     (async (req, res) => {
         logger.info("START-User creating RequestModel data");
-        const { data, role } = ValidateSchema(RequestSchema.ReqCreateRequestSchema, req.body);
 
+        const { data, role } = ValidateSchema(RequestSchema.ReqCreateRequestSchema, req.body);
         const user = res.session!.user;
 
         if (!user.roles.includes(role) || data === undefined) {

@@ -133,8 +133,7 @@ export class Request extends Model<RequestAttributes, RequestCreationAttributes>
                     allowNull: true,
                     validate: {
                         isStringArray(value) {
-                            const jsonfied = JSON.parse(value);
-                            for (const item of jsonfied) {
+                            for (const item of value) {
                                 if (typeof item !== "string") {
                                     throw new Error("Wrong item founded");
                                 }
@@ -147,8 +146,7 @@ export class Request extends Model<RequestAttributes, RequestCreationAttributes>
                     allowNull: true,
                     validate: {
                         isStringArray(value) {
-                            const jsonfied = JSON.parse(value);
-                            for (const item of jsonfied) {
+                            for (const item of value) {
                                 if (typeof item !== "string") {
                                     throw new Error("Wrong item founded");
                                 }
@@ -187,8 +185,7 @@ export class Request extends Model<RequestAttributes, RequestCreationAttributes>
                     allowNull: true,
                     validate: {
                         isStringArray(value) {
-                            const jsonfied = JSON.parse(value);
-                            for (const item of jsonfied) {
+                            for (const item of value) {
                                 if (typeof item !== "string") {
                                     throw new Error("Wrong item founded");
                                 }
