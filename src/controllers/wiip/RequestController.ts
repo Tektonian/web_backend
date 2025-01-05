@@ -220,9 +220,42 @@ export const updateRequestStatus = async (requestId: number, status: RequestEnum
     });
 
     if (request === null) {
-        logger.info("No such request");
-        return undefined;
+        throw new Errors.ServiceExceptionBase("No such request");
     }
 
-    return await RequestModel.update({ request_status: status }, { where: { request_id: request.request_id } });
+    try {
+        const ret = await sequelize.transaction(async (t) => {
+            logger.info("START: Transaction-[Update Request Status]");
+
+            if (
+                status === RequestEnum.REQUEST_STATUS_ENUM.FINISHED ||
+                status === RequestEnum.REQUEST_STATUS_ENUM.FAILED ||
+                status === RequestEnum.REQUEST_STATUS_ENUM.OUTDATED
+            ) {
+                const searchRet = await requestSearch.deleteDocument(request.request_id);
+                const searchTask = await client.waitForTask(searchRet.taskUid);
+
+                if (searchTask.status !== "succeeded") {
+                    logger.info("FAILED: Transaction-[Update Request Status]");
+                    throw new Errors.ServiceExceptionBase(
+                        "Failed to update request status on Meilisearch! " + JSON.stringify(searchTask),
+                    );
+                }
+            }
+
+            await RequestModel.update(
+                { request_status: status },
+                { where: { request_id: request.request_id }, transaction: t },
+            );
+
+            logger.info("INTER: Transaction-[Update Request Status]");
+        });
+
+        logger.info("END: Transaction-[Update Request Status]");
+        return ret;
+    } catch (error) {
+        // transaction failed
+        logger.error(`Update request status Error: ${error}`);
+        return undefined;
+    }
 };

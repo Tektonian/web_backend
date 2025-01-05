@@ -63,6 +63,9 @@ describe("Request Post 요청", () => {
         };
         const res = await corpAgent.post("/api/requests").send(dummy);
 
+        if (res.statusCode === 200) {
+            await Request.destroy({ where: { request_id: res.body.request_id } });
+        }
         expect(res.statusCode).toEqual(200);
         expect(res.body.request_id).toBeDefined();
     });
