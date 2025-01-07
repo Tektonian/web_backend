@@ -108,7 +108,7 @@ module.exports = {
                 studentUsers.push({
                     student_id: idx,
                     user_id: user.user_id,
-                    name_glb: { kr: user.username },
+                    name_glb: { KR: user.username, JP: user.username },
                     birth_date: new Date(),
                     email_verified: new Date(),
                     phone_number: "01022222222",
