@@ -3,8 +3,9 @@ import ChatUser from "./ChatUser";
 import ChatContent from "./ChatContet";
 import ChatRoom from "./ChatRoom";
 import Unread from "./Unread";
+import Device from "./Device";
+import Alarm from "./Alarm";
 import logger from "../../utils/logger";
-
 mongoose
     .connect(process.env.MONGODB_URI, {
         dbName: process.env.MONGODB_DATABASE,
@@ -30,4 +31,4 @@ declare namespace Types {
     export type { ChatUserType, ChatContentType, ChatRoomType, UnreadType };
 }
 
-export { ChatUser, ChatContent, ChatRoom, Unread, Types };
+export { ChatUser, ChatContent, ChatRoom, Unread, Device, Alarm };
