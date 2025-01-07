@@ -3,6 +3,7 @@ import { User } from "../models/rdbms/User";
 import { Consumer } from "../models/rdbms/Consumer";
 import { Student } from "../models/rdbms/Student";
 
+import { APIType } from "api_spec";
 export const getUserByName = async (username: string) => {
     const userProfile = await User.findOne({
         where: { username: username },
@@ -50,4 +51,18 @@ export const getUserByConsumerId = async (consumerId: number) => {
     });
 
     return user;
+};
+
+export const updateUserByUserId = async (userId: Buffer, data: APIType.UserType.ReqUpdateUserProfile) => {
+    const updatedUser = await User.update(
+        {
+            username: data.username,
+            nationality: data.nationality,
+            working_country: data.working_country,
+            image: data.image,
+        },
+        { where: { user_id: userId } },
+    );
+
+    return updatedUser;
 };

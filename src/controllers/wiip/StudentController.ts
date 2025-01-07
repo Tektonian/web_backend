@@ -99,9 +99,8 @@ export const createUnVerifiedStudentIdentity = async (uuid: typeof DataTypes.UUI
             const createdStudent = await Student.create(
                 {
                     name_glb: student.name_glb,
-                    nationality: student.nationality,
                     user_id: uuid,
-                    age: student.age,
+                    birth_date: student.birth_data,
                     phone_number: student.phone_number,
                     emergency_contact: student.emergency_contact,
                     gender: student.gender,
@@ -180,4 +179,24 @@ export const createUnVerifiedStudentIdentity = async (uuid: typeof DataTypes.UUI
         console.error("Create student profile failed:", error);
         return undefined;
     }
+};
+
+export const updateStudentProfileByUserId = async (
+    userId: Buffer,
+    data: APIType.StudentType.ReqUpdateStudentProfile,
+) => {
+    const updateCount = await Student.update(
+        {
+            name_glb: data.name_glb,
+            phone_number: data.phone_number,
+            emergency_contact: data.emergency_contact,
+            birth_date: data.birth_date,
+            gender: data.gender,
+            has_car: data.has_car,
+            keyword_list: data.keyword_list,
+        },
+        { where: { user_id: userId } },
+    );
+
+    return updateCount;
 };

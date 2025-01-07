@@ -4,6 +4,7 @@ import {
     getStudentByUserId,
     getInstReviewOfStudentByStudentId,
     createUnVerifiedStudentIdentity,
+    updateStudentProfileByUserId,
 } from "../../controllers/wiip/StudentController";
 import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
 import { Corporation } from "../../models/rdbms/Corporation";
@@ -12,6 +13,7 @@ import * as Errors from "../../errors";
 import { APISpec } from "api_spec";
 import logger from "../../utils/logger";
 import { getUserByStudentId } from "../../controllers/UserController";
+import { filterSessionByRBAC } from "../../middleware/auth.middleware";
 
 const StudentRouter = express.Router();
 
@@ -82,5 +84,24 @@ StudentRouter.get("/:student_id" satisfies keyof APISpec.StudentAPISpec, (async 
         contact: sessionUser?.id.equals(studentUser.user_id as Buffer) ? contact : undefined,
     });
 }) as APISpec.StudentAPISpec["/:student_id"]["get"]["__handler"]);
+
+StudentRouter.post(
+    "/update" satisfies keyof APISpec.StudentAPISpec,
+    // Only student user
+    filterSessionByRBAC(["student"]),
+    (async (req, res) => {
+        logger.info("START-Update student profile");
+        const sessionUser = res.session!.user;
+
+        const updateCount = await updateStudentProfileByUserId(sessionUser.id, req.body);
+
+        if (updateCount[0] === 0) {
+            throw new Errors.ServiceExceptionBase("Failed to update user profile");
+        }
+
+        res.status(200).json(req.body);
+        logger.info("START-Update student profile");
+    }) as APISpec.StudentAPISpec["/update"]["post"]["handler"],
+);
 
 export default StudentRouter;

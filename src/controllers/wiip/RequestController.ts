@@ -49,6 +49,10 @@ export const getRequestByRequestId = async (requestId: number) => {
     return request;
 };
 
+/**
+ *
+ * @deprecated
+ */
 export const getRequestByStudentId = async (studentId: number) => {
     throw new Error("");
 };

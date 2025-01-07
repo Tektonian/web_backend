@@ -39,9 +39,9 @@ ChatRouter.post(
     filterSessionByRBAC(["student"]),
     async (req, res) => {
         // TODO: add validation
+        logger.info(`START-Student want to participated in a request`);
         const { request_id } = req.body;
 
-        logger.info(`START-Student want to participated in a request:${request_id}`);
         const sessionUser = res.session!.user;
 
         const userInstance = await User.findOne({

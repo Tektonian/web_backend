@@ -1,8 +1,26 @@
+import { Op } from "sequelize";
 import { Consumer } from "../../models/rdbms/Consumer";
 import { Corporation } from "../../models/rdbms/Corporation";
 
 export const getCorpByCorpId = async (corpId: number) => {
     return await Corporation.findOne({ where: { corp_id: corpId } });
+};
+
+export const getCorpByUserId = async (userId: Buffer) => {
+    const consumer = await Consumer.findOne({
+        where: { [Op.and]: [{ user_id: userId }, { consumer_type: "corp" }] },
+        raw: true,
+    });
+
+    if (!consumer) {
+        return undefined;
+    }
+
+    const corpProfile = await Corporation.findOne({
+        where: { corp_id: consumer.corp_id },
+    });
+
+    return corpProfile;
 };
 
 export const getCorpByConsumerId = async (consumer_id: number) => {
