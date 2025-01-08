@@ -1,5 +1,5 @@
-import { CorporationReview } from "../models/rdbms/CorporationReview";
-import type { CorporationReviewAttributes } from "../models/rdbms/CorporationReview";
+import { CorporationReview } from "../../models/rdbms/CorporationReview";
+import type { CorporationReviewAttributes } from "../../models/rdbms/CorporationReview";
 
 export const createCorpReview = async (data: CorporationReviewAttributes) => {
     return await CorporationReview.create(data);

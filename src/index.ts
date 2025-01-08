@@ -107,7 +107,7 @@ app.get("/redirect", async (req, res) => {
     logger.info(`Cookie url: ${cookieUrl}`);
     if (!cookieUrl) {
         logger.error(`Cookie url not exist`);
-        res.redirect("http://localhost:3000/home");
+        res.redirect(`${process.env.CLIENT_BASE_URL}/home`);
         return;
     }
 
@@ -116,7 +116,7 @@ app.get("/redirect", async (req, res) => {
 
     if (!callbackUrl || callbackUrl.host !== req.host) {
         logger.error(`Wrong callback url ${req.originalUrl} - ${req.baseUrl}`);
-        res.redirect("http://localhost:3000/home");
+        res.redirect(`${process.env.CLIENT_BASE_URL}/home`);
         return;
     }
 
@@ -125,7 +125,7 @@ app.get("/redirect", async (req, res) => {
     logger.info(`cookie values: ${cookieRedirectType} / ${cookieRedirectUrl}`);
     if (cookieRedirectType !== redirectType || cookieRedirectUrl !== redirectUrl) {
         logger.error(`Wrong cookie value`);
-        res.redirect("http://localhost:3000/home");
+        res.redirect(`${process.env.CLIENT_BASE_URL}/home`);
         return;
     }
 

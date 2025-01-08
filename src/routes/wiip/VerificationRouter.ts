@@ -1,7 +1,7 @@
 import { createTransport } from "nodemailer";
 import express from "express";
-import { models } from "../models/rdbms";
-import logger from "../utils/logger";
+import { models } from "../../models/rdbms";
+import logger from "../../utils/logger";
 
 const server = {
     host: process.env.EMAIL_SERVER_HOST,

@@ -1,7 +1,7 @@
 import sequelize from "sequelize";
-import { User } from "../models/rdbms/User";
-import { Consumer } from "../models/rdbms/Consumer";
-import { Student } from "../models/rdbms/Student";
+import { User } from "../../models/rdbms/User";
+import { Consumer } from "../../models/rdbms/Consumer";
+import { Student } from "../../models/rdbms/Student";
 
 import { APIType } from "api_spec";
 export const getUserByName = async (username: string) => {
