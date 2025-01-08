@@ -1,6 +1,8 @@
 import * as express from "express";
 import { DefaultSession } from "@auth/express";
 import { UserEnum } from "api_spec/enum";
+import Joi from "@hapi/joi";
+import parse from "joi-to-json";
 import "joi-extract-type"; // <- import joi-extract-type for type hint for router
 declare global {
     namespace Express {
