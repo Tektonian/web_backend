@@ -3,6 +3,7 @@ import { createServer } from "http";
 import { Server as SocketServer } from "socket.io";
 import { currentSession } from "./middleware/auth.middleware";
 import { __initChat } from "./routes/chat/webSocketRouter";
+// TODO: Error handling for chat is needed
 import errorHandleMiddleware from "./middleware/error.middleware";
 import logger from "./utils/logger";
 
@@ -27,6 +28,8 @@ io.use((socket, next) => {
     currentSession(socket.request, socket.request, next);
 });
 __initChat(io);
+
+// TODO: add schedule later
 // __initSchedule();
 
 // Listen server

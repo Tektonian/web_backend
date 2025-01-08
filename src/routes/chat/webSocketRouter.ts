@@ -5,7 +5,7 @@ import * as UserController from "../../controllers/UserController";
 
 import type { HydratedDocument } from "mongoose";
 import type { Server, Socket } from "socket.io";
-import type { Types as ChatTypes } from "../../models/chat";
+import type * as ChatTypes from "../../models/chat";
 import type { APIType } from "api_spec";
 import type { ISessionUser } from "../../config/auth.types";
 import type { UserAttributes } from "../../models/rdbms/User";

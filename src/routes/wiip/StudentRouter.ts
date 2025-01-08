@@ -1,4 +1,8 @@
 import express, { Request, Response } from "express";
+
+/**
+ * Controller
+ */
 import {
     getStudentFullProfileByStudentId,
     getStudentByUserId,
@@ -6,13 +10,14 @@ import {
     createUnVerifiedStudentIdentity,
     updateStudentProfileByUserId,
 } from "../../controllers/wiip/StudentController";
-import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
-import { Corporation } from "../../models/rdbms/Corporation";
 
+import { getUserByStudentId } from "../../controllers/UserController";
+/**
+ * Utils, types, etc..
+ */
 import * as Errors from "../../errors";
 import { APISpec } from "api_spec";
 import logger from "../../utils/logger";
-import { getUserByStudentId } from "../../controllers/UserController";
 import { filterSessionByRBAC } from "../../middleware/auth.middleware";
 
 const StudentRouter = express.Router();

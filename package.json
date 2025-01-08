@@ -8,6 +8,7 @@
         "build": "tsx -p .",
         "test": "cross-env NODE_ENV=test dotenv -e \"./.env.local\" vitest",
         "dev": "cross-env NODE_ENV=development nodemon --watch \"src/**/*.ts\" --ignore *.test.ts --exec vite-node \"src/server.ts\" --options.deps.inline=\"dotenv/config dotenv_config_path=./.env.local\"",
+        "dev:production": "cross-env NODE_ENV=production nodemon --watch \"src/**/*.ts\" --ignore *.test.ts --exec vite-node \"src/server.ts\" --options.deps.inline=\"dotenv/config dotenv_config_path=./.env.local\"",
         "production": "cross-env NODE_ENV=production vite-node \"src/server.ts\" --options.deps.inline=\"dotenv/config dotenv_config_path=./.env\""
     },
     "keywords": [],
@@ -57,6 +58,7 @@
         "express": "^5.0.1",
         "joi": "^17.13.3",
         "joi-extract-type": "^15.0.8",
+        "joi-to-json": "^4.3.0",
         "meilisearch": "^0.45.0",
         "mongoose": "^8.7.3",
         "morgan": "^1.10.0",

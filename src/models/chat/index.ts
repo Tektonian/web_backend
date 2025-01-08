@@ -13,13 +13,16 @@ mongoose
     .then(async (val) => {
         logger.info("Connected to MongoDB => UserAPI");
         logger.info("drop collections");
-        await val.connection.dropCollection("chat_users");
-        await val.connection.dropCollection("chat_rooms");
-        await val.connection.dropCollection("chat_contents");
-        await val.connection.dropCollection("unreads");
+        if (process.env.NODE_ENV !== "production") {
+            await val.connection.dropCollection("chat_users");
+            await val.connection.dropCollection("chat_rooms");
+            await val.connection.dropCollection("chat_contents");
+            await val.connection.dropCollection("unreads");
+        }
     })
-    .catch((err) => {
-        logger.error(err);
+    .catch((error) => {
+        logger.error(error);
+        throw error;
     });
 
 type ChatUserType = InferSchemaType<(typeof ChatUser)["schema"]>;
@@ -27,8 +30,6 @@ type ChatContentType = InferSchemaType<(typeof ChatContent)["schema"]>;
 type ChatRoomType = InferSchemaType<(typeof ChatRoom)["schema"]>;
 type UnreadType = InferSchemaType<(typeof Unread)["schema"]>;
 
-declare namespace Types {
-    export type { ChatUserType, ChatContentType, ChatRoomType, UnreadType };
-}
-
 export { ChatUser, ChatContent, ChatRoom, Unread, Device, Alarm };
+
+export type { ChatUserType, ChatContentType, ChatRoomType, UnreadType };

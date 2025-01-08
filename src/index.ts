@@ -20,6 +20,7 @@ import RecommendRouter from "./routes/recommend/Recommend";
 import VerificationRouter from "./routes/VerificationRouter";
 import ChatRouter from "./routes/chat/chatRouter";
 import SSEAlarmRouter from "./routes/chat/sseRouter";
+import UserRouter from "./routes/wiip/UserRouter";
 // Initialize other services
 import { __initSchedule } from "./utils/schedule";
 // Dummy chat data
@@ -37,7 +38,7 @@ const PORT = process.env.PORT || 8080;
  * Middlewares
  */
 app.set("port", PORT);
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors({ origin: process.env.CORS_ORIGIN, credentials: true }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -70,7 +71,7 @@ app.use("/api/search/exams", ExamSearchRouter);
 app.use("/api/student-reviews", StudentReviewRouter);
 app.use("/api/corporations", CorporationRouter);
 app.use("/api/corporation-reviews", CorporationReviewRouter);
-
+app.use("/api/users", UserRouter);
 /**
  * Verification router
  */
@@ -83,16 +84,20 @@ app.use("/api/recommend", RecommendRouter);
 /**
  * For chatting
  */
-// Init dummy chat data
-new Promise((resolve, reject) => generateChatDummyData());
+// Init dummy chat data. Only for testing!!!
+if (process.env.NODE_ENV !== "production") {
+    new Promise((resolve, reject) => generateChatDummyData());
+}
 // Alarm and Chat data
 app.use("/api/sse", SSEAlarmRouter);
 app.use("/api/message", ChatRouter);
+
 app.get("/", async (req, res) => {
-    res.redirect(`wiip://callback?session=${JSON.stringify(cookie.parse(req.headers.cookie ?? ""))}`);
-    console.log(req.headers);
-    throw new ServiceErrorBase("This is for testing error");
+    res.redirect(`${process.env.CORS_ORIGIN}/home`);
 });
+/**
+ * For Sign in process of Android application
+ */
 app.get("/redirect", async (req, res) => {
     logger.info(`${JSON.stringify(req.headers)} / ${JSON.stringify(req.query)}`);
 
