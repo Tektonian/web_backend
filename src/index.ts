@@ -17,7 +17,7 @@ import StudentReviewRouter from "./routes/wiip/StudentReviewRouter";
 import CorporationRouter from "./routes/wiip/CorporationRouter";
 import CorporationReviewRouter from "./routes/wiip/CorporationReviewRouter";
 import RecommendRouter from "./routes/recommend/Recommend";
-import VerificationRouter from "./routes/VerificationRouter";
+import VerificationRouter from "./routes/wiip/VerificationRouter";
 import ChatRouter from "./routes/chat/chatRouter";
 import SSEAlarmRouter from "./routes/chat/sseRouter";
 import UserRouter from "./routes/wiip/UserRouter";
