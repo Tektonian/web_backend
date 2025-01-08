@@ -5,7 +5,7 @@ import { createServer } from "http";
 import { User } from "../../models/rdbms/User";
 import { Request } from "../../models/rdbms/Request";
 import { __initChatTest } from "../../routes/chat/webSocketRouter";
-import * as UserController from "../../controllers/UserController";
+import * as UserController from "../../controllers/wiip/UserController";
 import * as ChatUserController from "../../controllers/chat/chatUserController";
 import * as ChatContentController from "../../controllers/chat/chatContentController";
 import * as ChatRoomController from "../../controllers/chat/chatRoomController";

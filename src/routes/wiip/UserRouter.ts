@@ -3,7 +3,7 @@ import express from "express";
 /**
  * Controller
  */
-import { getUserById, updateUserByUserId } from "../../controllers/UserController";
+import { getUserById, updateUserByUserId } from "../../controllers/wiip/UserController";
 import {
     getRequestByStudentId,
     getRequestsByProviderUserId,

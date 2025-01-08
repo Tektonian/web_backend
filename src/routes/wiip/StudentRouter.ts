@@ -11,7 +11,7 @@ import {
     updateStudentProfileByUserId,
 } from "../../controllers/wiip/StudentController";
 
-import { getUserByStudentId } from "../../controllers/UserController";
+import { getUserByStudentId } from "../../controllers/wiip/UserController";
 /**
  * Utils, types, etc..
  */

@@ -16,7 +16,7 @@ import {
     getRequestsByUserId,
     getRequestsByProviderUserId,
 } from "../../controllers/wiip/RequestController";
-import { getUserByConsumerId, getUserByStudentId } from "../../controllers/UserController";
+import { getUserByConsumerId, getUserByStudentId } from "../../controllers/wiip/UserController";
 import { getChatUserByUUID, getChatUsersByUUID } from "../../controllers/chat/chatUserController";
 import {
     actionCompleteRecruit,

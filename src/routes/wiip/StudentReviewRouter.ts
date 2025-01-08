@@ -9,7 +9,7 @@ import { getStudentReviewsByStudentId } from "../../controllers/wiip/StudentRevi
 import { StudentReviewSchema } from "api_spec/joi";
 import { ValidateSchema } from "../../utils/validation.joi";
 import { pick } from "es-toolkit";
-import { getUserByConsumerId } from "../../controllers/UserController";
+import { getUserByConsumerId } from "../../controllers/wiip/UserController";
 import { getProviderOfRequestByStudentId } from "../../controllers/wiip/ProviderController";
 import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
 import { Op } from "sequelize";

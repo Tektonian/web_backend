@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
-import { createCorpReview, getCorpReviewsByCorpId } from "../../controllers/CorporationReveiwController";
+import { createCorpReview, getCorpReviewsByCorpId } from "../../controllers/wiip/CorporationReveiwController";
 import { getStudentByStudentId, getStudentByUserId } from "../../controllers/wiip/StudentController";
-import { getUserByName } from "../../controllers/UserController";
+import { getUserByName } from "../../controllers/wiip/UserController";
 import * as Errors from "../../errors";
 import { APISpec } from "api_spec";
 import { filterSessionByRBAC } from "../../middleware/auth.middleware";

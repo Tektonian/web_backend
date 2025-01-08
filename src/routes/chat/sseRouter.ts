@@ -3,7 +3,7 @@ import { createSession } from "better-sse";
 import { QueueEvents } from "bullmq";
 import { getUnreadCountOfUser } from "../../controllers/chat/chatUnreadController";
 import { getRequestsByUserId } from "../../controllers/wiip/RequestController";
-import { getCorpReviewsByRequestId } from "../../controllers/CorporationReveiwController";
+import { getCorpReviewsByRequestId } from "../../controllers/wiip/CorporationReveiwController";
 import { getStudentReviewsByRequestId } from "../../controllers/wiip/StudentReviewController";
 
 import logger from "../../utils/logger";

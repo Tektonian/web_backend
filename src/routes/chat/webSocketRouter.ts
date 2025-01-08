@@ -1,7 +1,7 @@
 import { createHash } from "crypto";
 import { QueueEvents } from "bullmq";
 import { chatController } from "../../controllers/chat";
-import * as UserController from "../../controllers/UserController";
+import * as UserController from "../../controllers/wiip/UserController";
 
 import type { HydratedDocument } from "mongoose";
 import type { Server, Socket } from "socket.io";

@@ -9,7 +9,7 @@ import { models } from "../../models/rdbms";
  * Controller
  */
 import * as ChatRoomController from "../../controllers/chat/chatRoomController";
-import { getUserByConsumerId } from "../../controllers/UserController";
+import { getUserByConsumerId } from "../../controllers/wiip/UserController";
 import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
 import { getChatRoomMessagesByContentType, sendMessage } from "../../controllers/chat/chatContentController";
 import { getStudentByUserId } from "../../controllers/wiip/StudentController";
