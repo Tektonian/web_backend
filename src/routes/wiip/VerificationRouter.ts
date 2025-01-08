@@ -2,7 +2,9 @@ import { createTransport } from "nodemailer";
 import express from "express";
 import { models } from "../../models/rdbms";
 import logger from "../../utils/logger";
-
+import * as Errors from "../../errors";
+import { filterSessionByRBAC } from "../../middleware/auth.middleware";
+import { UserEnum } from "api_spec/enum";
 const server = {
     host: process.env.EMAIL_SERVER_HOST,
     port: process.env.EMAIL_SERVER_PORT,
@@ -14,80 +16,120 @@ const server = {
 };
 const VerificationRouter = express.Router();
 
-VerificationRouter.post("/callback/identity-verify", async (req, res, next) => {
-    const { token, verifyEmail, phoneNumber, profileId, type } = req.body;
+VerificationRouter.post("/callback/identity-verify/student", filterSessionByRBAC([]), async (req, res) => {
+    logger.info("START-Verification of student profile");
+    const { token, verifyEmail } = req.body;
+    const sessionUser = res.session!.user;
+    const userRoles = new Set(sessionUser.roles);
 
-    const user = res.session?.user ?? null;
-
-    if (
-        (type !== undefined && !["student", "corp", "orgn"].includes(type)) ||
-        verifyEmail === undefined ||
-        phoneNumber === undefined ||
-        token === undefined ||
-        (profileId === undefined && ["corp", "orgn"].includes(type))
-    ) {
-        res.json("Wrong request");
-    }
-
-    if (user === null) {
-        res.json("Login first");
-    }
-
-    const userInstance =
-        (
-            await models.User.findOne({
-                where: { email: user.email },
-            })
-        )?.get({ plain: true }) ?? null;
-
-    if (userInstance === null) {
-        res.json("Verify first");
-        return;
+    if (userRoles.has("student")) {
+        throw new Errors.ServiceExceptionBase("User already has student identity", { responseCode: 400 });
     }
 
     const verificationToken = await models.VerificationToken.findOne({
         where: { identifier: verifyEmail },
         order: [["expires", "DESC"]],
+        raw: true,
     });
 
-    if (verificationToken === null || verificationToken.dataValues.token !== token) {
-        res.json("Wrong identification");
-        return;
+    if (!verificationToken) {
+        throw new Errors.ServiceExceptionBase("Wrong token input", { responseCode: 404 });
     }
 
-    if (type === "student") {
-        await models.Student.update({ email_verified: new Date() }, { where: { student_id: profileId } });
-    } else if (type === "corp") {
-        await models.Consumer.create({
-            user_id: userInstance.user_id,
-            consumer_email: verifyEmail,
-            consumer_verified: new Date(),
-            corp_id: profileId,
-            consumer_type: "corp",
-            phone_number: "",
-        });
-    } else if (type === "orgn") {
-        await models.Consumer.create({
-            user_id: userInstance.user_id,
-            consumer_email: verifyEmail,
-            consumer_verified: new Date(),
-            orgn_id: profileId,
-            consumer_type: "orgn",
-            phone_number: "",
-        });
-    }
-    // TODO: ERROR
-    // Add student role
-    logger.debug(`User email Verified through email: ${userInstance}`);
-    if (userInstance.roles === undefined) {
-        await models.User.update({ roles: [type] }, { where: { email: userInstance.email } });
-    } else {
-        const newRoles = Array.from(new Set([...(userInstance.roles as string[]), type]));
-        await models.User.update({ roles: newRoles }, { where: { email: userInstance.email } });
-    }
+    await models.Student.update({ email_verified: new Date() }, { where: { user_id: sessionUser.id } });
 
-    res.json({ status: "ok" });
+    logger.debug(`User email Verified through email: ${JSON.stringify(sessionUser)}`);
+
+    await models.User.update({ roles: [...sessionUser.roles, "student"] }, { where: { user_id: sessionUser.id } });
+
+    res.status(200).end();
+    logger.info("END-Verification of student profile");
 });
+
+/**
+ * TODO: seperate code by cases (student, corp, orgn)
+ * @deprecated
+ */
+VerificationRouter.post(
+    "/callback/identity-verify",
+    // Check login
+    filterSessionByRBAC([]),
+    async (req, res) => {
+        const { token, verifyEmail, phoneNumber, profileId, type } = req.body;
+
+        const sessionUser = res.session!.user;
+        const userRoles = new Set(sessionUser.roles);
+
+        if (
+            (type !== undefined && !["student", "corp", "orgn"].includes(type)) ||
+            verifyEmail === undefined ||
+            phoneNumber === undefined ||
+            token === undefined ||
+            (profileId === undefined && ["corp", "orgn"].includes(type))
+        ) {
+            res.json("Wrong request");
+        }
+
+        if (sessionUser === null) {
+            res.json("Login first");
+        }
+
+        const userInstance =
+            (
+                await models.User.findOne({
+                    where: { email: sessionUser.email },
+                })
+            )?.get({ plain: true }) ?? null;
+
+        if (userInstance === null) {
+            res.json("Verify first");
+            return;
+        }
+
+        const verificationToken = await models.VerificationToken.findOne({
+            where: { identifier: verifyEmail },
+            order: [["expires", "DESC"]],
+        });
+
+        if (verificationToken === null || verificationToken.dataValues.token !== token) {
+            res.json("Wrong identification");
+            return;
+        }
+
+        if (type === "student") {
+            await models.Student.update({ email_verified: new Date() }, { where: { student_id: profileId } });
+        } else if (type === "corp") {
+            await models.Consumer.create({
+                user_id: userInstance.user_id,
+                consumer_email: verifyEmail,
+                consumer_verified: new Date(),
+                corp_id: profileId,
+                consumer_type: "corp",
+                phone_number: "",
+            });
+        } else if (type === "orgn") {
+            await models.Consumer.create({
+                user_id: userInstance.user_id,
+                consumer_email: verifyEmail,
+                consumer_verified: new Date(),
+                orgn_id: profileId,
+                consumer_type: "orgn",
+                phone_number: "",
+            });
+        }
+        // TODO: ERROR
+        // Add student role
+        logger.debug(`User email Verified through email: ${userInstance}`);
+        if (userInstance.roles === undefined) {
+            await models.User.update({ roles: [type] }, { where: { email: userInstance.email } });
+        } else {
+            const newRoles = Array.from(new Set([...(userInstance.roles as string[]), type]));
+            await models.User.update({ roles: newRoles }, { where: { email: userInstance.email } });
+        }
+
+        res.status(200).end();
+    },
+);
 
 VerificationRouter.post("/identity-verify", async (req, res, next) => {
     const { verifyEmail, type } = req.body;

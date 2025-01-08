@@ -91,16 +91,15 @@ export const getInstReviewOfStudentByStudentId = async (student_id: number) => {
 };
 
 // TODO: Add type laterㅇ
-export const createUnVerifiedStudentIdentity = async (uuid: typeof DataTypes.UUID, data) => {
+export const createUnVerifiedStudentIdentity = async (userId: Buffer, data) => {
     try {
         const ret = await sequelize.transaction(async (t) => {
-            const { userType, academicHistory, examHistory, ...student } = data;
-
+            const { academicHistory, examHistory, ...student } = data;
             const createdStudent = await Student.create(
                 {
                     name_glb: student.name_glb,
-                    user_id: uuid,
-                    birth_date: student.birth_data,
+                    user_id: userId,
+                    birth_date: student.birth_date,
                     phone_number: student.phone_number,
                     emergency_contact: student.emergency_contact,
                     gender: student.gender,
