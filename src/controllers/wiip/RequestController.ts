@@ -10,8 +10,8 @@ import { RequestEnum } from "api_spec/enum";
 import { ConsumerEnum } from "api_spec/enum";
 import type { RequestAttributes } from "../../models/rdbms/Request";
 const client = new MeiliSearch({
-    host: "http://127.0.0.1:7700",
-    apiKey: "1zBmtAMDjgWPGLcTPAhEy-kRZv44BzxywQ1UHPkIYE0",
+    host: process.env.MEILISEARCH_HOST,
+    apiKey: process.env.MEILISEARCH_KEY,
 });
 
 const requestSearch = client.index("request");

@@ -16,8 +16,8 @@ import { APIType } from "api_spec";
 import { Corporation } from "../../models/rdbms/Corporation";
 
 const client = new MeiliSearch({
-    host: "http://127.0.0.1:7700",
-    apiKey: "1zBmtAMDjgWPGLcTPAhEy-kRZv44BzxywQ1UHPkIYE0",
+    host: process.env.MEILISEARCH_HOST,
+    apiKey: process.env.MEILISEARCH_KEY,
 });
 
 const studentSearch = client.index("studentwithcurrentschool");

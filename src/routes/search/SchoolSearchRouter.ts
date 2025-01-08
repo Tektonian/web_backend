@@ -5,8 +5,8 @@ import { SchoolSearchScheme } from "api_spec/joi";
 import { ValidateSchema } from "../../utils/validation.joi";
 import logger from "../../utils/logger";
 const client = new MeiliSearch({
-    host: "http://127.0.0.1:7700",
-    apiKey: "1zBmtAMDjgWPGLcTPAhEy-kRZv44BzxywQ1UHPkIYE0",
+    host: process.env.MEILISEARCH_HOST,
+    apiKey: process.env.MEILISEARCH_KEY,
 });
 
 const SchoolSearchRouter = express.Router();
