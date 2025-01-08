@@ -16,7 +16,7 @@ const server = {
 };
 const VerificationRouter = express.Router();
 
-VerificationRouter.post("/callback/identity-verify/student", filterSessionByRBAC([]), async (req, res) => {
+VerificationRouter.post("/callback/identity-verify/student", filterSessionByRBAC(), async (req, res) => {
     logger.info("START-Verification of student profile");
     const { token, verifyEmail } = req.body;
     const sessionUser = res.session!.user;

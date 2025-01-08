@@ -23,7 +23,7 @@ logger.info("Initialized Socket io");
 io.use((socket, next) => {
     // chatRoom will be set 'join' event
     socket.data.chatRoom = null;
-    // TODO: should add protocol to get session -> change later
+    // TODO: should add protocol to get session (problem cased by auth.js library)-> change later
     socket.request.protocol = "ws";
     currentSession(socket.request, socket.request, next);
 });
