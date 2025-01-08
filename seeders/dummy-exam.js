@@ -4,11 +4,9 @@ const { Meilisearch } = require("meilisearch");
 module.exports = {
     async up(queryInterface, Sequelize) {
         const fs = require("fs");
-        const ExamDataset = JSON.parse(
-            fs.readFileSync("../../school_dataset/exam.json", "utf-8"),
-        );
+        const ExamDataset = JSON.parse(fs.readFileSync("../../school_dataset/exam.json", "utf-8"));
         const client = new Meilisearch({
-            host: "http://127.0.0.1:7700",
+            host: "http://localhost:7700",
             // apikey if needed'
         });
 
@@ -35,6 +33,7 @@ module.exports = {
             console.log("Data successfully inserted into DB and Meilisearch.");
         } catch (error) {
             console.log("Validation Error in LanguageExam.bulkCreate", error);
+            throw error;
         }
     },
 

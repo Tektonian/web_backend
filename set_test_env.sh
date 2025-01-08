@@ -40,7 +40,7 @@ function gen_data {
     echo "Check sequelize/config file before you run the script"
     cp seeders/* ${SEQ}/seeders/
     cd ${SEQ}
-    npx sequelize-cli db:seed --seed dummy-orgn dummy-user dummy-consumer dummy-student dummy-request dummy-search dummy-review
+    npx sequelize-cli db:seed --seed dummy-orgn dummy-user dummy-consumer dummy-student dummy-request dummy-search dummy-review dummy-exam
     cd ..
 }
 
