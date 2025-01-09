@@ -20,19 +20,22 @@ const requestSearch = client.index("request");
 // requestSearch.updateFilterableAttributes(["_geo"]);
 // requestSearch.updateSortableAttributes(["_geo"]);
 
-const StudentWithCurrentSchool = models.studentwithcurrentschool;
+const AcademicHistory = models.AcademicHistory;
 const RequestModel = models.Request;
 const ConsumerModel = models.Consumer;
-const UserModel = models.User;
-const StudentModel = models.Student;
+const Student = models.Student;
 const ProviderModel = models.Provider;
 
 export const getRecommendedRequestByStudentId = async (student_id: number) => {
     const student = (
-        await StudentWithCurrentSchool.findOne({
+        await Student.findOne({
             where: { student_id: student_id },
         })
     )?.get({ plain: true });
+    /**
+     * TODO: fill logic later
+     * We will return every requests for now;
+     */
 
     const coordi = JSON.parse(JSON.stringify(student?.coordinate)).coordinates;
 
@@ -41,7 +44,17 @@ export const getRecommendedRequestByStudentId = async (student_id: number) => {
         sort: [`_geoPoint(${coordi[0]}, ${coordi[1]}):asc`],
     });
 
-    return searchRet;
+    const requests = await RequestModel.findAll({
+        where: {
+            [Op.or]: [
+                { request_status: RequestEnum.REQUEST_STATUS_ENUM.POSTED },
+                { request_status: RequestEnum.REQUEST_STATUS_ENUM.PAID },
+                { request_status: RequestEnum.REQUEST_STATUS_ENUM.CONTRACTED },
+            ],
+        },
+    });
+
+    return requests;
 };
 
 export const getRequestByRequestId = async (requestId: number) => {
@@ -118,7 +131,7 @@ export const updateRequestProviderIds = async (newProviderIds: Buffer[], request
             logger.info("Start: Transaction-[Change provider ids]");
             await Promise.all(
                 newProviderIds.map(async (providerId) => {
-                    const student = await StudentModel.findOne({ where: { user_id: providerId }, raw: true });
+                    const student = await Student.findOne({ where: { user_id: providerId }, raw: true });
                     if (!student) {
                         throw new Errors.ServiceErrorBase(
                             "updateRequestProviderIds called non-exist user - something went wrong",

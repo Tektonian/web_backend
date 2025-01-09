@@ -10,6 +10,7 @@ import { getRecommendedStudentByRequestId } from "../../controllers/wiip/Student
  */
 import { APISpec } from "api_spec";
 import logger from "../../utils/logger";
+import { pick } from "es-toolkit";
 
 const Student = models.Student;
 const RecommendRouter = express.Router();
@@ -32,11 +33,25 @@ RecommendRouter.post("/students" satisfies keyof APISpec.RecommendAPISpec, (asyn
 RecommendRouter.post("/requests" satisfies keyof APISpec.RecommendAPISpec, (async (req, res) => {
     logger.info("START-Get recommend request list");
 
-    const student = (await Student.findAll())[0].get({ plain: true });
+    /**
+     * TODO
+     * const student = (await Student.findAll())[0].get({ plain: true });
+     * const ret = await getRecommendedRequestByStudentId(student.student_id);
+     * Return all for now
+     */
+    const ret = (await getRecommendedRequestByStudentId(-1)).map((val) =>
+        pick(val.get({ plain: true }), [
+            "request_id",
+            "title",
+            "reward_price",
+            "currency",
+            "address",
+            "start_date",
+            "request_status",
+        ]),
+    );
 
-    const ret = await getRecommendedRequestByStudentId(student.student_id);
-
-    res.status(200).json(ret?.hits);
+    res.status(200).json(ret);
     logger.info("END-Get recommend request list");
 }) as APISpec.RecommendAPISpec["/requests"]["post"]["__handler"]);
 
