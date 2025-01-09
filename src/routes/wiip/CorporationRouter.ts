@@ -1,6 +1,5 @@
 import express, { Request, Response } from "express";
-import { Consumer } from "../../models/rdbms/Consumer";
-import { Corporation } from "../../models/rdbms/Corporation";
+import { models } from "../../models/rdbms";
 import * as CorpController from "../../global/corpInfo/kr/CorpInfoController";
 
 /**
@@ -17,6 +16,9 @@ import { APISpec } from "api_spec";
 import { pick } from "es-toolkit";
 import * as Errors from "../../errors";
 import logger from "../../utils/logger";
+
+const Consumer = models.Consumer;
+const Corporation = models.Corporation;
 
 const CorporationRouter = express.Router();
 

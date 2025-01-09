@@ -1,10 +1,12 @@
 import { models, sequelize } from "../../models/rdbms";
 import { MeiliSearch } from "meilisearch";
 import { Op } from "sequelize";
-import logger from "../../utils/logger";
 import { ChatRoom } from "../../models/chat";
 
-import { APIType } from "api_spec";
+/**
+ * Types, Errors, Utils ...
+ */
+import logger from "../../utils/logger";
 import * as Errors from "../../errors";
 import { RequestEnum } from "api_spec/enum";
 import { ConsumerEnum } from "api_spec/enum";

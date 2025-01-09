@@ -1,19 +1,23 @@
+/**
+ * Models
+ */
 import { models } from "../../models/rdbms";
 import { MeiliSearch } from "meilisearch";
-import { Student } from "../../models/rdbms/Student";
-import { StudentReview } from "../../models/rdbms/StudentReview";
-import { fullstudentprofile } from "../../models/rdbms/fullstudentprofile";
 import { sequelize } from "../../models/rdbms";
-import { AcademicHistory } from "../../models/rdbms/AcademicHistory";
-import { School } from "../../models/rdbms/School";
-import { Request } from "../../models/rdbms/Request";
-import { ExamHistory } from "../../models/rdbms/ExamHistory";
-import { DataTypes } from "sequelize";
+/**
+ * Utiles, Types
+ */
 import { runCatchingAsync } from "../../utils/runCatcher";
 
 import logger from "../../utils/logger";
 import { APIType } from "api_spec";
-import { Corporation } from "../../models/rdbms/Corporation";
+
+const Student = models.Student;
+const StudentReview = models.StudentReview;
+const AcademicHistory = models.AcademicHistory;
+const School = models.School;
+const Request = models.Request;
+const ExamHistory = models.ExamHistory;
 
 const client = new MeiliSearch({
     host: process.env.MEILISEARCH_HOST,
@@ -58,6 +62,7 @@ export const getRecommendedStudentByRequestId = async (request_id: number) => {
 /**
  * @deprecated
  */
+/*
 export const getStudentFullProfileByStudentId = async (student_id: number) => {
     const studentProfile = await fullstudentprofile.findOne({
         where: { student_id: student_id },
@@ -66,8 +71,9 @@ export const getStudentFullProfileByStudentId = async (student_id: number) => {
 
     return studentProfile;
 };
+*/
 
-export const getStudentByStudentId = async (studentId) => {
+export const getStudentByStudentId = async (studentId: number) => {
     return await Student.findOne({ where: { student_id: studentId } });
 };
 

@@ -1,5 +1,7 @@
-import { Organization } from "../../models/rdbms/Organization";
-import { Consumer } from "../../models/rdbms/Consumer";
+import { models } from "../../models/rdbms";
+
+const Organization = models.Organization;
+const Consumer = models.Consumer;
 
 export const getOrgnByOrgnId = async (orgnId: number) => {
     return await Organization.findOne({ where: { orgn_id: orgnId } });

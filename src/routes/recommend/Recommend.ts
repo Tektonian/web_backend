@@ -1,9 +1,17 @@
+import express from "express";
+import { models } from "../../models/rdbms";
+/**
+ * Controller
+ */
 import { getRecommendedRequestByStudentId } from "../../controllers/wiip/RequestController";
 import { getRecommendedStudentByRequestId } from "../../controllers/wiip/StudentController";
-import express, { Request, Response } from "express";
+/**
+ * Utils,
+ */
 import { APISpec } from "api_spec";
 import logger from "../../utils/logger";
-import { Student } from "../../models/rdbms/Student";
+
+const Student = models.Student;
 const RecommendRouter = express.Router();
 
 RecommendRouter.post("/students" satisfies keyof APISpec.RecommendAPISpec, (async (req, res) => {

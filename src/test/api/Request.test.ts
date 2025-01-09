@@ -1,12 +1,14 @@
 import app from "../..";
 import { describe, test, expect, beforeAll } from "vitest";
 import request from "supertest";
-import { Request } from "../../models/rdbms/Request";
-import { Organization } from "../../models/rdbms/Organization";
-import { Corporation } from "../../models/rdbms/Corporation";
-import { Provider } from "../../models/rdbms/Provider";
-import { omit } from "es-toolkit";
+import { models } from "../../models/rdbms";
 import { RequestEnum } from "api_spec/enum";
+
+const Request = models.Request;
+const Organization = models.Organization;
+const Corporation = models.Corporation;
+const Provider = models.Provider;
+
 const corpAgent = request.agent(app);
 beforeAll(async () => {
     // 로그인

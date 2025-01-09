@@ -2,15 +2,15 @@ import { beforeAll, afterAll, describe, it, expect } from "vitest";
 import { Server as SocketServer, type Socket as ServerSocketType } from "socket.io";
 import { io as ioClient, type Socket as ClientSocketType } from "socket.io-client";
 import { createServer } from "http";
-import { User } from "../../models/rdbms/User";
-import { Request } from "../../models/rdbms/Request";
+import { models } from "../../models/rdbms";
 import { __initChatTest } from "../../routes/chat/webSocketRouter";
-import * as UserController from "../../controllers/wiip/UserController";
 import * as ChatUserController from "../../controllers/chat/chatUserController";
 import * as ChatContentController from "../../controllers/chat/chatContentController";
 import * as ChatRoomController from "../../controllers/chat/chatRoomController";
 import { generateChatDummyData, cleanChatData } from "../../dummyChatData";
 import type { UserAttributes } from "../../models/rdbms/User";
+
+const User = models.User;
 
 let io: SocketServer;
 let serverSocket: ServerSocketType;

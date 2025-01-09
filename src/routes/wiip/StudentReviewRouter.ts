@@ -1,18 +1,39 @@
 import express from "express";
-import { StudentReview } from "../../models/rdbms/StudentReview";
-import { APISpec } from "api_spec";
-import { RequestEnum } from "api_spec/enum";
-import logger from "../../utils/logger";
-import * as Errors from "../../errors";
-import { filterSessionByRBAC } from "../../middleware/auth.middleware";
-import { getStudentReviewsByStudentId } from "../../controllers/wiip/StudentReviewController";
-import { StudentReviewSchema } from "api_spec/joi";
-import { ValidateSchema } from "../../utils/validation.joi";
-import { pick } from "es-toolkit";
+/**
+ * Controller
+ */
 import { getUserByConsumerId } from "../../controllers/wiip/UserController";
 import { getProviderOfRequestByStudentId } from "../../controllers/wiip/ProviderController";
 import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
+import { getStudentReviewsByStudentId } from "../../controllers/wiip/StudentReviewController";
+/**
+ * Modesl
+ */
+import { models } from "../../models/rdbms";
+/**
+ * Sequelize
+ */
 import { Op } from "sequelize";
+/**
+ * API Spec
+ */
+import { APISpec } from "api_spec";
+import { RequestEnum } from "api_spec/enum";
+import { StudentReviewSchema } from "api_spec/joi";
+
+/**
+ * Utils, Types, etc...
+ */
+import logger from "../../utils/logger";
+import * as Errors from "../../errors";
+
+import { filterSessionByRBAC } from "../../middleware/auth.middleware";
+import { ValidateSchema } from "../../utils/validation.joi";
+
+import { pick } from "es-toolkit";
+
+const StudentReview = models.StudentReview;
+
 const StudentReviewRouter = express.Router();
 
 StudentReviewRouter.post(

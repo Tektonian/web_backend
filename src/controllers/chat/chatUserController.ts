@@ -1,7 +1,12 @@
 import mongoose, { Types } from "mongoose";
-import { User } from "../../models/rdbms/User";
+import { models } from "../../models/rdbms";
 import { ChatUser } from "../../models/chat";
+/**
+ * Type
+ */
 import type { UserAttributes } from "../../models/rdbms/User";
+
+const User = models.User;
 
 export const createChatUser = async (user_id: Buffer) => {
     const user = await User.findByPk(user_id, { raw: true });

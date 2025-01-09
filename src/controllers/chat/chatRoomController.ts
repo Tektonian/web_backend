@@ -1,12 +1,15 @@
 import { Types } from "mongoose";
 import * as ChatModels from "../../models/chat";
-import type { UserAttributes } from "../../models/rdbms/User";
 import { models as RDBModels } from "../../models/rdbms";
 
+/**
+ * Utiles, text datas, types
+ */
 import { AlarmMessageGlbEnum } from "../../global/text/chat/alarm";
 import logger from "../../utils/logger";
 import { pushRefreshChatRooms } from "./messageQueue";
 import { Op } from "sequelize";
+import type { UserAttributes } from "../../models/rdbms/User";
 
 const { ChatRoom, ChatUser, Unread, ChatContent } = ChatModels;
 const { Request, User, Provider } = RDBModels;

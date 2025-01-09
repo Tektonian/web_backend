@@ -1,5 +1,7 @@
-import { Consumer } from "../../../models/rdbms/Consumer";
-import { Corporation } from "../../../models/rdbms/Corporation";
+import { models } from "../../../models/rdbms";
+
+const Consumer = models.Consumer;
+const Corporation = models.Corporation;
 
 const CORP_API_KEY = process.env.CORP_API_KEY;
 const CORP_API_BASE_URL = process.env.CORP_API_BASE_URL;

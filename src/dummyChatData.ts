@@ -1,15 +1,18 @@
 import { models } from "./models/rdbms";
 import { chatController } from "./controllers/chat";
 import { ChatContent, ChatRoom, ChatUser, Unread } from "./models/chat";
-import { Request } from "./models/rdbms/Request";
-import { Provider } from "./models/rdbms/Provider";
-
+/**
+ * Utils
+ */
 import { RequestEnum } from "api_spec/enum";
 import logger from "./utils/logger";
 import { Op } from "sequelize";
-import { Consumer } from "./models/rdbms/Consumer";
 
 const User = models.User;
+const Request = models.Request;
+const Provider = models.Provider;
+const Consumer = models.Consumer;
+
 const { chatRoomController, chatContentController, chatUserController } = chatController;
 
 const dummyMessage: string[] = [

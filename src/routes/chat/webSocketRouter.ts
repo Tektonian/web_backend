@@ -1,21 +1,31 @@
-import { createHash } from "crypto";
+/**
+ * Event listener
+ */
 import { QueueEvents } from "bullmq";
+/**
+ * Controller
+ */
 import { chatController } from "../../controllers/chat";
 import * as UserController from "../../controllers/wiip/UserController";
-
-import type { HydratedDocument } from "mongoose";
-import type { Server, Socket } from "socket.io";
-import type * as ChatTypes from "../../models/chat";
-import type { APIType } from "api_spec";
-import type { ISessionUser } from "../../config/auth.types";
-import type { UserAttributes } from "../../models/rdbms/User";
-
-import { AlarmMessageGlb } from "../../global/text/chat/alarm";
-import logger from "../../utils/logger";
 import { getAliveChatRoomsByUser } from "../../controllers/chat/chatRoomController";
 import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
 import { getProvidersByRequest } from "../../controllers/wiip/ProviderController";
+import { AlarmMessageGlb } from "../../global/text/chat/alarm";
+/**
+ * Utils
+ */
+import logger from "../../utils/logger";
 import { RequestEnum } from "api_spec/enum";
+import { createHash } from "crypto";
+/**
+ * Types
+ */
+import type { HydratedDocument } from "mongoose";
+import type { Server, Socket } from "socket.io";
+import type * as ChatTypes from "../../models/chat";
+import type { ISessionUser } from "../../config/auth.types";
+import type { UserAttributes } from "../../models/rdbms/User";
+import type { APIType } from "api_spec";
 
 const { chatContentController, chatRoomController, chatUserController, chatUnreadController } = chatController;
 const userSentEvent = new QueueEvents("userSentMessage");

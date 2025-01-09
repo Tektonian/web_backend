@@ -1,5 +1,7 @@
 import { Op } from "sequelize";
-import { Provider } from "../../models/rdbms/Provider";
+import { models } from "../../models/rdbms";
+
+const Provider = models.Provider;
 
 export const getProvidersByRequest = async (requestId: number) => {
     const providers = await Provider.findAll({ where: { request_id: requestId } });

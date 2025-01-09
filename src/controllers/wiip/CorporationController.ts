@@ -1,6 +1,8 @@
 import { Op } from "sequelize";
-import { Consumer } from "../../models/rdbms/Consumer";
-import { Corporation } from "../../models/rdbms/Corporation";
+import { models } from "../../models/rdbms";
+
+const Consumer = models.Consumer;
+const Corporation = models.Corporation;
 
 export const getCorpByCorpId = async (corpId: number) => {
     return await Corporation.findOne({ where: { corp_id: corpId } });

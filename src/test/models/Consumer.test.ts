@@ -1,6 +1,6 @@
 import { omit, pick } from "es-toolkit";
 import { describe, test, expect, beforeAll } from "vitest";
-import { models } from "../../models/rdbms/index";
+import { models } from "../../models/rdbms";
 const User = models.User;
 const Consumer = models.Consumer;
 

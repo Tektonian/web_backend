@@ -1,16 +1,14 @@
 import app from "../..";
 import { describe, test, expect, beforeAll } from "vitest";
 import request from "supertest";
-import { Request } from "../../models/rdbms/Request";
-import { Organization } from "../../models/rdbms/Organization";
-import { Corporation } from "../../models/rdbms/Corporation";
-import { StudentReview } from "../../models/rdbms/StudentReview";
-import { Provider } from "../../models/rdbms/Provider";
+import { models } from "../../models/rdbms";
 import { omit } from "es-toolkit";
-import { RequestEnum } from "api_spec/enum";
 import { Op } from "sequelize";
-import { Consumer } from "../../models/rdbms/Consumer";
-import { User } from "../../models/rdbms/User";
+
+const Request = models.Request;
+const StudentReview = models.StudentReview;
+const Consumer = models.Consumer;
+const User = models.User;
 
 const corpAgent = request.agent(app);
 const normalAgent = request.agent(app);
