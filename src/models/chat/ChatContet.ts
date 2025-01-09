@@ -23,7 +23,7 @@ const chatContentSchema = new Schema(
         },
         sender_id: {
             type: Schema.Types.Buffer,
-            get: (uuid) => Buffer.from(uuid),
+            get: (uuid: any) => Buffer.from(uuid),
         },
         url: { type: String, default: "" },
     },

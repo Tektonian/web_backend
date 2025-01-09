@@ -4,11 +4,10 @@ import express, { Request, Response } from "express";
  * Controller
  */
 import {
-    getStudentFullProfileByStudentId,
     getStudentByUserId,
-    getInstReviewOfStudentByStudentId,
     createUnVerifiedStudentIdentity,
     updateStudentProfileByUserId,
+    getStudentByStudentId,
 } from "../../controllers/wiip/StudentController";
 
 import { getUserByStudentId } from "../../controllers/wiip/UserController";
@@ -19,7 +18,7 @@ import * as Errors from "../../errors";
 import { APISpec } from "api_spec";
 import logger from "../../utils/logger";
 import { filterSessionByRBAC } from "../../middleware/auth.middleware";
-
+import { pick } from "es-toolkit";
 const StudentRouter = express.Router();
 
 StudentRouter.post("/", async (req: Request, res: Response) => {
@@ -58,8 +57,8 @@ StudentRouter.get("/:student_id" satisfies keyof APISpec.StudentAPISpec, (async 
         throw new Errors.ServiceExceptionBase(`User sent wrong student id: ${student_id}`);
     }
 
-    const studentFullProfile = (await getStudentFullProfileByStudentId(Number(student_id)))?.get({ plain: true });
-    if (!studentFullProfile) {
+    const studentProfile = (await getStudentByStudentId(Number(student_id)))?.get({ plain: true });
+    if (!studentProfile) {
         throw new Errors.ServiceExceptionBase(`User sent wrong student id: ${student_id}`);
     }
 
@@ -69,25 +68,24 @@ StudentRouter.get("/:student_id" satisfies keyof APISpec.StudentAPISpec, (async 
         throw new Errors.ServiceErrorBase(`Something went wrong, Student user should exist ${student_id}`);
     }
 
-    const contact = {
-        phone_number: studentFullProfile.phone_number,
-        emergency_contact: studentFullProfile.emergency_contact,
-    };
-
-    res.json({
-        profile: {
-            ...studentFullProfile,
-            name_glb: studentFullProfile.name_glb as { KR: string },
-            has_car: studentFullProfile.has_car as 0,
-            gender: studentFullProfile.gender as 0,
-            major: studentFullProfile.academic?.at(-1)?.faculty ?? "",
-            nationality: studentUser.nationality as "KR",
-            keyword_list: studentFullProfile.keyword_list as string[],
-            academic_history: studentFullProfile.academic ?? [],
-            // exam_history: studentFullProfile.language ?? [],
-        },
-        contact: sessionUser?.id.equals(studentUser.user_id as Buffer) ? contact : undefined,
-    });
+    res.json(
+        pick(
+            studentProfile,
+            sessionUser?.id.equals(studentProfile.user_id) !== true
+                ? ["name_glb", "keyword_list", "image", "student_id", "has_car"]
+                : [
+                      "name_glb",
+                      "keyword_list",
+                      "image",
+                      "student_id",
+                      "has_car",
+                      "gender",
+                      "birth_date",
+                      "phone_number",
+                      "emergency_contact",
+                  ],
+        ),
+    );
 }) as APISpec.StudentAPISpec["/:student_id"]["get"]["__handler"]);
 
 StudentRouter.post(

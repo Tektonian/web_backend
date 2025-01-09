@@ -5,6 +5,7 @@ import type { ExamHistory, ExamHistoryId } from "./ExamHistory";
 import type { Provider, ProviderId } from "./Provider";
 import type { User, UserId } from "./User";
 import { CountryCodeEnum } from "api_spec/enum";
+import { UserEnum } from "api_spec/enum";
 export interface StudentAttributes {
     student_id: number;
     user_id: any;
@@ -13,9 +14,9 @@ export interface StudentAttributes {
     email_verified?: Date;
     phone_number: string;
     emergency_contact: string;
-    gender: number;
+    gender: UserEnum.USER_GENDER_ENUM;
     image: string;
-    has_car: number;
+    has_car: 0 | 1;
     keyword_list: string[];
     created_at?: Date;
     updated_at?: Date;
@@ -40,9 +41,9 @@ export class Student extends Model<StudentAttributes, StudentCreationAttributes>
     email_verified?: Date;
     phone_number!: string;
     emergency_contact!: string;
-    gender!: number;
+    gender!: UserEnum.USER_GENDER_ENUM;
     image!: string;
-    has_car!: number;
+    has_car!: 0 | 1;
     keyword_list!: string[];
     created_at?: Date;
     updated_at?: Date;
