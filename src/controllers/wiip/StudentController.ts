@@ -20,7 +20,7 @@ const Request = models.Request;
 const ExamHistory = models.ExamHistory;
 
 const client = new MeiliSearch({
-    host: process.env.MEILISEARCH_HOST,
+    host: process.env.MEILISEARCH_HOST as string,
     apiKey: process.env.MEILISEARCH_KEY,
 });
 
