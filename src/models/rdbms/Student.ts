@@ -106,6 +106,7 @@ export class Student extends Model<StudentAttributes, StudentCreationAttributes>
                         model: "User",
                         key: "user_id",
                     },
+                    unique: "fk_student_user_id",
                 },
                 name_glb: {
                     type: DataTypes.JSON,
@@ -169,6 +170,12 @@ export class Student extends Model<StudentAttributes, StudentCreationAttributes>
                         unique: true,
                         using: "BTREE",
                         fields: [{ name: "student_id" }],
+                    },
+                    {
+                        name: "user_id_UNIQUE",
+                        unique: true,
+                        using: "BTREE",
+                        fields: [{ name: "user_id" }],
                     },
                     {
                         name: "user_id_idx",

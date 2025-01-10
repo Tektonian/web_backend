@@ -79,18 +79,11 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
     hasProvider!: Sequelize.HasManyHasAssociationMixin<Provider, ProviderId>;
     hasProviders!: Sequelize.HasManyHasAssociationsMixin<Provider, ProviderId>;
     countProviders!: Sequelize.HasManyCountAssociationsMixin;
-    // User hasMany Student via user_id
-    Students!: Student[];
-    getStudents!: Sequelize.HasManyGetAssociationsMixin<Student>;
-    setStudents!: Sequelize.HasManySetAssociationsMixin<Student, StudentId>;
-    addStudent!: Sequelize.HasManyAddAssociationMixin<Student, StudentId>;
-    addStudents!: Sequelize.HasManyAddAssociationsMixin<Student, StudentId>;
-    createStudent!: Sequelize.HasManyCreateAssociationMixin<Student>;
-    removeStudent!: Sequelize.HasManyRemoveAssociationMixin<Student, StudentId>;
-    removeStudents!: Sequelize.HasManyRemoveAssociationsMixin<Student, StudentId>;
-    hasStudent!: Sequelize.HasManyHasAssociationMixin<Student, StudentId>;
-    hasStudents!: Sequelize.HasManyHasAssociationsMixin<Student, StudentId>;
-    countStudents!: Sequelize.HasManyCountAssociationsMixin;
+    // User hasOne Student via user_id
+    Student!: Student;
+    getStudent!: Sequelize.HasOneGetAssociationMixin<Student>;
+    setStudent!: Sequelize.HasOneSetAssociationMixin<Student, StudentId>;
+    createStudent!: Sequelize.HasOneCreateAssociationMixin<Student>;
 
     static initModel(sequelize: Sequelize.Sequelize): typeof User {
         return User.init(
@@ -117,14 +110,14 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
                     allowNull: true,
                 },
                 nationality: {
-                    type: DataTypes.STRING(2),
+                    type: DataTypes.STRING(4),
                     allowNull: true,
                     validate: {
                         isIn: [Object.values(CountryCodeEnum.COUNTRY_CODE_ENUM)],
                     },
                 },
                 working_country: {
-                    type: DataTypes.STRING(2),
+                    type: DataTypes.STRING(4),
                     allowNull: true,
                     validate: {
                         isIn: [Object.values(CountryCodeEnum.COUNTRY_CODE_ENUM)],

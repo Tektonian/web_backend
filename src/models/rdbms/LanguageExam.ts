@@ -7,12 +7,14 @@ export interface LanguageExamAttributes {
     exam_id: number;
     exam_name_glb: { [country_code in CountryCodeEnum.COUNTRY_CODE_ENUM]?: string };
     exam_results: object;
+    exam_type?: string;
     lang_country_code: string;
 }
 
 export type LanguageExamPk = "exam_id";
 export type LanguageExamId = LanguageExam[LanguageExamPk];
-export type LanguageExamCreationAttributes = LanguageExamAttributes;
+export type LanguageExamOptionalAttributes = "exam_type";
+export type LanguageExamCreationAttributes = Optional<LanguageExamAttributes, LanguageExamOptionalAttributes>;
 
 export class LanguageExam
     extends Model<LanguageExamAttributes, LanguageExamCreationAttributes>
@@ -21,6 +23,7 @@ export class LanguageExam
     exam_id!: number;
     exam_name_glb!: { [country_code in CountryCodeEnum.COUNTRY_CODE_ENUM]?: string };
     exam_results!: object;
+    exam_type?: string;
     lang_country_code!: string;
 
     // LanguageExam hasMany ExamHistory via exam_id
@@ -53,9 +56,16 @@ export class LanguageExam
                     allowNull: false,
                     comment: "If a test is class type then the classes of a result of the test should be listed",
                 },
+                exam_type: {
+                    type: DataTypes.STRING(45),
+                    allowNull: true,
+                },
                 lang_country_code: {
-                    type: DataTypes.STRING(2),
+                    type: DataTypes.STRING(4),
                     allowNull: false,
+                    validate: {
+                        isIn: [Object.values(CountryCodeEnum.COUNTRY_CODE_ENUM)],
+                    },
                 },
             },
             {

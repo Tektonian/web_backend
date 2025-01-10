@@ -7,12 +7,12 @@ export interface ExamHistoryAttributes {
     id: number;
     student_id: number;
     exam_id: number;
-    exam_result?: string;
+    level?: number;
 }
 
 export type ExamHistoryPk = "id";
 export type ExamHistoryId = ExamHistory[ExamHistoryPk];
-export type ExamHistoryOptionalAttributes = "id" | "exam_result";
+export type ExamHistoryOptionalAttributes = "id" | "level";
 export type ExamHistoryCreationAttributes = Optional<ExamHistoryAttributes, ExamHistoryOptionalAttributes>;
 
 export class ExamHistory
@@ -22,7 +22,7 @@ export class ExamHistory
     id!: number;
     student_id!: number;
     exam_id!: number;
-    exam_result?: string;
+    level?: number;
 
     // ExamHistory belongsTo LanguageExam via exam_id
     exam!: LanguageExam;
@@ -60,8 +60,8 @@ export class ExamHistory
                         key: "exam_id",
                     },
                 },
-                exam_result: {
-                    type: DataTypes.STRING(45),
+                level: {
+                    type: DataTypes.INTEGER,
                     allowNull: true,
                 },
             },

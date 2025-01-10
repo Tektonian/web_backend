@@ -132,7 +132,7 @@ export class Request extends Model<RequestAttributes, RequestCreationAttributes>
                     type: DataTypes.JSON,
                     allowNull: true,
                     validate: {
-                        isStringArray(value) {
+                        isStringArray(value: any[]) {
                             for (const item of value) {
                                 if (typeof item !== "string") {
                                     throw new Error("Wrong item founded");
@@ -145,7 +145,7 @@ export class Request extends Model<RequestAttributes, RequestCreationAttributes>
                     type: DataTypes.JSON,
                     allowNull: true,
                     validate: {
-                        isStringArray(value) {
+                        isStringArray(value: any[]) {
                             for (const item of value) {
                                 if (typeof item !== "string") {
                                     throw new Error("Wrong item founded");
@@ -184,7 +184,7 @@ export class Request extends Model<RequestAttributes, RequestCreationAttributes>
                     type: DataTypes.JSON,
                     allowNull: true,
                     validate: {
-                        isStringArray(value) {
+                        isStringArray(value: any[]) {
                             for (const item of value) {
                                 if (typeof item !== "string") {
                                     throw new Error("Wrong item founded");
