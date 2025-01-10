@@ -148,7 +148,7 @@ export class Student extends Model<StudentAttributes, StudentCreationAttributes>
                     type: DataTypes.JSON,
                     allowNull: false,
                     validate: {
-                        isStringArray(value) {
+                        isStringArray(value: any[]) {
                             for (const item of value) {
                                 if (typeof item !== "string") {
                                     throw new Error("Wrong item founded");

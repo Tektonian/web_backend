@@ -2,13 +2,18 @@ import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
 import type { ExamHistory, ExamHistoryId } from "./ExamHistory";
 import { CountryCodeEnum } from "api_spec/enum";
+import { ExamEnum } from "api_spec/enum";
 
+interface EXAM_RESULT_TYPE {
+    class: string;
+    level: ExamEnum.EXAM_LEVEL_ENUM;
+}
 export interface LanguageExamAttributes {
     exam_id: number;
     exam_name_glb: { [country_code in CountryCodeEnum.COUNTRY_CODE_ENUM]?: string };
-    exam_results: object;
-    exam_type?: string;
-    lang_country_code: string;
+    exam_results: EXAM_RESULT_TYPE[];
+    exam_type?: ExamEnum.EXAM_TYPE;
+    lang_country_code: CountryCodeEnum.COUNTRY_CODE_ENUM;
 }
 
 export type LanguageExamPk = "exam_id";
@@ -22,9 +27,9 @@ export class LanguageExam
 {
     exam_id!: number;
     exam_name_glb!: { [country_code in CountryCodeEnum.COUNTRY_CODE_ENUM]?: string };
-    exam_results!: object;
-    exam_type?: string;
-    lang_country_code!: string;
+    exam_results!: EXAM_RESULT_TYPE[];
+    exam_type?: ExamEnum.EXAM_TYPE;
+    lang_country_code!: CountryCodeEnum.COUNTRY_CODE_ENUM;
 
     // LanguageExam hasMany ExamHistory via exam_id
     ExamHistories!: ExamHistory[];
@@ -59,6 +64,9 @@ export class LanguageExam
                 exam_type: {
                     type: DataTypes.STRING(45),
                     allowNull: true,
+                    validate: {
+                        isIn: [Object.values(ExamEnum.EXAM_TYPE)],
+                    },
                 },
                 lang_country_code: {
                     type: DataTypes.STRING(4),

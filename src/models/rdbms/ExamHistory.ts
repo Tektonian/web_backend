@@ -2,12 +2,12 @@ import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
 import type { LanguageExam, LanguageExamId } from "./LanguageExam";
 import type { Student, StudentId } from "./Student";
-
+import { ExamEnum } from "api_spec/enum";
 export interface ExamHistoryAttributes {
     id: number;
     student_id: number;
     exam_id: number;
-    level?: number;
+    level?: ExamEnum.EXAM_LEVEL_ENUM;
 }
 
 export type ExamHistoryPk = "id";
@@ -22,7 +22,7 @@ export class ExamHistory
     id!: number;
     student_id!: number;
     exam_id!: number;
-    level?: number;
+    level?: ExamEnum.EXAM_LEVEL_ENUM;
 
     // ExamHistory belongsTo LanguageExam via exam_id
     exam!: LanguageExam;
@@ -63,6 +63,9 @@ export class ExamHistory
                 level: {
                     type: DataTypes.INTEGER,
                     allowNull: true,
+                    validate: {
+                        isIn: [Object.values(ExamEnum.EXAM_LEVEL_ENUM)],
+                    },
                 },
             },
             {
