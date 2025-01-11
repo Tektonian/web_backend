@@ -23,7 +23,7 @@ RecommendRouter.post("/students" satisfies keyof APISpec.RecommendAPISpec, (asyn
     const ret = result.getOrNull();
 
     res.status(200).json(ret?.hits);
-    logger.info("START-Get recommend student list");
+    logger.info("END-Get recommend student list");
 }) as APISpec.RecommendAPISpec["/students"]["post"]["__handler"]);
 
 /**

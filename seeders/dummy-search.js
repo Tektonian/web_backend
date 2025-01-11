@@ -41,6 +41,7 @@ const createDummySchool = async (School, schoolIndex) => {
     });
 };
 
+/*
 const createDummyStudent = async (StudentWithCurrentSchool, studentIndex) => {
     const allStudents = await StudentWithCurrentSchool.findAll();
 
@@ -75,6 +76,7 @@ const createDummyStudent = async (StudentWithCurrentSchool, studentIndex) => {
         primaryKey: "id",
     });
 };
+*/
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -84,8 +86,6 @@ module.exports = {
         const db = require("../models");
         const Request = db.sequelize.models.Request;
         const School = db.sequelize.models.School;
-        const StudentWithCurrentSchool =
-            db.sequelize.models.studentwithcurrentschool;
 
         const MeiliSearch = require("meilisearch").MeiliSearch;
         const client = new MeiliSearch({
@@ -109,7 +109,7 @@ module.exports = {
 
         await createDummyRequest(Request, requestIndex);
         await createDummySchool(School, schoolIndex);
-        await createDummyStudent(StudentWithCurrentSchool, studentIndex);
+        // await createDummyStudent(StudentWithCurrentSchool, studentIndex);
 
         return;
     },

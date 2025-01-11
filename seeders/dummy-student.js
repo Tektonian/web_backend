@@ -135,7 +135,7 @@ module.exports = {
                 degree: ["학사", "석사", "박사"].at(Math.floor(Math.random() * 3)),
                 start_date: new Date(),
                 end_date: new Date(),
-                status: ["재학중", "휴학", "중퇴", "자퇴", "수료", "졸업"].at(Math.floor(Math.random() * 6)),
+                status: [0, 1, 2].at(Math.floor(Math.random() * 3)),
                 faculty: DepartMentList.at(Math.floor(Math.random() * DepartMentList.length)),
                 school_email: `email_of_${idx}th_school@test.com`,
                 is_attending: true,
