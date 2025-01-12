@@ -201,6 +201,7 @@ export class Request extends Model<RequestAttributes, RequestCreationAttributes>
                     validate: {
                         isIn: [Object.values(RequestEnum.REQUEST_STATUS_ENUM)],
                     },
+                    defaultValue: RequestEnum.REQUEST_STATUS_ENUM.POSTED,
                 },
                 start_time: {
                     type: DataTypes.TIME,
