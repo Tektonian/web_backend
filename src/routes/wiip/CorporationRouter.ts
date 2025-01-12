@@ -29,7 +29,7 @@ CorporationRouter.get("/", async (req: Request, res: Response) => {
     try {
         const consumer_id = req.query.consumer_id;
         const consumer = await Consumer.findOne({
-            where: { consumer_id },
+            where: { consumer_id: consumer_id },
             attributes: ["corp_id"],
         });
 
@@ -49,22 +49,29 @@ CorporationRouter.get("/", async (req: Request, res: Response) => {
 /**
  * @deprecated
  */
-CorporationRouter.get("/corpProfile", async (req: Request, res: Response) => {
+CorporationRouter.get("/profile/check", async (req: Request, res: Response) => {
+    logger.info("START-Check corporation profile exist");
+
     const corpNum = req.query.corpNum;
 
-    const storedCorpProfile = await CorpController.findCorpProfileByCorpNum(Number(corpNum));
+    const storedCorpProfile = (await CorpController.findCorpProfileByCorpNum(Number(corpNum)))?.get({ plain: true });
 
-    if (storedCorpProfile === undefined) {
+    if (!storedCorpProfile) {
         const externCorpProfile = await CorpController.externReqCorpProfile(Number(corpNum));
 
         if (externCorpProfile === undefined) {
+            logger.error("ERROR-Extern api failed");
+            res.status(404).end();
+            return;
             res.json({ status: "Extern API error", profile: undefined });
         }
-
-        res.json({ status: "not exist", profile: externCorpProfile });
+        logger.error("ERROR-No profile exist");
+        res.status(404).end();
+        return;
     } else {
-        res.json({ status: "exist", profile: storedCorpProfile });
+        res.status(200).json(storedCorpProfile);
     }
+    logger.info("END-Check corporation profile exist");
 });
 
 CorporationRouter.post(

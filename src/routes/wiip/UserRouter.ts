@@ -7,7 +7,7 @@ import { getUserById, updateUserByUserId } from "../../controllers/wiip/UserCont
 import {
     getRequestByStudentId,
     getRequestsByProviderUserId,
-    getRequestsByUserId,
+    getPostedRequestsByUserId,
 } from "../../controllers/wiip/RequestController";
 import { getStudentByUserId } from "../../controllers/wiip/StudentController";
 /**
@@ -84,7 +84,7 @@ UserRouter.get(
             responses.corp_profile = corpProfile;
         }
 
-        const userRequests = (await getRequestsByUserId(sessionUser.id)).map((val) => {
+        const userRequests = (await getPostedRequestsByUserId(sessionUser.id)).map((val) => {
             return pick(val.get({ plain: true }), [
                 "request_id",
                 "title",
