@@ -11,8 +11,9 @@ import * as Errors from "../../errors";
 import { RequestEnum } from "api_spec/enum";
 import { ConsumerEnum } from "api_spec/enum";
 import type { RequestAttributes } from "../../models/rdbms/Request";
+import { Consumer } from "../../models/rdbms/Consumer";
 const client = new MeiliSearch({
-    host: process.env.MEILISEARCH_HOST,
+    host: process.env.MEILISEARCH_HOST as string,
     apiKey: process.env.MEILISEARCH_KEY,
 });
 
@@ -35,7 +36,6 @@ export const getRecommendedRequestByStudentId = async (student_id: number) => {
     /**
      * TODO: fill logic later
      * We will return every requests for now;
-     */
 
     const coordi = JSON.parse(JSON.stringify(student?.coordinate)).coordinates;
 
@@ -43,6 +43,7 @@ export const getRecommendedRequestByStudentId = async (student_id: number) => {
         filter: [`_geoRadius(${coordi[0]}, ${coordi[1]}, 1000000000000)`],
         sort: [`_geoPoint(${coordi[0]}, ${coordi[1]}):asc`],
     });
+     */
 
     const requests = await RequestModel.findAll({
         where: {
@@ -52,6 +53,7 @@ export const getRecommendedRequestByStudentId = async (student_id: number) => {
                 { request_status: RequestEnum.REQUEST_STATUS_ENUM.CONTRACTED },
             ],
         },
+        limit: 999,
     });
 
     return requests;
@@ -97,32 +99,14 @@ export const getRequestsByProviderUserId = async (userId: Buffer) => {
 };
 
 // TODO: need refactoring
-export const getRequestsByUserId = async (userId: Buffer, as: "consumer" | "provider" | undefined = undefined) => {
-    /**
-     * We can search chatrooms to identify all users related with request
-     */
-    let requestIds = [] as number[];
-    if (as === undefined) {
-        const chatRooms = await ChatRoom.find({
-            participant_ids: { $in: userId },
-        });
-        // request_id could be less than 0 (when deleted)
-        requestIds = Array.from(new Set(chatRooms.map((room) => Math.abs(room.request_id))));
-    } else if (as === "consumer") {
-        const chatRooms = await ChatRoom.find({
-            consumer_id: userId,
-        });
-        // request_id could be less than 0 (when deleted)
-        requestIds = Array.from(new Set(chatRooms.map((room) => Math.abs(room.request_id))));
-    } else if (as === "provider") {
-        const chatRooms = await ChatRoom.find({
-            $and: [{ consumer_id: { $ne: userId } }, { participant_ids: { $in: userId } }],
-        });
-        // request_id could be less than 0 (when deleted)
-        requestIds = Array.from(new Set(chatRooms.map((room) => Math.abs(room.request_id))));
-    }
+export const getPostedRequestsByUserId = async (userId: Buffer) => {
+    const consumerIds = (await Consumer.findAll({ where: { user_id: userId }, raw: true })).map(
+        (val) => val.consumer_id,
+    );
 
-    return await RequestModel.findAll({ where: { request_id: requestIds } });
+    const postedRequests = await RequestModel.findAll({ where: { consumer_id: { [Op.in]: consumerIds } } });
+
+    return postedRequests;
 };
 
 export const updateRequestProviderIds = async (newProviderIds: Buffer[], requestId: number) => {
@@ -262,12 +246,13 @@ export const updateRequestStatus = async (requestId: number, status: RequestEnum
                 }
             }
 
-            await RequestModel.update(
+            const count = await RequestModel.update(
                 { request_status: status },
                 { where: { request_id: request.request_id }, transaction: t },
             );
 
             logger.info("INTER: Transaction-[Update Request Status]");
+            return count;
         });
 
         logger.info("END: Transaction-[Update Request Status]");
@@ -275,6 +260,6 @@ export const updateRequestStatus = async (requestId: number, status: RequestEnum
     } catch (error) {
         // transaction failed
         logger.error(`Update request status Error: ${error}`);
-        return undefined;
+        throw error;
     }
 };
