@@ -143,8 +143,8 @@ export const actionCompleteRecruit = async (requestId: number, consumerId: Buffe
         $and: [{ request_id: requestId }, { participant_ids: { $nin: providerIds } }],
     });
     await Promise.all(
-        toDelChatRooms.map(async (room) => {
-            return await delChatRoom(room._id);
+        toDelChatRooms.map((room) => {
+            return delChatRoom(room._id);
         }),
     );
 
@@ -163,6 +163,31 @@ export const actionCompleteRecruit = async (requestId: number, consumerId: Buffe
     return await ChatRoom.find({
         $and: [{ consumer_id: consumerId }, { request_id: requestId }],
     });
+};
+/**
+ * TODO: Maybe should be in requestcontroller?
+ */
+export const actionFinishRequest = async (requestId: number) => {
+    const providerIds = (await Provider.findAll({ where: { request_id: requestId }, raw: true })).map(
+        (val) => val.user_id,
+    );
+    const toDelChatRooms = await ChatRoom.find({
+        request_id: requestId,
+    });
+    await Promise.all(
+        toDelChatRooms.map((room) => {
+            return delChatRoom(room._id);
+        }),
+    );
+
+    const nowTime = new Date(Date.now());
+
+    await Provider.update(
+        {
+            finish_job_at: nowTime,
+        },
+        { where: { [Op.and]: [{ request_id: requestId }, { user_id: { [Op.in]: providerIds } }] } },
+    );
 };
 
 // Needed?
