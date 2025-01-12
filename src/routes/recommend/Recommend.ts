@@ -20,9 +20,11 @@ RecommendRouter.post("/students" satisfies keyof APISpec.RecommendAPISpec, (asyn
 
     const result = await getRecommendedStudentByRequestId(req.body.request_id);
 
-    const ret = result.getOrNull();
-
-    res.status(200).json(ret?.hits);
+    // const ret = result.getOrNull();
+    const ret = result.map((val) =>
+        pick(val.get({ plain: true }), ["student_id", "name_glb", "has_car", "keyword_list"]),
+    );
+    res.status(200).json(ret);
     logger.info("END-Get recommend student list");
 }) as APISpec.RecommendAPISpec["/students"]["post"]["__handler"]);
 

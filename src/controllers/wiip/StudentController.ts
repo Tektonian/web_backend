@@ -11,6 +11,7 @@ import { runCatchingAsync } from "../../utils/runCatcher";
 
 import logger from "../../utils/logger";
 import { APIType } from "api_spec";
+import { LanguageExam } from "../../models/rdbms/LanguageExam";
 
 const Student = models.Student;
 const StudentReview = models.StudentReview;
@@ -24,11 +25,12 @@ const client = new MeiliSearch({
     apiKey: process.env.MEILISEARCH_KEY,
 });
 
-const studentSearch = client.index("studentwithcurrentschool");
+const studentSearch = client.index("student");
 // studentSearch.updateFilterableAttributes(["_geo"]);
 // studentSearch.updateSortableAttributes(["_geo"]);
 
 export const getRecommendedStudentByRequestId = async (request_id: number) => {
+    /*
     const reqResult = await runCatchingAsync(async () =>
         (
             await Request.findOne({
@@ -55,8 +57,11 @@ export const getRecommendedStudentByRequestId = async (request_id: number) => {
     ret.onSuccess(() => {
         logger.info("Student search success");
     });
-
-    return ret;
+    */
+    const allStudents = await Student.findAll({
+        limit: 999,
+    });
+    return allStudents;
 };
 
 /**
