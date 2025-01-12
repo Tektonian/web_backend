@@ -12,16 +12,14 @@ const client = new MeiliSearch({
 const SchoolSearchRouter = express.Router();
 
 SchoolSearchRouter.get("/" satisfies keyof APISpec.SearchSchoolAPISpec, (async (req, res) => {
-    const { country_code } = ValidateSchema(SchoolSearchScheme.ReqSearchSchoolScheme, req.query);
+    //const { country_code } = ValidateSchema(SchoolSearchScheme.ReqSearchSchoolScheme, req.query);
+    const { country_code, q } = req.query;
 
     const index = client.index(`school-name-${country_code}`);
 
-    const school = await index.getDocuments();
+    const school = await index.search(q);
 
-    res.json({
-        status: "ok",
-        ret: school.results,
-    });
+    res.json(school.hits);
 
     return;
 }) as APISpec.SearchSchoolAPISpec["/"]["get"]["handler"]);
