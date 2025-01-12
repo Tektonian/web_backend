@@ -59,6 +59,11 @@ ChatRouter.post(
         }
         if (!reqeustInstance) {
             throw new Errors.ServiceExceptionBase("User sent wrong request_id");
+        } else if (
+            reqeustInstance.request_status !== RequestEnum.REQUEST_STATUS_ENUM.POSTED &&
+            reqeustInstance.request_status !== RequestEnum.REQUEST_STATUS_ENUM.PAID
+        ) {
+            throw new Errors.ServiceExceptionBase("User tried to participated in Contracted or Finished request");
         }
 
         const consumerInstance = (await getUserByConsumerId(reqeustInstance.consumer_id))?.get({ plain: true });
@@ -66,6 +71,14 @@ ChatRouter.post(
         if (!consumerInstance) {
             throw new Errors.ServiceErrorBase("Something went wrong");
         }
+
+        const chatRooms = await ChatRoomController.getAliveChatRoomsByUser(userInstance.user_id);
+
+        chatRooms.forEach((room) => {
+            if (room.request_id === Number(request_id)) {
+                throw new Errors.ServiceExceptionBase("ChatRoom already created, User may sent duplicated requests");
+            }
+        });
 
         const chatRoom = await createChatRoom(reqeustInstance.request_id, consumerInstance.user_id, [
             consumerInstance.user_id,

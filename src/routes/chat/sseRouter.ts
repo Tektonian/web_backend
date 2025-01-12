@@ -2,7 +2,7 @@ import { Router } from "express";
 import { createSession } from "better-sse";
 import { QueueEvents } from "bullmq";
 import { getUnreadCountOfUser } from "../../controllers/chat/chatUnreadController";
-import { getRequestsByUserId } from "../../controllers/wiip/RequestController";
+import { getPostedRequestsByUserId } from "../../controllers/wiip/RequestController";
 import { getCorpReviewsByRequestId } from "../../controllers/wiip/CorporationReveiwController";
 import { getStudentReviewsByRequestId } from "../../controllers/wiip/StudentReviewController";
 
@@ -56,7 +56,7 @@ SSEAlarmRouter.get("/review", async (req, res) => {
 
     const sessionUser = res.session.user;
 
-    const requests = await getRequestsByUserId(sessionUser.id as Buffer);
+    const requests = await getPostedRequestsByUserId(sessionUser.id as Buffer);
 
     const freshRequests = requests.filter(
         (req) =>

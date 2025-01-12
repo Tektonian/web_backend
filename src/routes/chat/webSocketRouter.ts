@@ -168,6 +168,12 @@ const ResRefreshFactory = async (chatUser: HydratedDocument<ChatTypes.ChatUserTy
         requests
             .filter((req) => req !== null)
             .map((req) => req.get({ plain: true }))
+            .filter(
+                (req) =>
+                    req.request_status === RequestEnum.REQUEST_STATUS_ENUM.POSTED ||
+                    req.request_status === RequestEnum.REQUEST_STATUS_ENUM.PAID ||
+                    req.request_status === RequestEnum.REQUEST_STATUS_ENUM.CONTRACTED,
+            )
             .map(async (req) => {
                 // List of chatroom id which selected provider is in
                 const providerChatRoomIds: string[] = [];
