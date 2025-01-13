@@ -22,33 +22,38 @@ import { filterSessionByRBAC } from "../../middleware/auth.middleware";
 import { pick } from "es-toolkit";
 const StudentRouter = express.Router();
 
-StudentRouter.post("/" satisfies keyof APISpec.StudentAPISpec, (async (req, res) => {
-    const profileData = ValidateSchema(StudentSchema.ReqCreateStudentProfileSchema, req.body);
-    const sessionUser = res.session?.user ?? undefined;
+StudentRouter.post(
+    "/" satisfies keyof APISpec.StudentAPISpec,
+    // Check session
+    filterSessionByRBAC([]),
+    (async (req, res) => {
+        const profileData = ValidateSchema(StudentSchema.ReqCreateStudentProfileSchema, req.body);
+        const sessionUser = res.session?.user ?? undefined;
 
-    if (sessionUser === undefined) {
-        res.json("Login first");
-        return;
-    }
+        if (sessionUser === undefined) {
+            res.json("Login first");
+            return;
+        }
 
-    const studentExist = (await getStudentByUserId(sessionUser.id as Buffer))?.get({ plain: true });
+        const studentExist = (await getStudentByUserId(sessionUser.id as Buffer))?.get({ plain: true });
 
-    if (studentExist !== undefined) {
-        res.json("Illigal request. Student identity is already exist");
-        return;
-    }
+        if (studentExist !== undefined) {
+            res.json("Illigal request. Student identity is already exist");
+            return;
+        }
 
-    const ret = await createUnVerifiedStudentIdentity(sessionUser.id, profileData);
+        const ret = await createUnVerifiedStudentIdentity(sessionUser.id, profileData);
 
-    if (ret === undefined) {
-        res.status(500).json({ message: "Internal Server Error" });
-    } else {
-        res.status(201).json({
-            message: "Student profile created successfully",
-            student: ret,
-        });
-    }
-}) as APISpec.StudentAPISpec["/"]["post"]["handler"]);
+        if (ret === undefined) {
+            res.status(500).json({ message: "Internal Server Error" });
+        } else {
+            res.status(201).json({
+                message: "Student profile created successfully",
+                student: ret,
+            });
+        }
+    }) as APISpec.StudentAPISpec["/"]["post"]["handler"],
+);
 
 // TODO: Response 타입 정확한지 확인 필요
 StudentRouter.get("/:student_id" satisfies keyof APISpec.StudentAPISpec, (async (req, res) => {

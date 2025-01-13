@@ -14,7 +14,6 @@ export { ServiceExceptionBase } from "./base-error";
 /**
  * Run time exceptions
  */
-export { ValidationError as JoiError } from "joi";
 export { ZodError } from "zod";
 export { SseError as SSEError } from "better-sse";
 export { AuthError as AuthError } from "@auth/core/errors";
