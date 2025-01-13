@@ -1,5 +1,29 @@
-import { Consumer } from "../../models/rdbms/Consumer";
-import { Corporation } from "../../models/rdbms/Corporation";
+import { Op } from "sequelize";
+import { models } from "../../models/rdbms";
+
+const Consumer = models.Consumer;
+const Corporation = models.Corporation;
+
+export const getCorpByCorpId = async (corpId: number) => {
+    return await Corporation.findOne({ where: { corp_id: corpId } });
+};
+
+export const getCorpByUserId = async (userId: Buffer) => {
+    const consumer = await Consumer.findOne({
+        where: { [Op.and]: [{ user_id: userId }, { consumer_type: "corp" }] },
+        raw: true,
+    });
+
+    if (!consumer) {
+        return undefined;
+    }
+
+    const corpProfile = await Corporation.findOne({
+        where: { corp_id: consumer.corp_id },
+    });
+
+    return corpProfile;
+};
 
 export const getCorpByConsumerId = async (consumer_id: number) => {
     const consumer = await Consumer.findOne({
@@ -18,4 +42,12 @@ export const getCorpByConsumerId = async (consumer_id: number) => {
     });
 
     return corpProfile;
+};
+
+export const checkUserIsCorpnWorker = async (userId: Buffer, corpId: number) => {
+    const consumers = await Consumer.findAll({ where: { user_id: userId }, raw: true });
+
+    const isWorker = consumers.find((val) => val.corp_id === corpId);
+
+    return isWorker;
 };

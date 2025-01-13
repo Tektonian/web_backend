@@ -2,9 +2,11 @@ import app from "..";
 
 import { describe, test, expect, beforeAll } from "vitest";
 import { currentSession, filterSessionByRBAC } from "../middleware/auth.middleware";
-import { User } from "../models/rdbms/User";
+import { models } from "../models/rdbms";
 import request from "supertest";
 import { ServiceExceptionBase } from "../errors";
+
+const User = models.User;
 
 const agent = request.agent(app);
 

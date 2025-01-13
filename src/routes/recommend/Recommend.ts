@@ -1,19 +1,31 @@
+import express from "express";
+import { models } from "../../models/rdbms";
+/**
+ * Controller
+ */
 import { getRecommendedRequestByStudentId } from "../../controllers/wiip/RequestController";
 import { getRecommendedStudentByRequestId } from "../../controllers/wiip/StudentController";
-import express, { Request, Response } from "express";
+/**
+ * Utils,
+ */
 import { APISpec } from "api_spec";
 import logger from "../../utils/logger";
-import { Student } from "../../models/rdbms/Student";
+import { pick } from "es-toolkit";
+
+const Student = models.Student;
 const RecommendRouter = express.Router();
 
 RecommendRouter.post("/students" satisfies keyof APISpec.RecommendAPISpec, (async (req, res) => {
-    logger.info("recommend router of student");
+    logger.info("START-Get recommend student list");
 
     const result = await getRecommendedStudentByRequestId(req.body.request_id);
 
-    const ret = result.getOrNull();
-
-    res.json(ret);
+    // const ret = result.getOrNull();
+    const ret = result.map((val) =>
+        pick(val.get({ plain: true }), ["student_id", "name_glb", "has_car", "keyword_list"]),
+    );
+    res.status(200).json(ret);
+    logger.info("END-Get recommend student list");
 }) as APISpec.RecommendAPISpec["/students"]["post"]["__handler"]);
 
 /**
@@ -21,12 +33,28 @@ RecommendRouter.post("/students" satisfies keyof APISpec.RecommendAPISpec, (asyn
  * 비로그인 / 학생 / 기업을 나눠서
  */
 RecommendRouter.post("/requests" satisfies keyof APISpec.RecommendAPISpec, (async (req, res) => {
-    const student = (await Student.findAll())[0].get({ plain: true });
+    logger.info("START-Get recommend request list");
 
-    const ret = await getRecommendedRequestByStudentId(student.student_id);
+    /**
+     * TODO
+     * const student = (await Student.findAll())[0].get({ plain: true });
+     * const ret = await getRecommendedRequestByStudentId(student.student_id);
+     * Return all for now
+     */
+    const ret = (await getRecommendedRequestByStudentId(-1)).map((val) =>
+        pick(val.get({ plain: true }), [
+            "request_id",
+            "title",
+            "reward_price",
+            "currency",
+            "address",
+            "start_date",
+            "request_status",
+        ]),
+    );
 
-    res.json(ret);
-    return;
+    res.status(200).json(ret);
+    logger.info("END-Get recommend request list");
 }) as APISpec.RecommendAPISpec["/requests"]["post"]["__handler"]);
 
 export default RecommendRouter;

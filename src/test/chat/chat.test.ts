@@ -2,13 +2,15 @@ import { beforeAll, afterAll, describe, it, expect } from "vitest";
 import { Server as SocketServer, type Socket as ServerSocketType } from "socket.io";
 import { io as ioClient, type Socket as ClientSocketType } from "socket.io-client";
 import { createServer } from "http";
+import { models } from "../../models/rdbms";
 import { __initChatTest } from "../../routes/chat/webSocketRouter";
-import * as UserController from "../../controllers/UserController";
 import * as ChatUserController from "../../controllers/chat/chatUserController";
 import * as ChatContentController from "../../controllers/chat/chatContentController";
 import * as ChatRoomController from "../../controllers/chat/chatRoomController";
 import { generateChatDummyData, cleanChatData } from "../../dummyChatData";
 import type { UserAttributes } from "../../models/rdbms/User";
+
+const User = models.User;
 
 let io: SocketServer;
 let serverSocket: ServerSocketType;
@@ -17,7 +19,9 @@ let user: UserAttributes;
 
 beforeAll(async () => {
     await generateChatDummyData();
-    user = (await UserController.getUserByName("corp_1_user"))?.get({ plain: true });
+
+    // TODO: User should contain not finished request
+    user = await User.findOne({ where: { email: "corp3@test.com" }, raw: true });
 
     return await new Promise((resolve) => {
         const httpServer = createServer();
@@ -37,8 +41,8 @@ beforeAll(async () => {
 });
 
 afterAll(() => {
-    clientSocket.disconnect();
-    io.close();
+    //clientSocket.disconnect();
+    //io.close();
     cleanChatData();
 });
 
@@ -104,12 +108,17 @@ describe("User Try Join 이벤트 테스트", () => {
         const chatUser = await ChatUserController.getChatUserByUUID(user.user_id);
         const chatRooms = await ChatRoomController.getAliveChatRoomsByUser(user.user_id);
 
+        clientSocket.once("userJoined", (callback) => {
+            console.log("User joined");
+            callback({ status: "ok" });
+        });
+
         const request = {
             id: chatUser?._id.toString(),
             chatRoomId: chatRooms.at(0)?._id.toString(),
             deviceLastSeq: 0,
         };
-        const response = await clientSocket.emitWithAck("userTryJoin", request);
+        const response = await clientSocket.timeout(500).emitWithAck("userTryJoin", request);
         const chatContents = await ChatContentController.getChatRoomMessages(chatRooms.at(0)?._id);
 
         await new Promise((resolve) => {
@@ -125,7 +134,6 @@ describe("User Try Join 이벤트 테스트", () => {
         const socketsInNamespace = await io.in(chatRooms.at(0)?._id.toString()).fetchSockets();
         console.log("Rooms", serverSocket.id);
         console.log("Rooms", serverSocket.eventNames());
-        console.log("client", clientSocket.id);
         expect(socketsInNamespace.map((sock) => sock.id).includes(clientSocket.id)).toBeTruthy();
     });
 });

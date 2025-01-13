@@ -9,11 +9,11 @@ import { models } from "../../models/rdbms";
  * Controller
  */
 import * as ChatRoomController from "../../controllers/chat/chatRoomController";
-import { getUserByConsumerId } from "../../controllers/UserController";
+import { getUserByConsumerId } from "../../controllers/wiip/UserController";
 import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
 import { getChatRoomMessagesByContentType, sendMessage } from "../../controllers/chat/chatContentController";
 import { getStudentByUserId } from "../../controllers/wiip/StudentController";
-
+import { getProvidersByRequest } from "../../controllers/wiip/ProviderController";
 /**
  * middleware
  */
@@ -39,9 +39,9 @@ ChatRouter.post(
     filterSessionByRBAC(["student"]),
     async (req, res) => {
         // TODO: add validation
+        logger.info(`START-Student want to participated in a request`);
         const { request_id } = req.body;
 
-        logger.info(`START-Student want to participated in a request:${request_id}`);
         const sessionUser = res.session!.user;
 
         const userInstance = await User.findOne({
@@ -59,13 +59,26 @@ ChatRouter.post(
         }
         if (!reqeustInstance) {
             throw new Errors.ServiceExceptionBase("User sent wrong request_id");
+        } else if (
+            reqeustInstance.request_status !== RequestEnum.REQUEST_STATUS_ENUM.POSTED &&
+            reqeustInstance.request_status !== RequestEnum.REQUEST_STATUS_ENUM.PAID
+        ) {
+            throw new Errors.ServiceExceptionBase("User tried to participated in Contracted or Finished request");
         }
 
-        const consumerInstance = await getUserByConsumerId(reqeustInstance.consumer_id);
+        const consumerInstance = (await getUserByConsumerId(reqeustInstance.consumer_id))?.get({ plain: true });
 
         if (!consumerInstance) {
             throw new Errors.ServiceErrorBase("Something went wrong");
         }
+
+        const chatRooms = await ChatRoomController.getAliveChatRoomsByUser(userInstance.user_id);
+
+        chatRooms.forEach((room) => {
+            if (room.request_id === Number(request_id)) {
+                throw new Errors.ServiceExceptionBase("ChatRoom already created, User may sent duplicated requests");
+            }
+        });
 
         const chatRoom = await createChatRoom(reqeustInstance.request_id, consumerInstance.user_id, [
             consumerInstance.user_id,
@@ -235,7 +248,7 @@ ChatRouter.post(
             throw new Errors.ServiceExceptionBase("Only contracted request permitted");
         }
 
-        const providerIds = request.provider_ids as Buffer[];
+        const providerIds = (await getProvidersByRequest(request.request_id)).map((val) => val.getDataValue("user_id"));
 
         const isProvider = providerIds.find((id) => id.equals(sessionUser.id));
 

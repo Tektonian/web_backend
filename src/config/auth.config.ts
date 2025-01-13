@@ -1,6 +1,8 @@
 import type { ExpressAuthConfig } from "@auth/express";
 import { skipCSRFCheck } from "@auth/core";
 import Google from "@auth/express/providers/google";
+import Naver from "@auth/express/providers/naver";
+import Kakao from "@auth/express/providers/kakao";
 import Nodemailer from "@auth/express/providers/nodemailer";
 import { Sequelize } from "sequelize";
 import SequelizeAdapter from "./auth.adapter-sequelize";
@@ -72,7 +74,6 @@ function html(params: { url: string; host: string; theme: Theme; token: string }
           <tr>
             <td align="center"
                 style="padding: 10px 0px; font-size: 22px; font-family: Helvetica, Arial, sans-serif; color: ${color.text};">
-                Input <strong>${token}</strong>
             </td>            
             <td align="center" style="border-radius: 5px;" bgcolor="${color.buttonBackground}"><a href="${url}"
                 target="_blank"
@@ -98,54 +99,62 @@ function text({ url, host }: { url: string; host: string }) {
     return `Sign in to ${host}\n${url}\n\n`;
 }
 
-const emailProvider = Nodemailer({
-    server: {
-        host: process.env.EMAIL_SERVER_HOST,
-        port: process.env.EMAIL_SERVER_PORT,
-        auth: {
-            user: process.env.EMAIL_SERVER_USER,
-            pass: process.env.EMAIL_SERVER_PASSWORD,
-        },
-    },
-    from: process.env.EMAIL_FROM,
-    sendVerificationRequest: customSendVerificationRequest,
-});
-
 export const authConfig: ExpressAuthConfig = {
     adapter: SequelizeAdapter(sequelize),
     session: { strategy: "jwt" },
-    providers: [
-        Google,
-        Nodemailer({
-            server: {
-                host: process.env.EMAIL_SERVER_HOST,
-                port: process.env.EMAIL_SERVER_PORT,
-                auth: {
-                    user: process.env.EMAIL_SERVER_USER,
-                    pass: process.env.EMAIL_SERVER_PASSWORD,
-                },
-            },
-            from: process.env.EMAIL_FROM,
-            sendVerificationRequest: customSendVerificationRequest,
-            generateVerificationToken: () => {
-                return crypto.randomUUID();
-            },
-        }),
-        // TODO: Only for developing
-        Credentials({
-            credentials: {
-                email: {},
-            },
-            authorize: async (credentials) => {
-                const adapter = SequelizeAdapter(sequelize);
-                const userInstance = await adapter.getUserByEmail(credentials.email);
-                logger.debug(`User credential authorization: ${userInstance}`);
-                return userInstance;
-            },
-        }),
-    ],
+    providers:
+        process.env.NODE_ENV !== "production"
+            ? [
+                  Google,
+                  Nodemailer({
+                      server: {
+                          host: process.env.EMAIL_SERVER_HOST,
+                          port: Number(process.env.EMAIL_SERVER_PORT),
+                          auth: {
+                              user: process.env.EMAIL_SERVER_USER,
+                              pass: process.env.EMAIL_SERVER_PASSWORD,
+                          },
+                      },
+                      from: process.env.EMAIL_FROM,
+                      sendVerificationRequest: customSendVerificationRequest,
+                      generateVerificationToken: () => {
+                          return crypto.randomUUID();
+                      },
+                  }),
+                  Credentials({
+                      credentials: {
+                          email: {},
+                      },
+                      authorize: async (credentials) => {
+                          const adapter = SequelizeAdapter(sequelize);
+                          const userInstance = await adapter.getUserByEmail(credentials.email);
+                          logger.debug(`User credential authorization: ${userInstance}`);
+                          return userInstance;
+                      },
+                  }),
+              ]
+            : [
+                  Google,
+                  Naver,
+                  Kakao,
+                  Nodemailer({
+                      server: {
+                          host: process.env.EMAIL_SERVER_HOST,
+                          port: Number(process.env.EMAIL_SERVER_PORT),
+                          auth: {
+                              user: process.env.EMAIL_SERVER_USER,
+                              pass: process.env.EMAIL_SERVER_PASSWORD,
+                          },
+                      },
+                      from: process.env.EMAIL_FROM,
+                      sendVerificationRequest: customSendVerificationRequest,
+                      generateVerificationToken: () => {
+                          return crypto.randomUUID();
+                      },
+                  }),
+              ],
 
-    skipCSRFCheck: skipCSRFCheck, // TODO: remove later
+    skipCSRFCheck: process.env.NODE_ENV !== "production" ? skipCSRFCheck : undefined, // TODO: remove later
     callbacks: {
         /**
          *
@@ -231,7 +240,10 @@ export const authConfig: ExpressAuthConfig = {
             // https://authjs.dev/guides/extending-the-session#with-jwt
             // console.log("Session: ", session, token, user);
             logger.debug(`Session: ${JSON.stringify(session)} - ${JSON.stringify(token)} - ${user}`);
-            session.user.id = token.id ?? undefined;
+            // User id should not be exposed
+            if (process.env.NODE_ENV !== "production") {
+                session.user.id = token.id ?? undefined;
+            }
             session.user.email = token.email ?? undefined;
             session.user.name = token.name;
             session.user.roles = token.roles ?? [];

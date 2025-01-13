@@ -10,7 +10,7 @@ export interface AcademicHistoryAttributes {
     degree: string;
     start_date: string;
     end_date: string;
-    status: string;
+    status: number;
     faculty: string;
     school_email?: string;
     is_attending?: number;
@@ -31,7 +31,7 @@ export class AcademicHistory
     degree!: string;
     start_date!: string;
     end_date!: string;
-    status!: string;
+    status!: number;
     faculty!: string;
     school_email?: string;
     is_attending?: number;
@@ -85,7 +85,7 @@ export class AcademicHistory
                     allowNull: false,
                 },
                 status: {
-                    type: DataTypes.STRING(255),
+                    type: DataTypes.TINYINT,
                     allowNull: false,
                 },
                 faculty: {
@@ -101,7 +101,7 @@ export class AcademicHistory
                     allowNull: true,
                     defaultValue: 0,
                     comment:
-                        "Whether a student is attending a school now or not.\n\nIf a Student is connected to multiple AcademicHistory, only one is_attending should be set true.\n\nUser can have multiple AcademicHistory, but s/he must be attending only one school.\n\n",
+                        "Whether a student is attending a school now or not.\n\nIf a Student is connected to multiple AcademicHistory, only one is_attending should be set true.\n\nUser can have multiple AcademicHistory, but s\/he must be attending only one school.\n\n",
                 },
             },
             {

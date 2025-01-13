@@ -31,6 +31,9 @@ yarn-error.log*
 # Dev logs
 /devLogs
 
+# Logs
+/logs
+
 /meilisearch
 meilisearch.exe
 

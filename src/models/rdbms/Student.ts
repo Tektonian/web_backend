@@ -2,20 +2,22 @@ import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
 import type { AcademicHistory, AcademicHistoryId } from "./AcademicHistory";
 import type { ExamHistory, ExamHistoryId } from "./ExamHistory";
+import type { Provider, ProviderId } from "./Provider";
 import type { User, UserId } from "./User";
-
+import { CountryCodeEnum } from "api_spec/enum";
+import { UserEnum } from "api_spec/enum";
 export interface StudentAttributes {
     student_id: number;
     user_id: any;
-    name_glb: object;
+    name_glb: { [country_code in CountryCodeEnum.COUNTRY_CODE_ENUM]?: string };
     birth_date: string;
     email_verified?: Date;
     phone_number: string;
     emergency_contact: string;
-    gender: number;
+    gender: UserEnum.USER_GENDER_ENUM;
     image: string;
-    has_car: number;
-    keyword_list: object;
+    has_car: 0 | 1;
+    keyword_list: string[];
     created_at?: Date;
     updated_at?: Date;
 }
@@ -34,15 +36,15 @@ export type StudentCreationAttributes = Optional<StudentAttributes, StudentOptio
 export class Student extends Model<StudentAttributes, StudentCreationAttributes> implements StudentAttributes {
     student_id!: number;
     user_id!: any;
-    name_glb!: object;
+    name_glb!: { [country_code in CountryCodeEnum.COUNTRY_CODE_ENUM]?: string };
     birth_date!: string;
     email_verified?: Date;
     phone_number!: string;
     emergency_contact!: string;
-    gender!: number;
+    gender!: UserEnum.USER_GENDER_ENUM;
     image!: string;
-    has_car!: number;
-    keyword_list!: object;
+    has_car!: 0 | 1;
+    keyword_list!: string[];
     created_at?: Date;
     updated_at?: Date;
 
@@ -70,6 +72,18 @@ export class Student extends Model<StudentAttributes, StudentCreationAttributes>
     hasExamHistory!: Sequelize.HasManyHasAssociationMixin<ExamHistory, ExamHistoryId>;
     hasExamHistories!: Sequelize.HasManyHasAssociationsMixin<ExamHistory, ExamHistoryId>;
     countExamHistories!: Sequelize.HasManyCountAssociationsMixin;
+    // Student hasMany Provider via student_id
+    Providers!: Provider[];
+    getProviders!: Sequelize.HasManyGetAssociationsMixin<Provider>;
+    setProviders!: Sequelize.HasManySetAssociationsMixin<Provider, ProviderId>;
+    addProvider!: Sequelize.HasManyAddAssociationMixin<Provider, ProviderId>;
+    addProviders!: Sequelize.HasManyAddAssociationsMixin<Provider, ProviderId>;
+    createProvider!: Sequelize.HasManyCreateAssociationMixin<Provider>;
+    removeProvider!: Sequelize.HasManyRemoveAssociationMixin<Provider, ProviderId>;
+    removeProviders!: Sequelize.HasManyRemoveAssociationsMixin<Provider, ProviderId>;
+    hasProvider!: Sequelize.HasManyHasAssociationMixin<Provider, ProviderId>;
+    hasProviders!: Sequelize.HasManyHasAssociationsMixin<Provider, ProviderId>;
+    countProviders!: Sequelize.HasManyCountAssociationsMixin;
     // Student belongsTo User via user_id
     user!: User;
     getUser!: Sequelize.BelongsToGetAssociationMixin<User>;
@@ -92,6 +106,7 @@ export class Student extends Model<StudentAttributes, StudentCreationAttributes>
                         model: "User",
                         key: "user_id",
                     },
+                    unique: "fk_student_user_id",
                 },
                 name_glb: {
                     type: DataTypes.JSON,
@@ -132,6 +147,15 @@ export class Student extends Model<StudentAttributes, StudentCreationAttributes>
                 keyword_list: {
                     type: DataTypes.JSON,
                     allowNull: false,
+                    validate: {
+                        isStringArray(value: any[]) {
+                            for (const item of value) {
+                                if (typeof item !== "string") {
+                                    throw new Error("Wrong item founded");
+                                }
+                            }
+                        },
+                    },
                 },
             },
             {
@@ -146,6 +170,12 @@ export class Student extends Model<StudentAttributes, StudentCreationAttributes>
                         unique: true,
                         using: "BTREE",
                         fields: [{ name: "student_id" }],
+                    },
+                    {
+                        name: "user_id_UNIQUE",
+                        unique: true,
+                        using: "BTREE",
+                        fields: [{ name: "user_id" }],
                     },
                     {
                         name: "user_id_idx",

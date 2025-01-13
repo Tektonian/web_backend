@@ -1,33 +1,41 @@
 import { models, sequelize } from "../../models/rdbms";
 import { MeiliSearch } from "meilisearch";
 import { Op } from "sequelize";
-import { DataTypes } from "sequelize";
-import { APIType } from "api_spec";
-import logger from "../../utils/logger";
-import { Consumer } from "../../models/rdbms/Consumer";
 import { ChatRoom } from "../../models/chat";
 
+/**
+ * Types, Errors, Utils ...
+ */
+import logger from "../../utils/logger";
+import * as Errors from "../../errors";
+import { RequestEnum } from "api_spec/enum";
+import { ConsumerEnum } from "api_spec/enum";
+import type { RequestAttributes } from "../../models/rdbms/Request";
+import { Consumer } from "../../models/rdbms/Consumer";
 const client = new MeiliSearch({
-    host: "http://127.0.0.1:7700",
-    apiKey: "1zBmtAMDjgWPGLcTPAhEy-kRZv44BzxywQ1UHPkIYE0",
+    host: process.env.MEILISEARCH_HOST as string,
+    apiKey: process.env.MEILISEARCH_KEY,
 });
 
 const requestSearch = client.index("request");
 // requestSearch.updateFilterableAttributes(["_geo"]);
 // requestSearch.updateSortableAttributes(["_geo"]);
 
-const StudentWithCurrentSchool = models.studentwithcurrentschool;
+const AcademicHistory = models.AcademicHistory;
 const RequestModel = models.Request;
 const ConsumerModel = models.Consumer;
-const StudentModel = models.Student;
-const UserModel = models.User;
+const Student = models.Student;
+const ProviderModel = models.Provider;
 
 export const getRecommendedRequestByStudentId = async (student_id: number) => {
     const student = (
-        await StudentWithCurrentSchool.findOne({
+        await Student.findOne({
             where: { student_id: student_id },
         })
     )?.get({ plain: true });
+    /**
+     * TODO: fill logic later
+     * We will return every requests for now;
 
     const coordi = JSON.parse(JSON.stringify(student?.coordinate)).coordinates;
 
@@ -35,8 +43,20 @@ export const getRecommendedRequestByStudentId = async (student_id: number) => {
         filter: [`_geoRadius(${coordi[0]}, ${coordi[1]}, 1000000000000)`],
         sort: [`_geoPoint(${coordi[0]}, ${coordi[1]}):asc`],
     });
+     */
 
-    return searchRet;
+    const requests = await RequestModel.findAll({
+        where: {
+            [Op.or]: [
+                { request_status: RequestEnum.REQUEST_STATUS_ENUM.POSTED },
+                { request_status: RequestEnum.REQUEST_STATUS_ENUM.PAID },
+                { request_status: RequestEnum.REQUEST_STATUS_ENUM.CONTRACTED },
+            ],
+        },
+        limit: 999,
+    });
+
+    return requests;
 };
 
 export const getRequestByRequestId = async (requestId: number) => {
@@ -46,6 +66,10 @@ export const getRequestByRequestId = async (requestId: number) => {
     return request;
 };
 
+/**
+ *
+ * @deprecated
+ */
 export const getRequestByStudentId = async (studentId: number) => {
     throw new Error("");
 };
@@ -64,78 +88,111 @@ export const getRequestsByCorpId = async (corpId: number) => {
     return requests;
 };
 
-export const getRequestsByUserId = async (userId: Buffer, as: "consumer" | "provider" | undefined = undefined) => {
-    /**
-     * We can search chatrooms to identify all users related with request
-     */
-    let requestIds = [] as number[];
-    if (as === undefined) {
-        const chatRooms = await ChatRoom.find({
-            participant_ids: { $in: userId },
-        });
-        // request_id could be less than 0 (when deleted)
-        requestIds = Array.from(new Set(chatRooms.map((room) => Math.abs(room.request_id))));
-    } else if (as === "consumer") {
-        const chatRooms = await ChatRoom.find({
-            consumer_id: userId,
-        });
-        // request_id could be less than 0 (when deleted)
-        requestIds = Array.from(new Set(chatRooms.map((room) => Math.abs(room.request_id))));
-    } else if (as === "provider") {
-        const chatRooms = await ChatRoom.find({
-            $and: [{ consumer_id: { $ne: userId } }, { participant_ids: { $in: userId } }],
-        });
-        // request_id could be less than 0 (when deleted)
-        requestIds = Array.from(new Set(chatRooms.map((room) => Math.abs(room.request_id))));
-    }
+export const getRequestsByProviderUserId = async (userId: Buffer) => {
+    const providerList = await ProviderModel.findAll({ where: { user_id: userId }, raw: true });
 
-    return await RequestModel.findAll({ where: { request_id: requestIds } });
+    const uniqueRequestIds = Array.from(new Set(providerList.map((val) => val.request_id)));
+
+    const requests = await RequestModel.findAll({ where: { request_id: { [Op.in]: uniqueRequestIds } } });
+
+    return requests;
+};
+
+// TODO: need refactoring
+export const getPostedRequestsByUserId = async (userId: Buffer) => {
+    const consumerIds = (await Consumer.findAll({ where: { user_id: userId }, raw: true })).map(
+        (val) => val.consumer_id,
+    );
+
+    const postedRequests = await RequestModel.findAll({ where: { consumer_id: { [Op.in]: consumerIds } } });
+
+    return postedRequests;
 };
 
 export const updateRequestProviderIds = async (newProviderIds: Buffer[], requestId: number) => {
-    return await RequestModel.update(
-        // Buffer type UUID will be stringfied
-        { provider_ids: newProviderIds },
-        { where: { request_id: requestId } },
-    );
+    try {
+        const ret = await sequelize.transaction(async (t) => {
+            logger.info("Start: Transaction-[Change provider ids]");
+            await Promise.all(
+                newProviderIds.map(async (providerId) => {
+                    const student = await Student.findOne({ where: { user_id: providerId }, raw: true });
+                    if (!student) {
+                        throw new Errors.ServiceErrorBase(
+                            "updateRequestProviderIds called non-exist user - something went wrong",
+                        );
+                    }
+                    return ProviderModel.findOrCreate({
+                        where: {
+                            [Op.and]: [{ request_id: requestId }, { user_id: providerId }],
+                        },
+                        defaults: {
+                            request_id: requestId,
+                            user_id: student.user_id,
+                            student_id: student.student_id,
+                        },
+                        transaction: t,
+                    });
+                }),
+            );
+
+            await ProviderModel.destroy({
+                where: { [Op.and]: [{ request_id: requestId }, { user_id: { [Op.notIn]: newProviderIds } }] },
+                transaction: t,
+            });
+
+            logger.info("END: Transaction-[Change provider ids]");
+            return newProviderIds;
+        });
+        return ret;
+    } catch (error) {
+        logger.error(`FAILED: Transaction-[Change provider ids], ${error}`);
+        throw new Errors.ServiceErrorBase(`updateRequestProviderIds failed transaction: ${error}`);
+    }
 };
 
 // api_spec 문서 보고 데이터 타비 맞춰서 리턴하도록 수정
-export const createRequest = async (uuid: Buffer, role: "corp" | "orgn" | "normal", data) => {
+export const createRequest = async (
+    userId: Buffer,
+    role: ConsumerEnum.CONSUMER_ENUM,
+    data: Omit<RequestAttributes, "consumer_id" | "request_id">,
+) => {
     try {
         const ret = await sequelize.transaction(async (t) => {
             logger.info("Start: Transaction-[Create Request]");
+
             const consumerIdentity = (
                 await ConsumerModel.findOne({
                     where: {
-                        [Op.and]: [{ user_id: uuid }, { consumer_type: role }],
+                        [Op.and]: [{ user_id: userId }, { consumer_type: role }],
                     },
                     transaction: t,
                 })
             )?.get({ plain: true });
 
             if (consumerIdentity === undefined) {
-                throw new Error("No consumer identity exist");
+                throw new Errors.ServiceExceptionBase("No consumer identity exist");
             }
-            // TODO: should add corp_id or orgn_id according to consumer identity
             const createdRequest = await RequestModel.create(
                 {
                     ...data,
+                    corp_id: consumerIdentity.corp_id,
+                    orgn_id: consumerIdentity.orgn_id,
                     consumer_id: consumerIdentity.consumer_id,
                 },
                 { transaction: t },
             );
 
-            logger.info(`Request created: ${createRequest}`);
+            logger.info(`INTER-Request created: ${JSON.stringify(createdRequest.toJSON())}`);
 
-            const coordinate = JSON.parse(JSON.stringify(createdRequest.dataValues.address_coordinate)).coordinates;
+            const coordinates = createdRequest.toJSON().address_coordinate.coordinates;
 
             const searchRet = await requestSearch.addDocuments(
                 [
                     {
                         ...createdRequest.dataValues,
+                        // Primary key value is in model value
                         request_id: createdRequest.request_id,
-                        _geo: { lat: coordinate[0], lng: coordinate[1] },
+                        _geo: { lat: coordinates[0], lng: coordinates[1] },
                     },
                 ],
                 { primaryKey: "request_id" },
@@ -144,12 +201,13 @@ export const createRequest = async (uuid: Buffer, role: "corp" | "orgn" | "norma
             const searchTask = await client.waitForTask(searchRet.taskUid);
 
             if (searchTask.status !== "succeeded") {
-                throw new Error("No record created! " + JSON.stringify(searchTask));
+                throw new Errors.ServiceExceptionBase("No record created! " + JSON.stringify(searchTask));
             }
-            logger.info("Request has been added to Search Engine");
+            logger.info("INTER-Request has been added to Search Engine");
             return createdRequest.request_id;
         });
-        logger.info("End: Transaction-[Create request]");
+
+        logger.info("End-Transaction-[Create request]");
         return ret;
     } catch (error) {
         // transaction failed
@@ -158,16 +216,50 @@ export const createRequest = async (uuid: Buffer, role: "corp" | "orgn" | "norma
     }
 };
 
-export const updateRequestStatus = async (requestId: number, status: APIType.RequestType.REQUEST_STATUS_ENUM) => {
+export const updateRequestStatus = async (requestId: number, status: RequestEnum.REQUEST_STATUS_ENUM) => {
     const request = await RequestModel.findOne({
         where: { request_id: requestId },
         raw: true,
     });
 
     if (request === null) {
-        logger.info("No such request");
-        return undefined;
+        throw new Errors.ServiceExceptionBase("No such request");
     }
 
-    return await RequestModel.update({ request_status: status }, { where: { request_id: request.request_id } });
+    try {
+        const ret = await sequelize.transaction(async (t) => {
+            logger.info("START: Transaction-[Update Request Status]");
+
+            if (
+                status === RequestEnum.REQUEST_STATUS_ENUM.FINISHED ||
+                status === RequestEnum.REQUEST_STATUS_ENUM.FAILED ||
+                status === RequestEnum.REQUEST_STATUS_ENUM.OUTDATED
+            ) {
+                const searchRet = await requestSearch.deleteDocument(request.request_id);
+                const searchTask = await client.waitForTask(searchRet.taskUid);
+
+                if (searchTask.status !== "succeeded") {
+                    logger.info("FAILED: Transaction-[Update Request Status]");
+                    throw new Errors.ServiceExceptionBase(
+                        "Failed to update request status on Meilisearch! " + JSON.stringify(searchTask),
+                    );
+                }
+            }
+
+            const count = await RequestModel.update(
+                { request_status: status },
+                { where: { request_id: request.request_id }, transaction: t },
+            );
+
+            logger.info("INTER: Transaction-[Update Request Status]");
+            return count;
+        });
+
+        logger.info("END: Transaction-[Update Request Status]");
+        return ret;
+    } catch (error) {
+        // transaction failed
+        logger.error(`Update request status Error: ${error}`);
+        throw error;
+    }
 };

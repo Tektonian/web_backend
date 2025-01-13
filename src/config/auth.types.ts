@@ -1,3 +1,6 @@
+/**
+ * @deprecated
+ */
 import { DataTypes } from "sequelize";
 
 type StringfiedUUID = {

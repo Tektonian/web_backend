@@ -1,6 +1,6 @@
 import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
-
+import type { ConsumerAttributes } from "./Consumer";
 export interface StudentReviewAttributes {
     id: number;
     corp_id?: number;
@@ -136,6 +136,24 @@ export class StudentReview
                         fields: [{ name: "id" }],
                     },
                 ],
+                hooks: {
+                    beforeCreate: async (review, option) => {
+                        const consumer = (await sequelize.models.Consumer.findOne({
+                            where: { consumer_id: review.getDataValue("consumer_id") },
+                            raw: true,
+                        })) as ConsumerAttributes | null;
+
+                        if (!consumer) {
+                            throw new Error("Error occured during create corporation review");
+                        }
+                        if (!consumer.corp_id && review.getDataValue("corp_id") === undefined) {
+                            throw new Error("Do not forget to fill corp_id area");
+                        }
+                        if (!consumer.orgn_id && review.getDataValue("orgn_id") === undefined) {
+                            throw new Error("Do not forget to fill orgn_id area");
+                        }
+                    },
+                },
             },
         );
     }

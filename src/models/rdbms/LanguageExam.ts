@@ -1,26 +1,35 @@
 import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
 import type { ExamHistory, ExamHistoryId } from "./ExamHistory";
+import { CountryCodeEnum } from "api_spec/enum";
+import { ExamEnum } from "api_spec/enum";
 
+interface EXAM_RESULT_TYPE {
+    class: string;
+    level: ExamEnum.EXAM_LEVEL_ENUM;
+}
 export interface LanguageExamAttributes {
     exam_id: number;
-    exam_name_glb: object;
-    exam_results: object;
-    lang_country_code: string;
+    exam_name_glb: { [country_code in CountryCodeEnum.COUNTRY_CODE_ENUM]?: string };
+    exam_results: EXAM_RESULT_TYPE[];
+    exam_type?: ExamEnum.EXAM_TYPE;
+    lang_country_code: CountryCodeEnum.COUNTRY_CODE_ENUM;
 }
 
 export type LanguageExamPk = "exam_id";
 export type LanguageExamId = LanguageExam[LanguageExamPk];
-export type LanguageExamCreationAttributes = LanguageExamAttributes;
+export type LanguageExamOptionalAttributes = "exam_type";
+export type LanguageExamCreationAttributes = Optional<LanguageExamAttributes, LanguageExamOptionalAttributes>;
 
 export class LanguageExam
     extends Model<LanguageExamAttributes, LanguageExamCreationAttributes>
     implements LanguageExamAttributes
 {
     exam_id!: number;
-    exam_name_glb!: object;
-    exam_results!: object;
-    lang_country_code!: string;
+    exam_name_glb!: { [country_code in CountryCodeEnum.COUNTRY_CODE_ENUM]?: string };
+    exam_results!: EXAM_RESULT_TYPE[];
+    exam_type?: ExamEnum.EXAM_TYPE;
+    lang_country_code!: CountryCodeEnum.COUNTRY_CODE_ENUM;
 
     // LanguageExam hasMany ExamHistory via exam_id
     ExamHistories!: ExamHistory[];
@@ -52,9 +61,19 @@ export class LanguageExam
                     allowNull: false,
                     comment: "If a test is class type then the classes of a result of the test should be listed",
                 },
+                exam_type: {
+                    type: DataTypes.STRING(45),
+                    allowNull: true,
+                    validate: {
+                        isIn: [Object.values(ExamEnum.EXAM_TYPE)],
+                    },
+                },
                 lang_country_code: {
-                    type: DataTypes.STRING(2),
+                    type: DataTypes.STRING(4),
                     allowNull: false,
+                    validate: {
+                        isIn: [Object.values(CountryCodeEnum.COUNTRY_CODE_ENUM)],
+                    },
                 },
             },
             {

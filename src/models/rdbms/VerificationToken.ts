@@ -33,6 +33,9 @@ export class VerificationToken
                     type: DataTypes.STRING(255),
                     allowNull: false,
                     primaryKey: true,
+                    validate: {
+                        isEmail: true,
+                    },
                     comment:
                         "User’s email address\nDidn’t set to foreign key but it is 1:N relationship.\nDue to users forgetting or failures during the sign-in flow, you might end up with unwanted rows in your database. You might want to periodically clean these up to avoid filling up your database with unnecessary data.",
                 },

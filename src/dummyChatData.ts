@@ -1,14 +1,18 @@
 import { models } from "./models/rdbms";
 import { chatController } from "./controllers/chat";
 import { ChatContent, ChatRoom, ChatUser, Unread } from "./models/chat";
-import { Request } from "./models/rdbms/Request";
-
+/**
+ * Utils
+ */
 import { RequestEnum } from "api_spec/enum";
 import logger from "./utils/logger";
 import { Op } from "sequelize";
-import { Consumer } from "./models/rdbms/Consumer";
 
 const User = models.User;
+const Request = models.Request;
+const Provider = models.Provider;
+const Consumer = models.Consumer;
+
 const { chatRoomController, chatContentController, chatUserController } = chatController;
 
 const dummyMessage: string[] = [
@@ -76,13 +80,14 @@ const genContractedRequestChatData = async () => {
     );
     await Promise.all(
         contractedRequests.map(async (req) => {
-            const participantIds = req.provider_ids;
+            const providerIds = (await Provider.findAll({ where: { request_id: req.request_id }, raw: true })).map(
+                (val) => val.user_id,
+            );
             const consumer = await Consumer.findOne({ where: { consumer_id: req.consumer_id }, raw: true });
 
-            const studentUsers = await User.findAll({ where: { user_id: participantIds }, raw: true });
-
+            const studentUsers = await User.findAll({ where: { user_id: providerIds }, raw: true });
             const restStudent = (
-                await User.findAll({ where: { user_id: { [Op.notIn]: participantIds } }, raw: true })
+                await User.findAll({ where: { user_id: { [Op.notIn]: providerIds } }, raw: true })
             ).filter((val) => val.email.startsWith("student"));
 
             const providerUsers = [...studentUsers, ...randPick(restStudent, 2)];
@@ -98,6 +103,7 @@ const genContractedRequestChatData = async () => {
                 consumer!.user_id,
                 studentUsers.map((val) => val.user_id),
             );
+            return;
         }),
     );
 };
@@ -108,8 +114,9 @@ const genPostedRequestChatData = async () => {
 
     await Promise.all(
         postedRequests.map(async (req) => {
-            // Don't know but getter of provider_ids in Request model doens't work here...
-            const providerIds = req.provider_ids.map((id) => Buffer.from(id));
+            const providerIds = (await Provider.findAll({ where: { request_id: req.request_id }, raw: true })).map(
+                (val) => val.user_id,
+            );
             const consumer = await Consumer.findOne({ where: { consumer_id: req.consumer_id }, raw: true });
 
             const studentUsers = await User.findAll({ where: { user_id: { [Op.in]: providerIds } }, raw: true });

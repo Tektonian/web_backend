@@ -1,20 +1,33 @@
 import express, { Request, Response } from "express";
-import { Consumer } from "../../models/rdbms/Consumer";
-import { Corporation } from "../../models/rdbms/Corporation";
 import * as CorpController from "../../global/corpInfo/kr/CorpInfoController";
+import { models } from "../../models/rdbms";
 
+/**
+ * Types, middleware, and validator
+ */
 import { APISpec } from "api_spec";
-import {} from "api_spec/enum";
+import { filterSessionByRBAC } from "../../middleware/auth.middleware";
+
+/**
+ * Utils
+ */
+import { pick } from "es-toolkit";
 import * as Errors from "../../errors";
 import logger from "../../utils/logger";
 
+const Consumer = models.Consumer;
+const Corporation = models.Corporation;
+
 const CorporationRouter = express.Router();
 
+/**
+ * @deprecated
+ */
 CorporationRouter.get("/", async (req: Request, res: Response) => {
     try {
         const consumer_id = req.query.consumer_id;
         const consumer = await Consumer.findOne({
-            where: { consumer_id },
+            where: { consumer_id: consumer_id },
             attributes: ["corp_id"],
         });
 
@@ -31,55 +44,76 @@ CorporationRouter.get("/", async (req: Request, res: Response) => {
     }
 });
 
-CorporationRouter.get("/corpProfile", async (req: Request, res: Response) => {
+/**
+ * @deprecated
+ */
+CorporationRouter.get("/profile/check", async (req: Request, res: Response) => {
+    logger.info("START-Check corporation profile exist");
+
     const corpNum = req.query.corpNum;
 
-    const storedCorpProfile = await CorpController.findCorpProfileByCorpNum(Number(corpNum));
+    const storedCorpProfile = (await CorpController.findCorpProfileByCorpNum(Number(corpNum)))?.get({ plain: true });
 
-    if (storedCorpProfile === undefined) {
+    if (!storedCorpProfile) {
         const externCorpProfile = await CorpController.externReqCorpProfile(Number(corpNum));
 
         if (externCorpProfile === undefined) {
+            logger.error("ERROR-Extern api failed");
+            res.status(404).end();
+            return;
             res.json({ status: "Extern API error", profile: undefined });
         }
-
-        res.json({ status: "not exist", profile: externCorpProfile });
+        logger.error("ERROR-No profile exist");
+        res.status(404).end();
+        return;
     } else {
-        res.json({ status: "exist", profile: storedCorpProfile });
+        res.status(200).json(storedCorpProfile);
     }
+    logger.info("END-Check corporation profile exist");
 });
 
-CorporationRouter.post("/corpProfile", async (req: Request, res: Response) => {
-    const corpData = req.body;
+CorporationRouter.post(
+    "/" satisfies keyof APISpec.CorporationAPISpec,
+    // Logined and validated
+    filterSessionByRBAC(["normal"]),
+    (async (req, res) => {
+        logger.info("START-Create corporation profile");
+        // const corpData = ValidateSchema(CorporationSchema.ReqCreateCorpProfileSchema, req.body);
+        const corpData = req.body;
 
-    const createdCorpProfile = await CorpController.createCorpProfile(corpData);
+        const createdCorpProfile = await CorpController.createCorpProfile(corpData);
 
-    res.json(createdCorpProfile);
-});
+        res.status(200).json({ corp_id: String(createdCorpProfile.corp_id) });
+        logger.info("END-Create corporation profile");
+    }) as APISpec.CorporationAPISpec["/"]["post"]["handler"],
+);
 
 CorporationRouter.get("/:corp_id" satisfies keyof APISpec.CorporationAPISpec, (async (req, res) => {
     logger.info("START-Get Corporation profile");
-    const corpId: number | undefined = req.params.corp_id;
+    const corpId: number | string | undefined = req.params.corp_id;
 
     if (!corpId) {
         throw new Errors.ServiceExceptionBase(`User requested wrong corporation id: ${corpId}`);
     }
-    const corpProfile = await CorpController.findCorpProfileByCorpId(Number(corpId));
+    const corpProfile = (await CorpController.findCorpProfileByCorpId(Number(corpId)))?.get({ plain: true });
 
     if (!corpProfile) {
         throw new Errors.ServiceExceptionBase(`User requested wrong corporation id: ${corpId}`);
     }
-    res.json({
-        corp_id: corpProfile.corp_id,
-        corp_name: corpProfile.corp_name,
-        nationality: corpProfile.nationality,
-        ceo_name: corpProfile.ceo_name,
-        biz_type: corpProfile.biz_type,
-        logo_image: corpProfile.logo_image,
-        site_url: corpProfile.site_url,
-        corp_domain: corpProfile.corp_domain,
-        phone_number: corpProfile.phone_number,
-    });
+    res.json(
+        pick(corpProfile, [
+            "corp_id",
+            "corp_name",
+            "nationality",
+            "ceo_name",
+            "corp_address",
+            "biz_type",
+            "logo_image",
+            "site_url",
+            "corp_domain",
+            "phone_number",
+        ]),
+    );
     logger.info("END-Get Corporation profile");
 }) as APISpec.CorporationAPISpec["/:corp_id"]["get"]["handler"]);
 

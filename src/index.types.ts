@@ -1,6 +1,6 @@
 import * as express from "express";
 import { DefaultSession } from "@auth/express";
-import "joi-extract-type"; // <- import joi-extract-type for type hint for router
+import { UserEnum } from "api_spec/enum";
 declare global {
     namespace Express {
         /** Extend Response types to add user session information */
@@ -10,7 +10,7 @@ declare global {
                     id: Buffer;
                     name: string;
                     email: string;
-                    roles: string[];
+                    roles: UserEnum.USER_ROLE_ENUM[];
                 };
             };
         }

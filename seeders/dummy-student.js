@@ -108,14 +108,14 @@ module.exports = {
                 studentUsers.push({
                     student_id: idx,
                     user_id: user.user_id,
-                    name_glb: { kr: user.username },
+                    name_glb: { KO: user.username, JP: user.username },
                     birth_date: new Date(),
                     email_verified: new Date(),
                     phone_number: "01022222222",
                     emergency_contact: "01044444444",
                     keyword_list: [],
                     gender: 0,
-                    image: "",
+                    image: "https://picsum.photos/200/300",
                     has_car: 0,
                 });
             }
@@ -135,7 +135,7 @@ module.exports = {
                 degree: ["학사", "석사", "박사"].at(Math.floor(Math.random() * 3)),
                 start_date: new Date(),
                 end_date: new Date(),
-                status: ["재학중", "휴학", "중퇴", "자퇴", "수료", "졸업"].at(Math.floor(Math.random() * 6)),
+                status: [0, 1, 2].at(Math.floor(Math.random() * 3)),
                 faculty: DepartMentList.at(Math.floor(Math.random() * DepartMentList.length)),
                 school_email: `email_of_${idx}th_school@test.com`,
                 is_attending: true,

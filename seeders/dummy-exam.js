@@ -4,11 +4,9 @@ const { Meilisearch } = require("meilisearch");
 module.exports = {
     async up(queryInterface, Sequelize) {
         const fs = require("fs");
-        const ExamDataset = JSON.parse(
-            fs.readFileSync("../../school_dataset/exam.json", "utf-8"),
-        );
+        const ExamDataset = JSON.parse(fs.readFileSync("../../school_dataset/exam/exam.json", "utf-8"));
         const client = new Meilisearch({
-            host: "http://127.0.0.1:7700",
+            host: "http://localhost:7700",
             // apikey if needed'
         });
 
@@ -16,8 +14,8 @@ module.exports = {
         const LanguageExam = db.sequelize.models.LanguageExam;
 
         const LanguageExamData = ExamDataset.map((exam) => ({
-            exam_id: exam.id,
-            exam_name_glb: { en: exam.en, kr: exam.kr, jp: exam.jp },
+            exam_id: exam.exam_id,
+            exam_name_glb: exam.exam_name_glb,
             exam_result_type: exam.exam_type,
             exam_results: exam.exam_results ?? null,
             exam_level: exam.exam_level ?? null,
@@ -35,11 +33,30 @@ module.exports = {
             console.log("Data successfully inserted into DB and Meilisearch.");
         } catch (error) {
             console.log("Validation Error in LanguageExam.bulkCreate", error);
+            throw error;
         }
+
+        const Student = db.sequelize.models.Student;
+        const ExamHistory = db.sequelize.models.ExamHistory;
+
+        const allStudents = await Student.findAll({ raw: true });
+
+        await Promise.all(
+            allStudents.map(async (val) => {
+                for (let i = 0; i < 2; i++) {
+                    await ExamHistory.create({
+                        student_id: val.student_id,
+                        exam_id: ExamDataset[Math.floor(Math.random() * ExamDataset.length)].exam_id,
+                        level: [1, 2, 3].at(Math.floor(Math.random() * 3)),
+                    });
+                }
+                return;
+            }),
+        );
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.bulkDelete("LanguageExam", null, {});
         await queryInterface.bulkDelete("ExamHistory", null, {});
+        await queryInterface.bulkDelete("LanguageExam", null, {});
     },
 };

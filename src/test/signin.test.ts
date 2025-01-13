@@ -1,10 +1,13 @@
 import app from "..";
 
 import { describe, test, expect, afterAll } from "vitest";
-import { User } from "../models/rdbms/User";
-import { VerificationToken } from "../models/rdbms/VerificationToken";
 import request from "supertest";
-import { Consumer } from "../models/rdbms/Consumer";
+
+import { models } from "../models/rdbms";
+
+const User = models.User;
+const VerificationToken = models.VerificationToken;
+const Consumer = models.Consumer;
 
 const agent = request.agent(app);
 

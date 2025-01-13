@@ -1,30 +1,36 @@
+/**
+ * Models
+ */
 import { models } from "../../models/rdbms";
 import { MeiliSearch } from "meilisearch";
-import { Student } from "../../models/rdbms/Student";
-import { StudentReview } from "../../models/rdbms/StudentReview";
-import { fullstudentprofile } from "../../models/rdbms/fullstudentprofile";
 import { sequelize } from "../../models/rdbms";
-import { AcademicHistory } from "../../models/rdbms/AcademicHistory";
-import { School } from "../../models/rdbms/School";
-import { Request } from "../../models/rdbms/Request";
-import { ExamHistory } from "../../models/rdbms/ExamHistory";
-import { DataTypes } from "sequelize";
+/**
+ * Utiles, Types
+ */
 import { runCatchingAsync } from "../../utils/runCatcher";
 
 import logger from "../../utils/logger";
 import { APIType } from "api_spec";
-import { Corporation } from "../../models/rdbms/Corporation";
+import { LanguageExam } from "../../models/rdbms/LanguageExam";
+
+const Student = models.Student;
+const StudentReview = models.StudentReview;
+const AcademicHistory = models.AcademicHistory;
+const School = models.School;
+const Request = models.Request;
+const ExamHistory = models.ExamHistory;
 
 const client = new MeiliSearch({
-    host: "http://127.0.0.1:7700",
-    apiKey: "1zBmtAMDjgWPGLcTPAhEy-kRZv44BzxywQ1UHPkIYE0",
+    host: process.env.MEILISEARCH_HOST as string,
+    apiKey: process.env.MEILISEARCH_KEY,
 });
 
-const studentSearch = client.index("studentwithcurrentschool");
+const studentSearch = client.index("student");
 // studentSearch.updateFilterableAttributes(["_geo"]);
 // studentSearch.updateSortableAttributes(["_geo"]);
 
 export const getRecommendedStudentByRequestId = async (request_id: number) => {
+    /*
     const reqResult = await runCatchingAsync(async () =>
         (
             await Request.findOne({
@@ -51,17 +57,15 @@ export const getRecommendedStudentByRequestId = async (request_id: number) => {
     ret.onSuccess(() => {
         logger.info("Student search success");
     });
-
-    return ret;
+    */
+    const allStudents = await Student.findAll({
+        limit: 999,
+    });
+    return allStudents;
 };
 
-export const getStudentFullProfileByStudentId = async (student_id: number) => {
-    const studentProfile = await fullstudentprofile.findOne({
-        where: { student_id: student_id },
-        attributes: { exclude: ["user_id", "id"] },
-    });
-
-    return studentProfile;
+export const getStudentByStudentId = async (studentId: number) => {
+    return await Student.findOne({ where: { student_id: studentId } });
 };
 
 export const getStudentByUserId = async (user_id: Buffer | null) => {
@@ -87,17 +91,15 @@ export const getInstReviewOfStudentByStudentId = async (student_id: number) => {
 };
 
 // TODO: Add type laterㅇ
-export const createUnVerifiedStudentIdentity = async (uuid: typeof DataTypes.UUID, data) => {
+export const createUnVerifiedStudentIdentity = async (userId: Buffer, data) => {
     try {
         const ret = await sequelize.transaction(async (t) => {
-            const { userType, academicHistory, examHistory, ...student } = data;
-
+            const { academicHistory, examHistory, ...student } = data;
             const createdStudent = await Student.create(
                 {
                     name_glb: student.name_glb,
-                    nationality: student.nationality,
-                    user_id: uuid,
-                    age: student.age,
+                    user_id: userId,
+                    birth_date: student.birth_date,
                     phone_number: student.phone_number,
                     emergency_contact: student.emergency_contact,
                     gender: student.gender,
@@ -176,4 +178,24 @@ export const createUnVerifiedStudentIdentity = async (uuid: typeof DataTypes.UUI
         console.error("Create student profile failed:", error);
         return undefined;
     }
+};
+
+export const updateStudentProfileByUserId = async (
+    userId: Buffer,
+    data: APIType.StudentType.ReqUpdateStudentProfile,
+) => {
+    const updateCount = await Student.update(
+        {
+            name_glb: data.name_glb,
+            phone_number: data.phone_number,
+            emergency_contact: data.emergency_contact,
+            birth_date: data.birth_date,
+            gender: data.gender,
+            has_car: data.has_car,
+            keyword_list: data.keyword_list,
+        },
+        { where: { user_id: userId } },
+    );
+
+    return updateCount;
 };

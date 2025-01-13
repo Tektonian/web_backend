@@ -3,7 +3,7 @@ import type { ErrorRequestHandler } from "express";
 /**
  * Run time exceptions
  */
-import { JoiError } from "../errors";
+import { ZodError } from "../errors";
 import { SSEError } from "../errors";
 import { ServiceExceptionBase } from "../errors";
 /**
@@ -24,10 +24,8 @@ const errorHandleMiddleware: ErrorRequestHandler = (err, req, res, next) => {
      * So we can't use 'instanceof' here.
      * use isJoi here (but leave code for code-readers)
      */
-    if (err.isJoi || err instanceof JoiError) {
-        const joiError = err as JoiError;
-
-        logger.warn(JSON.stringify({ error: joiError, ip: req.ip, headers: req.headers, cookies: req.cookies }));
+    if (err instanceof ZodError) {
+        logger.warn(JSON.stringify({ error: err, ip: req.ip, headers: req.headers, cookies: req.cookies }));
         res.status(404).json("");
     } else if (err instanceof SSEError) {
     } else if (err instanceof ServiceExceptionBase) {

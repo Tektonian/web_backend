@@ -1,14 +1,18 @@
 import { Types } from "mongoose";
 import * as ChatModels from "../../models/chat";
-import type { UserAttributes } from "../../models/rdbms/User";
 import { models as RDBModels } from "../../models/rdbms";
 
+/**
+ * Utiles, text datas, types
+ */
 import { AlarmMessageGlbEnum } from "../../global/text/chat/alarm";
 import logger from "../../utils/logger";
 import { pushRefreshChatRooms } from "./messageQueue";
+import { Op } from "sequelize";
+import type { UserAttributes } from "../../models/rdbms/User";
 
 const { ChatRoom, ChatUser, Unread, ChatContent } = ChatModels;
-const { Request, User } = RDBModels;
+const { Request, User, Provider } = RDBModels;
 
 // TODO: should be transactional!! -> Need new MongoDB setting
 export const createChatRoom = async (requestId: number, consumerId: Buffer, participantIds: Buffer[]) => {
@@ -42,7 +46,7 @@ export const createChatRoom = async (requestId: number, consumerId: Buffer, part
         });
         const res = await Promise.all(
             participants.map(async (parti) => {
-                await Unread.create({
+                return await Unread.create({
                     chatroom: chatRoomInstance,
                     user_id: parti.user_id,
                 });
@@ -139,9 +143,16 @@ export const actionCompleteRecruit = async (requestId: number, consumerId: Buffe
         $and: [{ request_id: requestId }, { participant_ids: { $nin: providerIds } }],
     });
     await Promise.all(
-        toDelChatRooms.map(async (room) => {
-            return await delChatRoom(room._id);
+        toDelChatRooms.map((room) => {
+            return delChatRoom(room._id);
         }),
+    );
+
+    const nowTime = new Date(Date.now());
+
+    await Provider.update(
+        { contracted_at: nowTime },
+        { where: { [Op.and]: [{ request_id: requestId }, { user_id: { [Op.in]: providerIds } }] } },
     );
 
     // Won't create unnecessary group　chat room
@@ -152,6 +163,31 @@ export const actionCompleteRecruit = async (requestId: number, consumerId: Buffe
     return await ChatRoom.find({
         $and: [{ consumer_id: consumerId }, { request_id: requestId }],
     });
+};
+/**
+ * TODO: Maybe should be in requestcontroller?
+ */
+export const actionFinishRequest = async (requestId: number) => {
+    const providerIds = (await Provider.findAll({ where: { request_id: requestId }, raw: true })).map(
+        (val) => val.user_id,
+    );
+    const toDelChatRooms = await ChatRoom.find({
+        request_id: requestId,
+    });
+    await Promise.all(
+        toDelChatRooms.map((room) => {
+            return delChatRoom(room._id);
+        }),
+    );
+
+    const nowTime = new Date(Date.now());
+
+    await Provider.update(
+        {
+            finish_job_at: nowTime,
+        },
+        { where: { [Op.and]: [{ request_id: requestId }, { user_id: { [Op.in]: providerIds } }] } },
+    );
 };
 
 // Needed?

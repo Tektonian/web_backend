@@ -44,11 +44,12 @@ export const pushRefreshChatRooms = async (chatUserId: Types.ObjectId) => {
         return;
     }
     logger.debug(`Update producer ${chatUser._id.toString()}`);
-    refreshChatRoomsProducer.publishEvent({
+    await refreshChatRoomsProducer.publishEvent({
         eventName: chatUser._id.toString(),
         jobId: "",
         returnvalue: "",
     });
+    return;
 };
 /**
  *
@@ -89,7 +90,7 @@ export const pushMessageQueue = async (
         sender: sender,
     };
     const jobName = `${sender._id.toString()}:${chatRoom._id.toString()}`;
-    await sentMessageQueue.add(jobName, data);
+    return sentMessageQueue.add(jobName, data);
 };
 
 /**
@@ -140,7 +141,7 @@ const userSentWorker = new Worker(
                     __v":0}} 
         */
         logger.debug(`userSentWorker: ${JSON.stringify(data)}`);
-        console.log(data);
+        // console.log(data);
         if (data.message.contentType === "text") {
             const ret = await ChatContent.create({
                 sender_id: data.sender.user_id,
@@ -177,4 +178,8 @@ userSentWorker.on("completed", (job) => {
 
 userSentWorker.on("failed", (job, err) => {
     logger.debug(`${job.id} has failed with ${err.message}`);
+});
+
+userSentWorker.on("error", (failedReason) => {
+    logger.error(`Error on User sent worker: ${failedReason}`);
 });

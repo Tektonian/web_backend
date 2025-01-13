@@ -1,26 +1,26 @@
 import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
 import type { Consumer, ConsumerId } from "./Consumer";
+import type { Provider, ProviderId } from "./Provider";
 import { RequestEnum } from "api_spec/enum";
 
 export interface RequestAttributes {
     request_id: number;
     consumer_id: number;
-    provider_ids?: object;
     title: string;
     head_count: number;
     reward_price: number;
     currency: string;
     content: string;
-    are_needed?: object;
-    are_required?: object;
+    are_needed?: string[];
+    are_required?: string[];
     start_date: string;
     end_date: string;
     address?: string;
     address_coordinate?: any;
-    provide_food: any;
-    provide_trans_exp: any;
-    prep_material?: object;
+    provide_food: boolean;
+    provide_trans_exp: boolean;
+    prep_material?: string[];
     request_status?: RequestEnum.REQUEST_STATUS_ENUM;
     start_time: string;
     end_time: string;
@@ -34,7 +34,6 @@ export type RequestPk = "request_id";
 export type RequestId = Request[RequestPk];
 export type RequestOptionalAttributes =
     | "request_id"
-    | "provider_ids"
     | "are_needed"
     | "are_required"
     | "address"
@@ -52,21 +51,20 @@ export type RequestCreationAttributes = Optional<RequestAttributes, RequestOptio
 export class Request extends Model<RequestAttributes, RequestCreationAttributes> implements RequestAttributes {
     request_id!: number;
     consumer_id!: number;
-    provider_ids?: object;
     title!: string;
     head_count!: number;
     reward_price!: number;
     currency!: string;
     content!: string;
-    are_needed?: object;
-    are_required?: object;
+    are_needed?: string[];
+    are_required?: string[];
     start_date!: string;
     end_date!: string;
     address?: string;
     address_coordinate?: any;
-    provide_food!: any;
-    provide_trans_exp!: any;
-    prep_material?: object;
+    provide_food!: boolean;
+    provide_trans_exp!: boolean;
+    prep_material?: string[];
     request_status?: RequestEnum.REQUEST_STATUS_ENUM;
     start_time!: string;
     end_time!: string;
@@ -80,6 +78,18 @@ export class Request extends Model<RequestAttributes, RequestCreationAttributes>
     getConsumer!: Sequelize.BelongsToGetAssociationMixin<Consumer>;
     setConsumer!: Sequelize.BelongsToSetAssociationMixin<Consumer, ConsumerId>;
     createConsumer!: Sequelize.BelongsToCreateAssociationMixin<Consumer>;
+    // Request hasMany Provider via request_id
+    Providers!: Provider[];
+    getProviders!: Sequelize.HasManyGetAssociationsMixin<Provider>;
+    setProviders!: Sequelize.HasManySetAssociationsMixin<Provider, ProviderId>;
+    addProvider!: Sequelize.HasManyAddAssociationMixin<Provider, ProviderId>;
+    addProviders!: Sequelize.HasManyAddAssociationsMixin<Provider, ProviderId>;
+    createProvider!: Sequelize.HasManyCreateAssociationMixin<Provider>;
+    removeProvider!: Sequelize.HasManyRemoveAssociationMixin<Provider, ProviderId>;
+    removeProviders!: Sequelize.HasManyRemoveAssociationsMixin<Provider, ProviderId>;
+    hasProvider!: Sequelize.HasManyHasAssociationMixin<Provider, ProviderId>;
+    hasProviders!: Sequelize.HasManyHasAssociationsMixin<Provider, ProviderId>;
+    countProviders!: Sequelize.HasManyCountAssociationsMixin;
 
     static initModel(sequelize: Sequelize.Sequelize): typeof Request {
         return Request.init(
@@ -96,28 +106,6 @@ export class Request extends Model<RequestAttributes, RequestCreationAttributes>
                     references: {
                         model: "Consumer",
                         key: "consumer_id",
-                    },
-                },
-                provider_ids: {
-                    type: DataTypes.JSON,
-                    allowNull: true,
-                    comment: "Provider ids of students",
-                    get() {
-                        const stringfiedUUIDs = this.getDataValue("provider_ids") as any[];
-                        const bufferUUIDs = stringfiedUUIDs?.map((uuid) => Buffer.from(uuid));
-                        return bufferUUIDs;
-                    },
-                    validate: {
-                        isArrayOfUUID(value: any[]) {
-                            // Value should be array of UUIDs
-                            for (let userId of value) {
-                                const isBuffer = userId instanceof Buffer;
-                                const isStringfiedBuffer: string | undefined = userId.type;
-                                if (!isBuffer && !(isStringfiedBuffer === "Buffer")) {
-                                    throw new Error(`Not valid provider ids: ${value}`);
-                                }
-                            }
-                        },
                     },
                 },
                 title: {
@@ -143,10 +131,28 @@ export class Request extends Model<RequestAttributes, RequestCreationAttributes>
                 are_needed: {
                     type: DataTypes.JSON,
                     allowNull: true,
+                    validate: {
+                        isStringArray(value: any[]) {
+                            for (const item of value) {
+                                if (typeof item !== "string") {
+                                    throw new Error("Wrong item founded");
+                                }
+                            }
+                        },
+                    },
                 },
                 are_required: {
                     type: DataTypes.JSON,
                     allowNull: true,
+                    validate: {
+                        isStringArray(value: any[]) {
+                            for (const item of value) {
+                                if (typeof item !== "string") {
+                                    throw new Error("Wrong item founded");
+                                }
+                            }
+                        },
+                    },
                 },
                 start_date: {
                     type: DataTypes.DATEONLY,
@@ -165,18 +171,27 @@ export class Request extends Model<RequestAttributes, RequestCreationAttributes>
                     allowNull: true,
                 },
                 provide_food: {
-                    type: DataTypes.BLOB,
+                    type: DataTypes.BOOLEAN,
                     allowNull: false,
-                    defaultValue: "0x30",
+                    defaultValue: false,
                 },
                 provide_trans_exp: {
-                    type: DataTypes.BLOB,
+                    type: DataTypes.BOOLEAN,
                     allowNull: false,
-                    defaultValue: "0x30",
+                    defaultValue: false,
                 },
                 prep_material: {
                     type: DataTypes.JSON,
                     allowNull: true,
+                    validate: {
+                        isStringArray(value: any[]) {
+                            for (const item of value) {
+                                if (typeof item !== "string") {
+                                    throw new Error("Wrong item founded");
+                                }
+                            }
+                        },
+                    },
                 },
                 request_status: {
                     type: DataTypes.TINYINT,
@@ -186,6 +201,7 @@ export class Request extends Model<RequestAttributes, RequestCreationAttributes>
                     validate: {
                         isIn: [Object.values(RequestEnum.REQUEST_STATUS_ENUM)],
                     },
+                    defaultValue: RequestEnum.REQUEST_STATUS_ENUM.POSTED,
                 },
                 start_time: {
                     type: DataTypes.TIME,

@@ -1,5 +1,7 @@
-import { Consumer } from "../../../models/rdbms/Consumer";
-import { Corporation } from "../../../models/rdbms/Corporation";
+import { models } from "../../../models/rdbms";
+
+const Consumer = models.Consumer;
+const Corporation = models.Corporation;
 
 const CORP_API_KEY = process.env.CORP_API_KEY;
 const CORP_API_BASE_URL = process.env.CORP_API_BASE_URL;
@@ -103,6 +105,7 @@ export const externReqCorpProfile = async (corpNum: number) => {
     }
 };
 
+// TODO: add type later
 export const createCorpProfile = async (corpProfile) => {
     const createdProfile = (await Corporation.create(corpProfile)).get({
         plain: true,
@@ -112,13 +115,13 @@ export const createCorpProfile = async (corpProfile) => {
 };
 
 export const findCorpProfileByCorpNum = async (corpNum: number) => {
-    const corpProfile = (await Corporation.findOne({ where: { corp_num: corpNum } }))?.get({ plain: true });
+    const corpProfile = await Corporation.findOne({ where: { corp_num: corpNum } });
 
     return corpProfile;
 };
 
 export const findCorpProfileByCorpId = async (corpId: number) => {
-    const corpProfile = (await Corporation.findOne({ where: { corp_id: corpId } }))?.get({ plain: true });
+    const corpProfile = await Corporation.findOne({ where: { corp_id: corpId } });
 
     return corpProfile;
 };

@@ -5,6 +5,7 @@ import type { Organization, OrganizationId } from "./Organization";
 import type { Request, RequestId } from "./Request";
 import type { User, UserId } from "./User";
 import { ConsumerEnum } from "api_spec/enum";
+import { Op } from "sequelize";
 
 export interface ConsumerAttributes {
     consumer_id: number;
@@ -108,20 +109,15 @@ export class Consumer extends Model<ConsumerAttributes, ConsumerCreationAttribut
                     type: DataTypes.STRING(255),
                     allowNull: false,
                     validate: {
-                        isValidType(value: string) {
-                            const validTypeSet = new Set(Object.values(ConsumerEnum.CONSUMER_ENUM));
-
-                            if (validTypeSet.has(value) === false) {
-                                throw new Error(
-                                    `Wrong Comsuper type input: Value:${value}, Expect:${ConsumerEnum.CONSUMER_ENUM}`,
-                                );
-                            }
-                        },
+                        isIn: [Object.values(ConsumerEnum.CONSUMER_ENUM)],
                     },
                 },
                 consumer_email: {
                     type: DataTypes.STRING(255),
                     allowNull: false,
+                    validate: {
+                        isEmail: true,
+                    },
                 },
                 consumer_verified: {
                     type: DataTypes.DATE,
@@ -163,6 +159,26 @@ export class Consumer extends Model<ConsumerAttributes, ConsumerCreationAttribut
                         fields: [{ name: "orgn_id" }],
                     },
                 ],
+
+                hooks: {
+                    beforeCreate: async (consumer, option) => {
+                        const hasSameIdentity = await sequelize.models.Consumer.count({
+                            where: {
+                                [Op.and]: [
+                                    { user_id: consumer.getDataValue("user_id") },
+                                    { consumer_type: consumer.getDataValue("consumer_type") },
+                                ],
+                            },
+                        });
+                        console.error(hasSameIdentity);
+                        if (hasSameIdentity !== 0) {
+                            throw new Sequelize.ValidationError(
+                                `Duplicated consumer type for one user: ${JSON.stringify(consumer.toJSON())}`,
+                                [],
+                            );
+                        }
+                    },
+                },
             },
         );
     }

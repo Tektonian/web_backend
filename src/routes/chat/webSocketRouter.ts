@@ -1,20 +1,31 @@
-import { createHash } from "crypto";
+/**
+ * Event listener
+ */
 import { QueueEvents } from "bullmq";
+/**
+ * Controller
+ */
 import { chatController } from "../../controllers/chat";
-import * as UserController from "../../controllers/UserController";
-
-import type { HydratedDocument } from "mongoose";
-import type { Server, Socket } from "socket.io";
-import type { Types as ChatTypes } from "../../models/chat";
-import type { APIType } from "api_spec";
-import type { ISessionUser } from "../../config/auth.types";
-import type { UserAttributes } from "../../models/rdbms/User";
-
-import { AlarmMessageGlb } from "../../global/text/chat/alarm";
-import logger from "../../utils/logger";
+import * as UserController from "../../controllers/wiip/UserController";
 import { getAliveChatRoomsByUser } from "../../controllers/chat/chatRoomController";
 import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
+import { getProvidersByRequest } from "../../controllers/wiip/ProviderController";
+import { AlarmMessageGlb } from "../../global/text/chat/alarm";
+/**
+ * Utils
+ */
+import logger from "../../utils/logger";
 import { RequestEnum } from "api_spec/enum";
+import { createHash } from "crypto";
+/**
+ * Types
+ */
+import type { HydratedDocument } from "mongoose";
+import type { Server, Socket } from "socket.io";
+import type * as ChatTypes from "../../models/chat";
+import type { ISessionUser } from "../../config/auth.types";
+import type { UserAttributes } from "../../models/rdbms/User";
+import type { APIType } from "api_spec";
 
 const { chatContentController, chatRoomController, chatUserController, chatUnreadController } = chatController;
 const userSentEvent = new QueueEvents("userSentMessage");
@@ -157,6 +168,12 @@ const ResRefreshFactory = async (chatUser: HydratedDocument<ChatTypes.ChatUserTy
         requests
             .filter((req) => req !== null)
             .map((req) => req.get({ plain: true }))
+            .filter(
+                (req) =>
+                    req.request_status === RequestEnum.REQUEST_STATUS_ENUM.POSTED ||
+                    req.request_status === RequestEnum.REQUEST_STATUS_ENUM.PAID ||
+                    req.request_status === RequestEnum.REQUEST_STATUS_ENUM.CONTRACTED,
+            )
             .map(async (req) => {
                 // List of chatroom id which selected provider is in
                 const providerChatRoomIds: string[] = [];
@@ -167,7 +184,9 @@ const ResRefreshFactory = async (chatUser: HydratedDocument<ChatTypes.ChatUserTy
                 // Send selected chatroom list only for consumer
                 // TODO: add PAID status and delete POSTED later
                 if (isConsumer && req.request_status === RequestEnum.REQUEST_STATUS_ENUM.POSTED) {
-                    const providerIds = req.provider_ids as Buffer[];
+                    const providerIds = (await getProvidersByRequest(req.request_id)).map((val) =>
+                        val.getDataValue("user_id"),
+                    );
                     const providerChatRoom = aliveChatRooms
                         .filter((room) => room.request_id === req.request_id)
                         .map((room) => {
