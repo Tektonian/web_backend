@@ -64,20 +64,6 @@ export const getRecommendedStudentByRequestId = async (request_id: number) => {
     return allStudents;
 };
 
-/**
- * @deprecated
- */
-/*
-export const getStudentFullProfileByStudentId = async (student_id: number) => {
-    const studentProfile = await fullstudentprofile.findOne({
-        where: { student_id: student_id },
-        attributes: { exclude: ["user_id", "id"] },
-    });
-
-    return studentProfile;
-};
-*/
-
 export const getStudentByStudentId = async (studentId: number) => {
     return await Student.findOne({ where: { student_id: studentId } });
 };

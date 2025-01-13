@@ -15,12 +15,15 @@ import { getUserByStudentId } from "../../controllers/wiip/UserController";
  */
 import * as Errors from "../../errors";
 import { APISpec } from "api_spec";
+import { StudentSchema } from "api_spec/joi";
+import { ValidateSchema } from "../../utils/validation.joi";
 import logger from "../../utils/logger";
 import { filterSessionByRBAC } from "../../middleware/auth.middleware";
 import { pick } from "es-toolkit";
 const StudentRouter = express.Router();
 
-StudentRouter.post("/", async (req: Request, res: Response) => {
+StudentRouter.post("/" satisfies keyof APISpec.StudentAPISpec, (async (req, res) => {
+    const profileData = ValidateSchema(StudentSchema.ReqCreateStudentProfileSchema, req.body);
     const sessionUser = res.session?.user ?? undefined;
 
     if (sessionUser === undefined) {
@@ -35,7 +38,7 @@ StudentRouter.post("/", async (req: Request, res: Response) => {
         return;
     }
 
-    const ret = await createUnVerifiedStudentIdentity(sessionUser.id, req.body);
+    const ret = await createUnVerifiedStudentIdentity(sessionUser.id, profileData);
 
     if (ret === undefined) {
         res.status(500).json({ message: "Internal Server Error" });
@@ -45,7 +48,7 @@ StudentRouter.post("/", async (req: Request, res: Response) => {
             student: ret,
         });
     }
-});
+}) as APISpec.StudentAPISpec["/"]["post"]["handler"]);
 
 // TODO: Response 타입 정확한지 확인 필요
 StudentRouter.get("/:student_id" satisfies keyof APISpec.StudentAPISpec, (async (req, res) => {

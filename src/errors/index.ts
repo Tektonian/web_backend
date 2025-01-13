@@ -1,3 +1,8 @@
+/**
+ * This folder is for integrating other packages' error definitions into our services.
+ * Handlers of errors can be found middleware folder not here
+ * @see {@link src/middleware}
+ */
 // We will wrap other services' error here, so other files can import from one source file
 
 /**
@@ -10,6 +15,7 @@ export { ServiceExceptionBase } from "./base-error";
  * Run time exceptions
  */
 export { ValidationError as JoiError } from "joi";
+export { ZodError } from "zod";
 export { SseError as SSEError } from "better-sse";
 export { AuthError as AuthError } from "@auth/core/errors";
 /**

@@ -2,10 +2,10 @@ import express from "express";
 /**
  * Controller
  */
-import { getUserByConsumerId } from "../../controllers/wiip/UserController";
 import { getProviderOfRequestByStudentId } from "../../controllers/wiip/ProviderController";
 import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
 import { getStudentReviewsByStudentId } from "../../controllers/wiip/StudentReviewController";
+import { getUserByConsumerId } from "../../controllers/wiip/UserController";
 /**
  * Modesl
  */
@@ -19,16 +19,14 @@ import { Op } from "sequelize";
  */
 import { APISpec } from "api_spec";
 import { RequestEnum } from "api_spec/enum";
-import { StudentReviewSchema } from "api_spec/joi";
 
 /**
  * Utils, Types, etc...
  */
-import logger from "../../utils/logger";
 import * as Errors from "../../errors";
+import logger from "../../utils/logger";
 
 import { filterSessionByRBAC } from "../../middleware/auth.middleware";
-import { ValidateSchema } from "../../utils/validation.joi";
 
 import { pick } from "es-toolkit";
 
@@ -42,10 +40,7 @@ StudentReviewRouter.post(
     filterSessionByRBAC(),
     (async (req, res) => {
         logger.info("Start-Create student review");
-        const { consumer_id, student_id, request_id, ...reviewData } = ValidateSchema(
-            StudentReviewSchema.ReqCreateStudentReveiwSchema,
-            req.body,
-        );
+        const { consumer_id, student_id, request_id, ...reviewData } = req.body;
 
         const sessionUser = res.session!.user;
 

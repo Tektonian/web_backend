@@ -1,8 +1,6 @@
 import express from "express";
 import MeiliSearch from "meilisearch";
 import { APISpec } from "api_spec";
-import { SchoolSearchScheme } from "api_spec/joi";
-import { ValidateSchema } from "../../utils/validation.joi";
 import logger from "../../utils/logger";
 const client = new MeiliSearch({
     host: process.env.MEILISEARCH_HOST,

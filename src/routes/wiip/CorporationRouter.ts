@@ -1,14 +1,12 @@
 import express, { Request, Response } from "express";
-import { models } from "../../models/rdbms";
 import * as CorpController from "../../global/corpInfo/kr/CorpInfoController";
+import { models } from "../../models/rdbms";
 
 /**
  * Types, middleware, and validator
  */
-import { filterSessionByRBAC } from "../../middleware/auth.middleware";
-import { CorporationSchema } from "api_spec/joi";
-import { ValidateSchema } from "../../utils/validation.joi";
 import { APISpec } from "api_spec";
+import { filterSessionByRBAC } from "../../middleware/auth.middleware";
 
 /**
  * Utils
@@ -80,7 +78,8 @@ CorporationRouter.post(
     filterSessionByRBAC(["normal"]),
     (async (req, res) => {
         logger.info("START-Create corporation profile");
-        const corpData = ValidateSchema(CorporationSchema.ReqCreateCorpProfileSchema, req.body);
+        // const corpData = ValidateSchema(CorporationSchema.ReqCreateCorpProfileSchema, req.body);
+        const corpData = req.body;
 
         const createdCorpProfile = await CorpController.createCorpProfile(corpData);
 

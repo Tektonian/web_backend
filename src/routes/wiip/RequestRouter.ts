@@ -38,7 +38,6 @@ import { APISpec } from "api_spec";
 import { RequestSchema } from "api_spec/joi";
 import { RequestEnum } from "api_spec/enum";
 import * as Errors from "../../errors";
-import { ValidateSchema } from "../../utils/validation.joi";
 import logger from "../../utils/logger";
 import { omit, pick } from "es-toolkit";
 import { checkUserIsCorpnWorker, getCorpByCorpId } from "../../controllers/wiip/CorporationController";
@@ -115,7 +114,8 @@ RequestRouter.post(
     (async (req, res) => {
         logger.info("START-Get student request card list");
 
-        const { student_id } = ValidateSchema(RequestSchema.ReqAllRequestCardSchema, req.body);
+        // const { student_id } = ValidateSchema(RequestSchema.ReqAllRequestCardSchema, req.body);
+        const { student_id } = req.body;
         const sessionUser = res.session!.user;
         const userRoles = new Set(sessionUser.roles);
         if (!student_id) {
@@ -162,7 +162,8 @@ RequestRouter.post(
     (async (req, res) => {
         logger.info("START-Get corp request card list");
 
-        const { corp_id } = ValidateSchema(RequestSchema.ReqAllRequestCardSchema, req.body);
+        // const { corp_id } = ValidateSchema(RequestSchema.ReqAllRequestCardSchema, req.body);
+        const { corp_id } = req.body;
         const sessionUser = res.session!.user;
         const userRoles = new Set(sessionUser.roles);
 
@@ -209,7 +210,9 @@ RequestRouter.post(
     (async (req, res) => {
         logger.info("START-Get orgn request card list");
 
-        const { orgn_id } = ValidateSchema(RequestSchema.ReqAllRequestCardSchema, req.body);
+        // const { orgn_id } = ValidateSchema(RequestSchema.ReqAllRequestCardSchema, req.body);
+        const { orgn_id } = req.body;
+
         const sessionUser = res.session!.user;
         const userRoles = new Set(sessionUser.roles);
 
