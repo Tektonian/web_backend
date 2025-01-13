@@ -15,8 +15,8 @@ import { getUserByStudentId } from "../../controllers/wiip/UserController";
  */
 import * as Errors from "../../errors";
 import { APISpec } from "api_spec";
-import { StudentSchema } from "api_spec/joi";
-import { ValidateSchema } from "../../utils/validation.joi";
+import { StudentSchema } from "api_spec/zod";
+import { ValidateSchema } from "../../utils/validation";
 import logger from "../../utils/logger";
 import { filterSessionByRBAC } from "../../middleware/auth.middleware";
 import { pick } from "es-toolkit";

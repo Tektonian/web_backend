@@ -35,7 +35,7 @@ import { ChatRoom } from "../../models/chat";
  * Enums / Utils / etc...
  */
 import { APISpec } from "api_spec";
-import { RequestSchema } from "api_spec/joi";
+import { RequestSchema } from "api_spec/zod";
 import { RequestEnum } from "api_spec/enum";
 import * as Errors from "../../errors";
 import logger from "../../utils/logger";
