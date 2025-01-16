@@ -5,6 +5,8 @@ import { authConfig } from "../config/auth.config.js";
 
 import { UserEnum } from "api_spec/enum";
 import * as Errors from "../errors";
+
+import { models } from "../models/rdbms/index.js";
 import logger from "../utils/logger.js";
 
 export const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -22,20 +24,22 @@ export const currentSession = async (req: Request, res: Response, next: NextFunc
     // init as undefined
     res.session = undefined;
     req.uuid = undefined;
-    // console.log("currentSession", session);
-    // encode JSON.stringfied Buffer to Buffer
-    // https://stackoverflow.com/questions/34557889/how-to-deserialize-a-nested-buffer-using-json-parse
-    if (session !== undefined && session.user !== undefined && session.user.id !== undefined) {
-        res.session = {
-            user: {
-                ...session.user,
-                id: Buffer.from(session.user.id.data),
-            },
-        };
-        const str = Buffer.from(session.user.id.data).toString("hex");
-        req.uuid = `${str.slice(0, 8)}-${str.slice(8, 12)}-${str.slice(12, 16)}-${str.slice(16, 20)}-${str.slice(20)}`;
+    if (session?.user?.email) {
+        const dbUser = await models.User.findOne({ where: { email: session?.user?.email }, raw: true });
+        if (dbUser) {
+            res.session = {
+                user: {
+                    id: dbUser.user_id as Buffer,
+                    name: dbUser.username ?? "",
+                    email: dbUser.email,
+                    roles: dbUser.roles ?? [],
+                    nationality: dbUser.nationality,
+                },
+            };
+            const str = dbUser.user_id.toString("hex");
+            req.uuid = `${str.slice(0, 8)}-${str.slice(8, 12)}-${str.slice(12, 16)}-${str.slice(16, 20)}-${str.slice(20)}`;
+        }
     }
-
     return next();
 };
 
