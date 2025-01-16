@@ -6,7 +6,7 @@ import { ExamEnum } from "api_spec/enum";
 export interface ExamHistoryAttributes {
     id: number;
     student_id: number;
-    exam_id: number;
+    exam_id: Buffer;
     level?: ExamEnum.EXAM_LEVEL_ENUM;
 }
 
@@ -21,7 +21,7 @@ export class ExamHistory
 {
     id!: number;
     student_id!: number;
-    exam_id!: number;
+    exam_id!: Buffer;
     level?: ExamEnum.EXAM_LEVEL_ENUM;
 
     // ExamHistory belongsTo LanguageExam via exam_id
@@ -53,7 +53,7 @@ export class ExamHistory
                     },
                 },
                 exam_id: {
-                    type: DataTypes.INTEGER,
+                    type: DataTypes.BLOB,
                     allowNull: false,
                     references: {
                         model: "LanguageExam",
