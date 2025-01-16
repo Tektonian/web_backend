@@ -1,0 +1,20 @@
+FROM node
+
+RUN mkdir /mesh
+# 서버 소스 복사
+COPY ./web_backend /mesh
+
+# api spec 소스 복사
+COPY ./api_spec /api_spec
+
+COPY ./tspec-with-joi-to-json /tspec-with-joi-to-json 
+WORKDIR /mesh
+
+RUN chmod +x wait-for-it.sh 
+
+RUN npm update --force
+RUN npm install --force
+ 
+
+# 실행 명령어
+CMD ["npm", "run", "dev:production"]

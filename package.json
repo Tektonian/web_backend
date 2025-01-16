@@ -4,12 +4,12 @@
     "main": "index.js",
     "type": "module",
     "scripts": {
-        "start": "cross-env NODE_ENV=test node compiled/index.js",
+        "start": "cross-env NODE_ENV=test vite-node ./src/server.ts",
         "build": "vite build",
         "test": "cross-env NODE_ENV=test dotenv -e \"./.env.local\" vitest",
         "dev": "cross-env NODE_ENV=development nodemon --watch \"src/**/*.ts\" --ignore *.test.ts --exec vite-node \"src/server.ts\" --options.deps.inline=\"dotenv/config dotenv_config_path=./.env.local\"",
-        "dev:production": "cross-env NODE_ENV=production nodemon --watch \"src/**/*.ts\" --ignore *.test.ts --exec vite-node \"src/server.ts\" --options.deps.inline=\"dotenv/config dotenv_config_path=./.env.local\"",
-        "production": "cross-env NODE_ENV=production vite-node \"src/server.ts\" --options.deps.inline=\"dotenv/config dotenv_config_path=./.env\""
+        "dev:production": "cross-env NODE_ENV=production nodemon --watch \"src/**/*.ts\" --ignore *.test.ts --exec vite-node \"src/server.ts\"",
+        "production": "cross-env NODE_ENV=production vite-node \"./src/server.ts\""
     },
     "keywords": [],
     "author": "",
@@ -44,7 +44,7 @@
         "vitest": "^2.1.8"
     },
     "dependencies": {
-        "@auth/express": "^0.8.2",
+        "@auth/express": "^0.8.4",
         "@auth/sequelize-adapter": "^2.7.2",
         "api_spec": "file:../api_spec/api_spec-1.0.0.tgz",
         "better-sse": "^0.14.1",
