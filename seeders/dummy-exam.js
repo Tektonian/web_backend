@@ -14,7 +14,16 @@ module.exports = {
         const LanguageExam = db.sequelize.models.LanguageExam;
 
         const LanguageExamData = ExamDataset.map((exam) => ({
-            exam_id: exam.exam_id,
+            exam_id: Buffer.from(exam.exam_id.replaceAll("-", ""), "hex"),
+            exam_name_glb: exam.exam_name_glb,
+            exam_result_type: exam.exam_type,
+            exam_results: exam.exam_results ?? null,
+            exam_level: exam.exam_level ?? null,
+            lang_country_code: exam.lang_country_code,
+        }));
+
+        const LanguageExamSearchData = ExamDataset.map((exam) => ({
+            exam_id: exam.exam_id.replaceAll("-", ""),
             exam_name_glb: exam.exam_name_glb,
             exam_result_type: exam.exam_type,
             exam_results: exam.exam_results ?? null,
@@ -26,7 +35,7 @@ module.exports = {
             await LanguageExam.bulkCreate(LanguageExamData);
 
             const index = client.index("language-exam");
-            await index.addDocuments(LanguageExamData, {
+            await index.addDocuments(LanguageExamSearchData, {
                 primaryKey: "exam_id",
             });
 
@@ -46,7 +55,7 @@ module.exports = {
                 for (let i = 0; i < 2; i++) {
                     await ExamHistory.create({
                         student_id: val.student_id,
-                        exam_id: ExamDataset[Math.floor(Math.random() * ExamDataset.length)].exam_id,
+                        exam_id: LanguageExamData[Math.floor(Math.random() * LanguageExamData.length)].exam_id,
                         level: [1, 2, 3].at(Math.floor(Math.random() * 3)),
                     });
                 }
