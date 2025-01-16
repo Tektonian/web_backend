@@ -30,7 +30,6 @@ module.exports = {
             host: meilisearchHost,
             apiKey: process.env.MEILISEARCH_KEY,
         });
-
         const db = require("../models");
         const School = db.sequelize.models.School;
         let idx = 0;
@@ -49,7 +48,7 @@ module.exports = {
                     },
                 });
                 client.index("school-name-jp").addDocuments({
-                    school_id: school["school_id"].replaceAll("-", ""),
+                    school_id: school["school_id"],
                     school_name: school["JP"],
                     school_name_glb: {
                         KO: school["KO"],
@@ -80,7 +79,7 @@ module.exports = {
                     },
                 });
                 client.index("school-name-ko").addDocuments({
-                    school_id: school["school_id"].replaceAll("-", ""),
+                    school_id: school["school_id"],
                     school_name: school["KO"],
                     school_name_glb: {
                         KO: school["KO"],
@@ -99,6 +98,16 @@ module.exports = {
     },
 
     async down(queryInterface, Sequelize) {
+        const MeiliSearch = require("meilisearch").MeiliSearch;
+        const meilisearchHost =
+            process.env.NODE_ENV === "production" ? process.env.MEILISEARCH_HOST : "http://127.0.0.1:7700";
+
+        const client = new MeiliSearch({
+            host: meilisearchHost,
+            apiKey: process.env.MEILISEARCH_KEY,
+        });
+        client.index("school-name-jp").deleteAllDocuments();
+        client.index("school-name-ko").deleteAllDocuments();
         await queryInterface.bulkDelete("School", null, {});
     },
 };

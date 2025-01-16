@@ -119,8 +119,11 @@ export const createUnVerifiedStudentIdentity = async (userId: Buffer, data) => {
 
             for (const history of academic_history) {
                 const isAttending = history.status === "In progress" ? 1 : 0;
+                // TODO: Need validator and type should be added
                 // change to string id to buffer
-                history.school_id = Buffer.from(history.school_id, "hex");
+                if (typeof history.school_id === "string") {
+                    history.school_id = Buffer.from(history.school_id.replaceAll("-", ""), "hex");
+                }
                 const acaHistory = await AcademicHistory.create(
                     {
                         school_id: history.school_id,
@@ -159,12 +162,16 @@ export const createUnVerifiedStudentIdentity = async (userId: Buffer, data) => {
             const searchTask = await client.waitForTask(searchRet.taskUid);
 
             for (const exam of exam_history) {
-                exam.exam_id = Buffer.from(exam.exam_id, "hex");
+                // TODO: Need validator and type should be added
+                // change to string id to buffer
+                if (typeof exam.exam_id === "string") {
+                    exam.exam_id = Buffer.from(exam.exam_id.replaceAll("-", ""), "hex");
+                }
                 await ExamHistory.create(
                     {
                         student_id: studentId,
                         exam_id: exam.exam_id,
-                        exam_result: exam.exam_result,
+                        level: exam.level,
                     },
                     { transaction: t },
                 );
