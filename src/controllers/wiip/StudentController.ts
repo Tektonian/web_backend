@@ -119,6 +119,8 @@ export const createUnVerifiedStudentIdentity = async (userId: Buffer, data) => {
 
             for (const history of academic_history) {
                 const isAttending = history.status === "In progress" ? 1 : 0;
+                // change to string id to buffer
+                history.school_id = Buffer.from(history.school_id, "hex");
                 const acaHistory = await AcademicHistory.create(
                     {
                         school_id: history.school_id,
@@ -157,6 +159,7 @@ export const createUnVerifiedStudentIdentity = async (userId: Buffer, data) => {
             const searchTask = await client.waitForTask(searchRet.taskUid);
 
             for (const exam of exam_history) {
+                exam.exam_id = Buffer.from(exam.exam_id, "hex");
                 await ExamHistory.create(
                     {
                         student_id: studentId,
