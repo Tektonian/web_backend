@@ -12,12 +12,14 @@ mongoose
     })
     .then(async (val) => {
         logger.info("Connected to MongoDB => UserAPI");
-        logger.info("drop collections");
         if (process.env.NODE_ENV !== "production") {
+            logger.info("drop collections");
             await val.connection.dropCollection("chat_users");
             await val.connection.dropCollection("chat_rooms");
             await val.connection.dropCollection("chat_contents");
             await val.connection.dropCollection("unreads");
+        } else if (process.env.NODE_ENV === "production") {
+            await val.syncIndexes();
         }
     })
     .catch((error) => {
