@@ -10,6 +10,11 @@ export const sequelize = new Sequelize(
         dialect: "mysql",
         logging: (msg) => logger.debug(msg),
         logQueryParameters: true,
+        dialectOptions: {
+            host: process.env.MYSQL_HOST,
+            user: process.env.MYSQL_USER,
+            password: process.env.MYSQL_PASSWORD,
+        },
     },
 );
 
