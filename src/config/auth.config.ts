@@ -221,10 +221,9 @@ export const authConfig: ExpressAuthConfig = {
             // https://authjs.dev/guides/extending-the-session#with-jwt
             // console.log("Session: ", session, token, user);
             logger.debug(`Session: ${JSON.stringify(session)} - ${JSON.stringify(token)} - ${user}`);
-            // User id should not be exposed
-            if (process.env.NODE_ENV !== "production") {
-                session.user.id = token.id ?? undefined;
-            }
+            // IMPORTANT: User id should not be exposed
+            // session.user.id = token.id ?? undefined;
+
             session.user.email = token.email ?? undefined;
             session.user.name = token.name;
             session.user.roles = token.roles ?? [];

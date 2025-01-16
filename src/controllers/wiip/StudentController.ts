@@ -91,7 +91,10 @@ export const getInstReviewOfStudentByStudentId = async (student_id: number) => {
 };
 
 // TODO: Add type laterㅇ
-export const createUnVerifiedStudentIdentity = async (userId: Buffer, data) => {
+export const createUnVerifiedStudentIdentity = async (
+    userId: Buffer,
+    data: APIType.StudentType.ReqCreateStudentProfile,
+) => {
     try {
         const ret = await sequelize.transaction(async (t) => {
             const { academic_history, exam_history, ...student } = data;
@@ -103,7 +106,6 @@ export const createUnVerifiedStudentIdentity = async (userId: Buffer, data) => {
                     phone_number: student.phone_number,
                     emergency_contact: student.emergency_contact,
                     gender: student.gender,
-                    image: student.image,
                     has_car: student.has_car,
                     keyword_list: student.keyword_list,
                 },
@@ -118,7 +120,7 @@ export const createUnVerifiedStudentIdentity = async (userId: Buffer, data) => {
             };
 
             for (const history of academic_history) {
-                const isAttending = history.status === "In progress" ? 1 : 0;
+                const isAttending = history.status === 0 ? 1 : 0;
                 // TODO: Need validator and type should be added
                 // change to string id to buffer
                 if (typeof history.school_id === "string") {
