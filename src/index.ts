@@ -30,10 +30,8 @@ import { ServiceErrorBase } from "./errors";
 import * as rTracer from "cls-rtracer";
 import logger from "./utils/logger";
 
-Error.stackTraceLimit = 999;
 const app = express();
 const PORT = process.env.PORT || 8080;
-
 /**
  * Middlewares
  */
@@ -93,7 +91,7 @@ app.use("/api/sse", SSEAlarmRouter);
 app.use("/api/message", ChatRouter);
 
 app.get("/", async (req, res) => {
-    res.redirect(`${process.env.CORS_ORIGIN}/home`);
+    res.redirect(`${process.env.CORS_ORIGIN}/`);
 });
 /**
  * For Sign in process of Android application
