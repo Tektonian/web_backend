@@ -25,7 +25,7 @@ const StudentRouter = express.Router();
 StudentRouter.post(
     "/" satisfies keyof APISpec.StudentAPISpec,
     // Check session
-    filterSessionByRBAC([]),
+    filterSessionByRBAC(),
     (async (req, res) => {
         const profileData = ValidateSchema(StudentSchema.ReqCreateStudentProfileSchema, req.body);
         const sessionUser = res.session?.user ?? undefined;
