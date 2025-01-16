@@ -8,8 +8,18 @@ import { APIType } from "api_spec";
 // Some user sent message at specific chatroom
 // Server will record sent messages at database
 // Finally server will broadcast saved message to users who paticipate in chatroom
-const sentMessageQueue = new Queue("userSentMessage");
-const chatEventProducer = new QueueEventsProducer("userSentMessage");
+const sentMessageQueue = new Queue("userSentMessage", {
+    connection: {
+        host: process.env.REDIS_HOST,
+        port: process.env.REDIS_PORT,
+    },
+});
+const chatEventProducer = new QueueEventsProducer("userSentMessage", {
+    connection: {
+        host: process.env.REDIS_HOST,
+        port: process.env.REDIS_PORT,
+    },
+});
 
 // User will ack to server that "I have received a message and updated last sequence"
 // Until then server will wait about 1s until ack message from users
@@ -19,14 +29,26 @@ const chatEventProducer = new QueueEventsProducer("userSentMessage");
 // - In this case we can send user that update chat room unread by using "updateChatRoomQueue"
 // 2nd is when user is offline
 // - In this case we should send alaram (for mobile device) and sse (for web) by using "sendAlarmQueue"
-const updateChatRoomQueue = new Queue("updateChatRoom");
-const updateChatRoomProducer = new QueueEventsProducer("updateChatRoom");
+const updateChatRoomProducer = new QueueEventsProducer("updateChatRoom", {
+    connection: {
+        host: process.env.REDIS_HOST,
+        port: process.env.REDIS_PORT,
+    },
+});
 
-const sendAlarmQueue = new Queue("sendAlarm");
-const sendAlarmProducer = new QueueEventsProducer("sendAlarm");
+const sendAlarmProducer = new QueueEventsProducer("sendAlarm", {
+    connection: {
+        host: process.env.REDIS_HOST,
+        port: process.env.REDIS_PORT,
+    },
+});
 
-const refreshChatRoomsQueue = new Queue("refreshChatRooms");
-const refreshChatRoomsProducer = new QueueEventsProducer("refreshChatRooms");
+const refreshChatRoomsProducer = new QueueEventsProducer("refreshChatRooms", {
+    connection: {
+        host: process.env.REDIS_HOST,
+        port: process.env.REDIS_PORT,
+    },
+});
 
 export const pushSendAlarm = async (message: APIType.WebSocketType.UserSentEventReturn, userUUID: Buffer) => {
     logger.debug(`push alaram: ${userUUID.toString("hex")}`);
