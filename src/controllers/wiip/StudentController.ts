@@ -94,7 +94,7 @@ export const getInstReviewOfStudentByStudentId = async (student_id: number) => {
 export const createUnVerifiedStudentIdentity = async (userId: Buffer, data) => {
     try {
         const ret = await sequelize.transaction(async (t) => {
-            const { academicHistory, examHistory, ...student } = data;
+            const { academic_history, exam_history, ...student } = data;
             const createdStudent = await Student.create(
                 {
                     name_glb: student.name_glb,
@@ -117,7 +117,7 @@ export const createUnVerifiedStudentIdentity = async (userId: Buffer, data) => {
                 ...createdStudent.dataValues,
             };
 
-            for (const history of academicHistory) {
+            for (const history of academic_history) {
                 const isAttending = history.status === "In progress" ? 1 : 0;
                 const acaHistory = await AcademicHistory.create(
                     {
@@ -148,15 +148,15 @@ export const createUnVerifiedStudentIdentity = async (userId: Buffer, data) => {
 
             searchDocument = {
                 ...searchDocument,
-                academicHistory: academicHistory,
-                examHistory: examHistory,
+                academic_history: academic_history,
+                exam_history: exam_history,
             };
 
             const searchRet = await studentSearch.addDocuments([searchDocument], { primaryKey: "id" });
 
             const searchTask = await client.waitForTask(searchRet.taskUid);
 
-            for (const exam of examHistory) {
+            for (const exam of exam_history) {
                 await ExamHistory.create(
                     {
                         student_id: studentId,
