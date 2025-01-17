@@ -33,7 +33,7 @@ __initChat(io);
 
 // TODO: add schedule later
 // __initSchedule();
-
+/*
 if (process.env.NODE_ENV === "production") {
     app.use(express.static(path.join(__dirname, "../web_input_test/dist")));
 }
@@ -41,6 +41,7 @@ if (process.env.NODE_ENV === "production") {
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "../web_input_test/dist", "index.html"));
 });
+*/
 // Listen server
 httpServer.listen(process.env.PORT, () => {
     logger.info(`Server is running on port ${process.env.PORT}`);

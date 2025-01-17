@@ -2,7 +2,7 @@
 
 SEQ=sequelize
 DB_NAME=tektonian
-DB_URL=mysql://$2:$3@localhost/${DB_NAME}
+DB_URL=mysql://$2:$3@localhost:3306/${DB_NAME}
 
 DB_USER=$2
 DB_PASSWORD=$3
@@ -59,7 +59,7 @@ function clean_data {
     echo "Cleaning data"
     echo "Check sequelize/config file before you run the script"
     cd ${SEQ}
-    npx sequelize-cli --url ${DB_URL} db:seed:undo:all
+    npx sequelize-cli db:seed:undo:all --url ${DB_URL} 
     cd ..
 }
 

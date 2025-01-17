@@ -1,14 +1,11 @@
 FROM node
 
 RUN mkdir /mesh
+RUN mkdir /mesh/backend
 # 서버 소스 복사
-COPY ./web_backend /mesh
+COPY ./web_backend /mesh/backend
 
-# api spec 소스 복사
-COPY ./api_spec /api_spec
-
-COPY ./tspec-with-joi-to-json /tspec-with-joi-to-json 
-WORKDIR /mesh
+WORKDIR /mesh/backend
 
 RUN chmod +x wait-for-it.sh 
 
