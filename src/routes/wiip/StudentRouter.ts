@@ -1,25 +1,25 @@
-import express, { Request, Response } from "express";
+import express from "express";
 
 /**
  * Controller
  */
 import {
-    getStudentByUserId,
     createUnVerifiedStudentIdentity,
-    updateStudentProfileByUserId,
     getStudentByStudentId,
-} from "../../controllers/wiip/StudentController";
-import { getUserByStudentId } from "../../controllers/wiip/UserController";
+    getStudentByUserId,
+    updateStudentProfileByUserId,
+} from "../../controllers/wiip/StudentController.js";
+import { getUserByStudentId } from "../../controllers/wiip/UserController.js";
 /**
  * Utils, types, etc..
  */
-import * as Errors from "../../errors";
-import { APISpec } from "api_spec";
-import { StudentSchema } from "api_spec/zod";
-import { ValidateSchema } from "../../utils/validation";
-import logger from "../../utils/logger";
-import { filterSessionByRBAC } from "../../middleware/auth.middleware";
+import { APISpec } from "@mesh/api_spec";
+import { StudentSchema } from "@mesh/api_spec/zod";
 import { pick } from "es-toolkit";
+import * as Errors from "../../errors/index.js";
+import { filterSessionByRBAC } from "../../middleware/auth.middleware.js";
+import logger from "../../utils/logger.js";
+import { ValidateSchema } from "../../utils/validation.js";
 const StudentRouter = express.Router();
 
 StudentRouter.post(

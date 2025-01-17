@@ -8,8 +8,8 @@ import { ChatRoom } from "../../models/chat";
  */
 import logger from "../../utils/logger";
 import * as Errors from "../../errors";
-import { RequestEnum } from "api_spec/enum";
-import { ConsumerEnum } from "api_spec/enum";
+import { RequestEnum } from "@mesh/api_spec/enum";
+import { ConsumerEnum } from "@mesh/api_spec/enum";
 import type { RequestAttributes } from "../../models/rdbms/Request";
 import { Consumer } from "../../models/rdbms/Consumer";
 const client = new MeiliSearch({

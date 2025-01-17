@@ -1,7 +1,7 @@
 import mongoose, { Types, HydratedDocument } from "mongoose";
 import { Unread, ChatUser, ChatRoom, Types as ChatTypes } from "../../models/chat";
 import { pushSendAlarm, pushUpdateChatRoom } from "./messageQueue";
-import { APIType } from "api_spec";
+import { APIType } from "@mesh/api_spec";
 import logger from "../../utils/logger";
 
 type UserSentEventReturn = APIType.WebSocketType.UserSentEventReturn;

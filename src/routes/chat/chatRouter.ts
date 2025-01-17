@@ -3,29 +3,29 @@
  * such as, unread message count and information about current chatrooms
  */
 import { Router } from "express";
-import { models } from "../../models/rdbms";
+import { models } from "../../models/rdbms/index.js";
 
 /**
  * Controller
  */
-import * as ChatRoomController from "../../controllers/chat/chatRoomController";
-import { getUserByConsumerId } from "../../controllers/wiip/UserController";
-import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
-import { getChatRoomMessagesByContentType, sendMessage } from "../../controllers/chat/chatContentController";
-import { getStudentByUserId } from "../../controllers/wiip/StudentController";
-import { getProvidersByRequest } from "../../controllers/wiip/ProviderController";
+import { getChatRoomMessagesByContentType, sendMessage } from "../../controllers/chat/chatContentController.js";
+import * as ChatRoomController from "../../controllers/chat/chatRoomController.js";
+import { getProvidersByRequest } from "../../controllers/wiip/ProviderController.js";
+import { getRequestByRequestId } from "../../controllers/wiip/RequestController.js";
+import { getStudentByUserId } from "../../controllers/wiip/StudentController.js";
+import { getUserByConsumerId } from "../../controllers/wiip/UserController.js";
 /**
  * middleware
  */
-import { filterSessionByRBAC } from "../../middleware/auth.middleware";
+import { filterSessionByRBAC } from "../../middleware/auth.middleware.js";
 
 /**
  * Enum / Util / Text
  */
-import { RequestEnum } from "api_spec/enum";
-import * as Errors from "../../errors";
-import logger from "../../utils/logger";
-import { AlarmMessageGlb, AlarmMessageGlbEnum } from "../../global/text/chat/alarm";
+import { RequestEnum } from "@mesh/api_spec/enum";
+import * as Errors from "../../errors/index.js";
+import { AlarmMessageGlbEnum } from "../../global/text/chat/alarm.js";
+import logger from "../../utils/logger.js";
 
 const ChatRouter = Router();
 

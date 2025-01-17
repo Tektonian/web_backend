@@ -3,22 +3,21 @@ import express from "express";
 /**
  * Controller
  */
-import { getUserById, updateUserByUserId } from "../../controllers/wiip/UserController";
 import {
-    getRequestByStudentId,
-    getRequestsByProviderUserId,
     getPostedRequestsByUserId,
-} from "../../controllers/wiip/RequestController";
-import { getStudentByUserId } from "../../controllers/wiip/StudentController";
+    getRequestsByProviderUserId
+} from "../../controllers/wiip/RequestController.js";
+import { getStudentByUserId } from "../../controllers/wiip/StudentController.js";
+import { getUserById, updateUserByUserId } from "../../controllers/wiip/UserController.js";
 /**
  * Util, types, etc..
  */
-import * as Errors from "../../errors";
+import { APISpec } from "@mesh/api_spec";
 import { pick } from "es-toolkit";
-import { filterSessionByRBAC } from "../../middleware/auth.middleware";
-import { APISpec } from "api_spec";
-import logger from "../../utils/logger";
-import { getCorpByConsumerId, getCorpByUserId } from "../../controllers/wiip/CorporationController";
+import { getCorpByUserId } from "../../controllers/wiip/CorporationController.js";
+import * as Errors from "../../errors/index.js";
+import { filterSessionByRBAC } from "../../middleware/auth.middleware.js";
+import logger from "../../utils/logger.js";
 
 const UserRouter = express.Router();
 

@@ -5,27 +5,27 @@ import { QueueEvents } from "bullmq";
 /**
  * Controller
  */
-import { chatController } from "../../controllers/chat";
-import * as UserController from "../../controllers/wiip/UserController";
-import { getAliveChatRoomsByUser } from "../../controllers/chat/chatRoomController";
-import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
-import { getProvidersByRequest } from "../../controllers/wiip/ProviderController";
-import { AlarmMessageGlb } from "../../global/text/chat/alarm";
+import { chatController } from "../../controllers/chat/index.js";
+import * as UserController from "../../controllers/wiip/UserController.js";
+import { getAliveChatRoomsByUser } from "../../controllers/chat/chatRoomController.js";
+import { getRequestByRequestId } from "../../controllers/wiip/RequestController.js";
+import { getProvidersByRequest } from "../../controllers/wiip/ProviderController.js";
+import { AlarmMessageGlb } from "../../global/text/chat/alarm.js";
 /**
  * Utils
  */
-import logger from "../../utils/logger";
-import { RequestEnum } from "api_spec/enum";
+import logger from "../../utils/logger.js";
+import { RequestEnum } from "@mesh/api_spec/enum";
 import { createHash } from "crypto";
 /**
  * Types
  */
 import type { HydratedDocument } from "mongoose";
 import type { Server, Socket } from "socket.io";
-import type * as ChatTypes from "../../models/chat";
-import type { ISessionUser } from "../../config/auth.types";
-import type { UserAttributes } from "../../models/rdbms/User";
-import type { APIType } from "api_spec";
+import type * as ChatTypes from "../../models/chat/index.js";
+import type { ISessionUser } from "../../config/auth.types.js";
+import type { UserAttributes } from "../../models/rdbms/User.js";
+import type { APIType } from "@mesh/api_spec";
 
 const { chatContentController, chatRoomController, chatUserController, chatUnreadController } = chatController;
 const userSentEvent = new QueueEvents("userSentMessage", {

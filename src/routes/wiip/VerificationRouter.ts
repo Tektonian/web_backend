@@ -1,10 +1,10 @@
 import { createTransport } from "nodemailer";
 import express from "express";
-import { models } from "../../models/rdbms";
-import logger from "../../utils/logger";
-import * as Errors from "../../errors";
-import { filterSessionByRBAC } from "../../middleware/auth.middleware";
-import { UserEnum } from "api_spec/enum";
+import { models } from "../../models/rdbms/index.js";
+import logger from "../../utils/logger.js";
+import * as Errors from "../../errors/index.js";
+import { filterSessionByRBAC } from "../../middleware/auth.middleware.js";
+import { UserEnum } from "@mesh/api_spec/enum";
 const server = {
     host: process.env.EMAIL_SERVER_HOST,
     port: process.env.EMAIL_SERVER_PORT,

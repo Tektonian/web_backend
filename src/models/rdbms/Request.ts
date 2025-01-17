@@ -2,7 +2,7 @@ import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
 import type { Consumer, ConsumerId } from "./Consumer";
 import type { Provider, ProviderId } from "./Provider";
-import { RequestEnum } from "api_spec/enum";
+import { RequestEnum } from "@mesh/api_spec/enum";
 
 export interface RequestAttributes {
     request_id: number;

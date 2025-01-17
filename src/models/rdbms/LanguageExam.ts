@@ -1,8 +1,8 @@
 import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
 import type { ExamHistory, ExamHistoryId } from "./ExamHistory";
-import { CountryCodeEnum } from "api_spec/enum";
-import { ExamEnum } from "api_spec/enum";
+import { CountryCodeEnum } from "@mesh/api_spec/enum";
+import { ExamEnum } from "@mesh/api_spec/enum";
 
 interface EXAM_RESULT_TYPE {
     class: string;

@@ -1,15 +1,15 @@
 import express from "express";
-import { models } from "../../models/rdbms";
+import { models } from "../../models/rdbms/index.js";
 /**
  * Controller
  */
-import { getRecommendedRequestByStudentId } from "../../controllers/wiip/RequestController";
-import { getRecommendedStudentByRequestId } from "../../controllers/wiip/StudentController";
+import { getRecommendedRequestByStudentId } from "../../controllers/wiip/RequestController.js";
+import { getRecommendedStudentByRequestId } from "../../controllers/wiip/StudentController.js";
 /**
  * Utils,
  */
-import { APISpec } from "api_spec";
-import logger from "../../utils/logger";
+import { APISpec } from "@mesh/api_spec";
+import logger from "../../utils/logger.js";
 import { pick } from "es-toolkit";
 
 const Student = models.Student;

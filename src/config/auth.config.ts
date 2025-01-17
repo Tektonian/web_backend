@@ -4,10 +4,10 @@ import Google from "@auth/express/providers/google";
 import Naver from "@auth/express/providers/naver";
 import Kakao from "@auth/express/providers/kakao";
 import Nodemailer from "@auth/express/providers/nodemailer";
-import { sequelize } from "../models/rdbms";
-import SequelizeAdapter from "./auth.adapter-sequelize";
+import { sequelize } from "../models/rdbms/index.js";
+import SequelizeAdapter from "./auth.adapter-sequelize.js";
 
-import logger from "../utils/logger";
+import logger from "../utils/logger.js";
 
 /**
  * Most of the codes are from https://github.com/nextauthjs/next-auth/blob/main/packages/core/src/lib/actions/callback/handle-login.ts#L26

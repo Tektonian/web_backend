@@ -2,7 +2,7 @@ import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
 import type { LanguageExam, LanguageExamId } from "./LanguageExam";
 import type { Student, StudentId } from "./Student";
-import { ExamEnum } from "api_spec/enum";
+import { ExamEnum } from "@mesh/api_spec/enum";
 export interface ExamHistoryAttributes {
     id: number;
     student_id: number;

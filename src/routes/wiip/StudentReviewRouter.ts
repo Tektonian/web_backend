@@ -2,14 +2,14 @@ import express from "express";
 /**
  * Controller
  */
-import { getProviderOfRequestByStudentId } from "../../controllers/wiip/ProviderController";
-import { getRequestByRequestId } from "../../controllers/wiip/RequestController";
-import { getStudentReviewsByStudentId } from "../../controllers/wiip/StudentReviewController";
-import { getUserByConsumerId } from "../../controllers/wiip/UserController";
+import { getProviderOfRequestByStudentId } from "../../controllers/wiip/ProviderController.js";
+import { getRequestByRequestId } from "../../controllers/wiip/RequestController.js";
+import { getStudentReviewsByStudentId } from "../../controllers/wiip/StudentReviewController.js";
+import { getUserByConsumerId } from "../../controllers/wiip/UserController.js";
 /**
  * Modesl
  */
-import { models } from "../../models/rdbms";
+import { models } from "../../models/rdbms/index.js";
 /**
  * Sequelize
  */
@@ -17,16 +17,16 @@ import { Op } from "sequelize";
 /**
  * API Spec
  */
-import { APISpec } from "api_spec";
-import { RequestEnum } from "api_spec/enum";
+import { APISpec } from "@mesh/api_spec";
+import { RequestEnum } from "@mesh/api_spec/enum";
 
 /**
  * Utils, Types, etc...
  */
-import * as Errors from "../../errors";
-import logger from "../../utils/logger";
+import * as Errors from "../../errors/index.js";
+import logger from "../../utils/logger.js";
 
-import { filterSessionByRBAC } from "../../middleware/auth.middleware";
+import { filterSessionByRBAC } from "../../middleware/auth.middleware.js";
 
 import { pick } from "es-toolkit";
 

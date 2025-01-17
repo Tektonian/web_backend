@@ -1,8 +1,8 @@
 import express from "express";
 import MeiliSearch from "meilisearch";
-import { APISpec } from "api_spec";
-import logger from "../../utils/logger";
-import { LanguageExam } from "../../models/rdbms/LanguageExam";
+import { APISpec } from "@mesh/api_spec";
+import logger from "../../utils/logger.js";
+import { LanguageExam } from "../../models/rdbms/LanguageExam.js";
 /*
 const client = new MeiliSearch({
     host: process.env.MEILISEARCH_HOST,

@@ -2,7 +2,7 @@ import app from "../..";
 import { describe, test, expect, beforeAll } from "vitest";
 import request from "supertest";
 import { models } from "../../models/rdbms";
-import { RequestEnum } from "api_spec/enum";
+import { RequestEnum } from "@mesh/api_spec/enum";
 
 const Request = models.Request;
 const Organization = models.Organization;

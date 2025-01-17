@@ -4,8 +4,8 @@ import type { Account, AccountId } from "./Account";
 import type { Consumer, ConsumerId } from "./Consumer";
 import type { Provider, ProviderId } from "./Provider";
 import type { Student, StudentId } from "./Student";
-import { UserEnum } from "api_spec/enum";
-import { CountryCodeEnum } from "api_spec/enum";
+import { UserEnum } from "@mesh/api_spec/enum";
+import { CountryCodeEnum } from "@mesh/api_spec/enum";
 
 export interface UserAttributes {
     user_id: any;

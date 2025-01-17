@@ -4,8 +4,8 @@ import type { AcademicHistory, AcademicHistoryId } from "./AcademicHistory";
 import type { ExamHistory, ExamHistoryId } from "./ExamHistory";
 import type { Provider, ProviderId } from "./Provider";
 import type { User, UserId } from "./User";
-import { CountryCodeEnum } from "api_spec/enum";
-import { UserEnum } from "api_spec/enum";
+import { CountryCodeEnum } from "@mesh/api_spec/enum";
+import { UserEnum } from "@mesh/api_spec/enum";
 export interface StudentAttributes {
     student_id: number;
     user_id: any;

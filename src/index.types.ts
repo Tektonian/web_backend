@@ -1,6 +1,6 @@
 import * as express from "express";
 import { DefaultSession } from "@auth/express";
-import { UserEnum } from "api_spec/enum";
+import { UserEnum } from "@mesh/api_spec/enum";
 declare global {
     namespace Express {
         /** Extend Response types to add user session information */

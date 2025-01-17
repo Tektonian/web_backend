@@ -1,6 +1,6 @@
 import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
-import { VerificationTokenEnum } from "api_spec/enum";
+import { VerificationTokenEnum } from "@mesh/api_spec/enum";
 
 export interface VerificationTokenAttributes {
     identifier: string;

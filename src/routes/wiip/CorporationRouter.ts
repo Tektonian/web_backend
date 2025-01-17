@@ -1,19 +1,19 @@
 import express, { Request, Response } from "express";
-import * as CorpController from "../../global/corpInfo/kr/CorpInfoController";
-import { models } from "../../models/rdbms";
+import * as CorpController from "../../global/corpInfo/kr/CorpInfoController.js";
+import { models } from "../../models/rdbms/index.js";
 
 /**
  * Types, middleware, and validator
  */
-import { APISpec } from "api_spec";
-import { filterSessionByRBAC } from "../../middleware/auth.middleware";
+import { APISpec } from "@mesh/api_spec";
+import { filterSessionByRBAC } from "../../middleware/auth.middleware.js";
 
 /**
  * Utils
  */
 import { pick } from "es-toolkit";
-import * as Errors from "../../errors";
-import logger from "../../utils/logger";
+import * as Errors from "../../errors/index.js";
+import logger from "../../utils/logger.js";
 
 const Consumer = models.Consumer;
 const Corporation = models.Corporation;

@@ -3,7 +3,7 @@ import type { NextFunction, Request, RequestHandler, Response } from "express";
 import { getSession } from "@auth/express";
 import { authConfig } from "../config/auth.config.js";
 
-import { UserEnum } from "api_spec/enum";
+import { UserEnum } from "@mesh/api_spec/enum";
 import * as Errors from "../errors";
 
 import { models } from "../models/rdbms/index.js";

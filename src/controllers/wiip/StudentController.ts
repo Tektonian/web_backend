@@ -10,7 +10,7 @@ import { sequelize } from "../../models/rdbms";
 import { runCatchingAsync } from "../../utils/runCatcher";
 
 import logger from "../../utils/logger";
-import { APIType } from "api_spec";
+import { APIType } from "@mesh/api_spec";
 import { LanguageExam } from "../../models/rdbms/LanguageExam";
 
 const Student = models.Student;

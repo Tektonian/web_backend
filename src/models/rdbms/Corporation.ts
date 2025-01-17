@@ -1,6 +1,6 @@
 import * as Sequelize from "sequelize";
 import { DataTypes, Model, Optional } from "sequelize";
-import { CountryCodeEnum } from "api_spec/enum";
+import { CountryCodeEnum } from "@mesh/api_spec/enum";
 import type { Consumer, ConsumerId } from "./Consumer";
 
 export interface CorporationAttributes {

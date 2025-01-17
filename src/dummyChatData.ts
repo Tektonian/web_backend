@@ -4,7 +4,7 @@ import { ChatContent, ChatRoom, ChatUser, Unread } from "./models/chat";
 /**
  * Utils
  */
-import { RequestEnum } from "api_spec/enum";
+import { RequestEnum } from "@mesh/api_spec/enum";
 import logger from "./utils/logger";
 import { Op } from "sequelize";
 

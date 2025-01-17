@@ -2,46 +2,44 @@ import express from "express";
 /**
  * Middleware
  */
-import { filterSessionByRBAC } from "../../middleware/auth.middleware";
+import { filterSessionByRBAC } from "../../middleware/auth.middleware.js";
 /**
  * Controller
  */
-import {
-    createRequest,
-    getRequestsByCorpId,
-    getRequestByRequestId,
-    updateRequestProviderIds,
-    updateRequestStatus,
-    getRequestsByOrgnId,
-    getPostedRequestsByUserId,
-    getRequestsByProviderUserId,
-} from "../../controllers/wiip/RequestController";
-import { getUserByConsumerId, getUserByStudentId } from "../../controllers/wiip/UserController";
-import { getChatUserByUUID, getChatUsersByUUID } from "../../controllers/chat/chatUserController";
+import { sendMessage } from "../../controllers/chat/chatContentController.js";
 import {
     actionCompleteRecruit,
     actionFinishRequest,
     getChatRoomById,
     sendRefreshChatRooms,
-} from "../../controllers/chat/chatRoomController";
-import { getProvidersByRequest } from "../../controllers/wiip/ProviderController";
-import { sendMessage } from "../../controllers/chat/chatContentController";
+} from "../../controllers/chat/chatRoomController.js";
+import { getChatUserByUUID, getChatUsersByUUID } from "../../controllers/chat/chatUserController.js";
+import { getProvidersByRequest } from "../../controllers/wiip/ProviderController.js";
+import {
+    createRequest,
+    getPostedRequestsByUserId,
+    getRequestByRequestId,
+    getRequestsByCorpId,
+    getRequestsByOrgnId,
+    getRequestsByProviderUserId,
+    updateRequestProviderIds,
+    updateRequestStatus,
+} from "../../controllers/wiip/RequestController.js";
+import { getUserByConsumerId, getUserByStudentId } from "../../controllers/wiip/UserController.js";
 
 /**
  * MongoDB Model: TODO -> Should remove later
  */
-import { ChatRoom } from "../../models/chat";
 /**
  * Enums / Utils / etc...
  */
-import { APISpec } from "api_spec";
-import { RequestSchema } from "api_spec/zod";
-import { RequestEnum } from "api_spec/enum";
-import * as Errors from "../../errors";
-import logger from "../../utils/logger";
-import { omit, pick } from "es-toolkit";
-import { checkUserIsCorpnWorker, getCorpByCorpId } from "../../controllers/wiip/CorporationController";
-import { checkUserIsOrgnWorker, getOrgnByOrgnId } from "../../controllers/wiip/OrganizationController";
+import { APISpec } from "@mesh/api_spec";
+import { RequestEnum } from "@mesh/api_spec/enum";
+import { pick } from "es-toolkit";
+import { checkUserIsCorpnWorker, getCorpByCorpId } from "../../controllers/wiip/CorporationController.js";
+import { checkUserIsOrgnWorker, getOrgnByOrgnId } from "../../controllers/wiip/OrganizationController.js";
+import * as Errors from "../../errors/index.js";
+import logger from "../../utils/logger.js";
 const RequestRouter = express.Router();
 
 RequestRouter.post(

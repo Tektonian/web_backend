@@ -4,7 +4,7 @@ import type { Corporation, CorporationId } from "./Corporation";
 import type { Organization, OrganizationId } from "./Organization";
 import type { Request, RequestId } from "./Request";
 import type { User, UserId } from "./User";
-import { ConsumerEnum } from "api_spec/enum";
+import { ConsumerEnum } from "@mesh/api_spec/enum";
 import { Op } from "sequelize";
 
 export interface ConsumerAttributes {

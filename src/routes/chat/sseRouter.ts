@@ -1,13 +1,13 @@
 import { Router } from "express";
 import { createSession } from "better-sse";
 import { QueueEvents } from "bullmq";
-import { getUnreadCountOfUser } from "../../controllers/chat/chatUnreadController";
-import { getPostedRequestsByUserId } from "../../controllers/wiip/RequestController";
-import { getCorpReviewsByRequestId } from "../../controllers/wiip/CorporationReveiwController";
-import { getStudentReviewsByRequestId } from "../../controllers/wiip/StudentReviewController";
+import { getUnreadCountOfUser } from "../../controllers/chat/chatUnreadController.js";
+import { getPostedRequestsByUserId } from "../../controllers/wiip/RequestController.js";
+import { getCorpReviewsByRequestId } from "../../controllers/wiip/CorporationReveiwController.js";
+import { getStudentReviewsByRequestId } from "../../controllers/wiip/StudentReviewController.js";
 
-import logger from "../../utils/logger";
-import { RequestEnum } from "api_spec/enum";
+import logger from "../../utils/logger.js";
+import { RequestEnum } from "@mesh/api_spec/enum";
 
 const sendSSEAlarm = new QueueEvents("sendAlarm", {
     connection: {

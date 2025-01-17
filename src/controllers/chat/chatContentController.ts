@@ -3,7 +3,7 @@ import { ChatUser, ChatContent, ChatRoom, Types as ChatTypes } from "../../model
 
 import { pushMessageQueue } from "./messageQueue";
 
-import { APIType } from "api_spec";
+import { APIType } from "@mesh/api_spec";
 import logger from "../../utils/logger";
 
 export const sendMessage = async (

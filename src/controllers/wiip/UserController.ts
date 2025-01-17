@@ -8,7 +8,7 @@ const User = models.User;
 const Consumer = models.Consumer;
 const Student = models.Student;
 
-import { APIType } from "api_spec";
+import { APIType } from "@mesh/api_spec";
 export const getUserByName = async (username: string) => {
     const userProfile = await User.findOne({
         where: { username: username },

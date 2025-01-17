@@ -3,7 +3,7 @@ import { Queue, Worker, QueueEventsProducer } from "bullmq";
 import mongoose, { Types } from "mongoose";
 
 import logger from "../../utils/logger";
-import { APIType } from "api_spec";
+import { APIType } from "@mesh/api_spec";
 
 // Some user sent message at specific chatroom
 // Server will record sent messages at database
