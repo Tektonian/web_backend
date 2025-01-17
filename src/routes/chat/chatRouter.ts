@@ -55,7 +55,7 @@ ChatRouter.post(
         });
 
         if (!userInstance) {
-            throw new Errors.ServiceErrorBase("Something went wrong");
+            throw new Errors.ServiceErrorBase("No user instance found");
         }
         if (!reqeustInstance) {
             throw new Errors.ServiceExceptionBase("User sent wrong request_id");
@@ -69,7 +69,9 @@ ChatRouter.post(
         const consumerInstance = (await getUserByConsumerId(reqeustInstance.consumer_id))?.get({ plain: true });
 
         if (!consumerInstance) {
-            throw new Errors.ServiceErrorBase("Something went wrong");
+            throw new Errors.ServiceErrorBase("No consumer instance found");
+        } else if (consumerInstance.user_id.equals(userInstance.user_id)) {
+            throw new Errors.ServiceExceptionBase("Consumer of a request asked to be a provider");
         }
 
         const chatRooms = await ChatRoomController.getAliveChatRoomsByUser(userInstance.user_id);

@@ -4,15 +4,10 @@ import Google from "@auth/express/providers/google";
 import Naver from "@auth/express/providers/naver";
 import Kakao from "@auth/express/providers/kakao";
 import Nodemailer from "@auth/express/providers/nodemailer";
-import { Sequelize } from "sequelize";
+import { sequelize } from "../models/rdbms";
 import SequelizeAdapter from "./auth.adapter-sequelize";
 
 import logger from "../utils/logger";
-
-const sequelize = new Sequelize(process.env.MYSQL_DATABASE, process.env.MYSQL_USER, process.env.MYSQL_PASSWORD, {
-    dialect: "mysql",
-    logging: (msg) => logger.debug(msg),
-});
 
 /**
  * Most of the codes are from https://github.com/nextauthjs/next-auth/blob/main/packages/core/src/lib/actions/callback/handle-login.ts#L26
@@ -158,8 +153,12 @@ export const authConfig: ExpressAuthConfig = {
     callbacks: {
         /**
          *
-         * @param token: token is a value that is only visible at server-side
-         * @param session: session is a value that is exposed to user-side
+         * @param token: When trigger is "signIn" or "signUp", it will be a subset of JWT,
+                        name, email and image will be included.
+                        Otherwise, it will be the full JWT for subsequent calls.
+         * @param session: When using AuthConfig.session strategy: "jwt", this is the data
+                            sent from the client via the useSession().update method.
+                            ⚠ Note, you should validate this data before using it.
          * @param User
          * @param trigger
          * @param account
@@ -185,7 +184,7 @@ export const authConfig: ExpressAuthConfig = {
             logger.debug(
                 `jwt: ${process.env.NODE_ENV} ${JSON.stringify(token)}, ${JSON.stringify(user)}, ${JSON.stringify(trigger)}, ${JSON.stringify(account)}, ${JSON.stringify(profile)}, ${JSON.stringify(session)}`,
             );
-            if (trigger === "update") {
+            if (trigger === "update" || trigger === "signIn" || trigger === "signUp") {
                 const adapter = SequelizeAdapter(sequelize);
                 const userInstance = await adapter.getUserByEmail(token.email);
 
@@ -193,24 +192,6 @@ export const authConfig: ExpressAuthConfig = {
                 token.email = userInstance?.email;
                 token.name = userInstance?.username;
                 token.roles = userInstance?.roles;
-            }
-            // TOOD: for debugging
-            else if (
-                process.env.NODE_ENV !== "production" &&
-                trigger === "signIn" &&
-                account?.provider === "credentials"
-            ) {
-                const adapter = SequelizeAdapter(sequelize);
-                const userInstance = await adapter.getUserByEmail(user.email);
-                token.id = userInstance?.id;
-                token.email = userInstance?.email;
-                token.name = userInstance.username;
-                token.roles = userInstance.roles;
-            } else if (trigger === "signIn") {
-                token.name = user.username;
-                token.email = user.email ?? "";
-                token.id = Buffer.from(user?.id ?? []);
-                token.roles = user?.roles ?? [];
             }
             return token;
         },
@@ -240,10 +221,9 @@ export const authConfig: ExpressAuthConfig = {
             // https://authjs.dev/guides/extending-the-session#with-jwt
             // console.log("Session: ", session, token, user);
             logger.debug(`Session: ${JSON.stringify(session)} - ${JSON.stringify(token)} - ${user}`);
-            // User id should not be exposed
-            if (process.env.NODE_ENV !== "production") {
-                session.user.id = token.id ?? undefined;
-            }
+            // IMPORTANT: User id should not be exposed
+            // session.user.id = token.id ?? undefined;
+
             session.user.email = token.email ?? undefined;
             session.user.name = token.name;
             session.user.roles = token.roles ?? [];
@@ -258,5 +238,15 @@ export const authConfig: ExpressAuthConfig = {
             // console.log("event session", session, token);
         },
     },
-    debug: true,
+    logger: {
+        error(code, ...message) {
+            logger.error(`${code}:${message}`);
+        },
+        warn(code, ...message) {
+            logger.warn(`${code}:${message}`);
+        },
+        debug(code, ...message) {
+            logger.debug(`${code}:${message}`);
+        },
+    },
 };

@@ -9,7 +9,7 @@ interface EXAM_RESULT_TYPE {
     level: ExamEnum.EXAM_LEVEL_ENUM;
 }
 export interface LanguageExamAttributes {
-    exam_id: number;
+    exam_id: Buffer;
     exam_name_glb: { [country_code in CountryCodeEnum.COUNTRY_CODE_ENUM]?: string };
     exam_results: EXAM_RESULT_TYPE[];
     exam_type?: ExamEnum.EXAM_TYPE;
@@ -25,7 +25,7 @@ export class LanguageExam
     extends Model<LanguageExamAttributes, LanguageExamCreationAttributes>
     implements LanguageExamAttributes
 {
-    exam_id!: number;
+    exam_id!: Buffer;
     exam_name_glb!: { [country_code in CountryCodeEnum.COUNTRY_CODE_ENUM]?: string };
     exam_results!: EXAM_RESULT_TYPE[];
     exam_type?: ExamEnum.EXAM_TYPE;
@@ -48,7 +48,7 @@ export class LanguageExam
         return LanguageExam.init(
             {
                 exam_id: {
-                    type: DataTypes.INTEGER,
+                    type: DataTypes.BLOB,
                     allowNull: false,
                     primaryKey: true,
                 },

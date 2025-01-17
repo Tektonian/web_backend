@@ -5,7 +5,7 @@ import type { Student, StudentId } from "./Student";
 
 export interface AcademicHistoryAttributes {
     id: number;
-    school_id: number;
+    school_id: Buffer;
     student_id: number;
     degree: string;
     start_date: string;
@@ -26,7 +26,7 @@ export class AcademicHistory
     implements AcademicHistoryAttributes
 {
     id!: number;
-    school_id!: number;
+    school_id!: Buffer;
     student_id!: number;
     degree!: string;
     start_date!: string;
@@ -57,7 +57,7 @@ export class AcademicHistory
                     primaryKey: true,
                 },
                 school_id: {
-                    type: DataTypes.INTEGER,
+                    type: DataTypes.BLOB,
                     allowNull: false,
                     references: {
                         model: "School",

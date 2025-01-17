@@ -1,0 +1,17 @@
+FROM node
+
+RUN mkdir /mesh
+RUN mkdir /mesh/backend
+# 서버 소스 복사
+COPY ./web_backend /mesh/backend
+
+WORKDIR /mesh/backend
+
+RUN chmod +x wait-for-it.sh 
+
+RUN npm update --force
+RUN npm install --force
+ 
+
+# 실행 명령어
+CMD ["npm", "run", "dev:production"]

@@ -9,7 +9,12 @@ import { getStudentReviewsByRequestId } from "../../controllers/wiip/StudentRevi
 import logger from "../../utils/logger";
 import { RequestEnum } from "api_spec/enum";
 
-const sendSSEAlarm = new QueueEvents("sendAlarm");
+const sendSSEAlarm = new QueueEvents("sendAlarm", {
+    connection: {
+        host: process.env.REDIS_HOST,
+        port: process.env.REDIS_PORT,
+    },
+});
 
 const SSEAlarmRouter = Router();
 

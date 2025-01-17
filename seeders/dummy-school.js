@@ -23,11 +23,13 @@ module.exports = {
     async up(queryInterface, Sequelize) {
         const parsedJpSchool = parseCsv("../../school_dataset/assets/jp/school_list.csv");
         const MeiliSearch = require("meilisearch").MeiliSearch;
+        const meilisearchHost =
+            process.env.NODE_ENV === "production" ? process.env.MEILISEARCH_HOST : "http://127.0.0.1:7700";
+
         const client = new MeiliSearch({
-            host: "http://127.0.0.1:7700",
+            host: meilisearchHost,
             apiKey: process.env.MEILISEARCH_KEY,
         });
-
         const db = require("../models");
         const School = db.sequelize.models.School;
         let idx = 0;
@@ -35,7 +37,7 @@ module.exports = {
         for (let school of parsedJpSchool) {
             try {
                 await School.create({
-                    school_id: idx,
+                    school_id: Buffer.from(school["school_id"].replaceAll("-", ""), "hex"),
                     school_name: school["JP"],
                     school_name_glb: { KO: school["KO"], JP: school["JP"], US: school["US"] },
                     country_code: "JP",
@@ -46,7 +48,7 @@ module.exports = {
                     },
                 });
                 client.index("school-name-jp").addDocuments({
-                    school_id: idx,
+                    school_id: school["school_id"],
                     school_name: school["JP"],
                     school_name_glb: {
                         KO: school["KO"],
@@ -57,6 +59,7 @@ module.exports = {
                 });
             } catch (error) {
                 console.log("Validation Error in School.bulkcreate", error);
+                throw error;
             }
             idx += 1;
         }
@@ -65,7 +68,7 @@ module.exports = {
         for (let school of parsedKoSchool) {
             try {
                 await School.create({
-                    school_id: idx,
+                    school_id: Buffer.from(school["school_id"].replaceAll("-", ""), "hex"),
                     school_name: school["KO"],
                     school_name_glb: { KO: school["KO"], JP: school["JP"], US: school["US"] },
                     country_code: "KO",
@@ -76,7 +79,7 @@ module.exports = {
                     },
                 });
                 client.index("school-name-ko").addDocuments({
-                    school_id: idx,
+                    school_id: school["school_id"],
                     school_name: school["KO"],
                     school_name_glb: {
                         KO: school["KO"],
@@ -95,6 +98,16 @@ module.exports = {
     },
 
     async down(queryInterface, Sequelize) {
+        const MeiliSearch = require("meilisearch").MeiliSearch;
+        const meilisearchHost =
+            process.env.NODE_ENV === "production" ? process.env.MEILISEARCH_HOST : "http://127.0.0.1:7700";
+
+        const client = new MeiliSearch({
+            host: meilisearchHost,
+            apiKey: process.env.MEILISEARCH_KEY,
+        });
+        client.index("school-name-jp").deleteAllDocuments();
+        client.index("school-name-ko").deleteAllDocuments();
         await queryInterface.bulkDelete("School", null, {});
     },
 };

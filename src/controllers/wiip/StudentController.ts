@@ -91,10 +91,13 @@ export const getInstReviewOfStudentByStudentId = async (student_id: number) => {
 };
 
 // TODO: Add type laterㅇ
-export const createUnVerifiedStudentIdentity = async (userId: Buffer, data) => {
+export const createUnVerifiedStudentIdentity = async (
+    userId: Buffer,
+    data: APIType.StudentType.ReqCreateStudentProfile,
+) => {
     try {
         const ret = await sequelize.transaction(async (t) => {
-            const { academicHistory, examHistory, ...student } = data;
+            const { academic_history, exam_history, ...student } = data;
             const createdStudent = await Student.create(
                 {
                     name_glb: student.name_glb,
@@ -103,7 +106,6 @@ export const createUnVerifiedStudentIdentity = async (userId: Buffer, data) => {
                     phone_number: student.phone_number,
                     emergency_contact: student.emergency_contact,
                     gender: student.gender,
-                    image: student.image,
                     has_car: student.has_car,
                     keyword_list: student.keyword_list,
                 },
@@ -117,8 +119,13 @@ export const createUnVerifiedStudentIdentity = async (userId: Buffer, data) => {
                 ...createdStudent.dataValues,
             };
 
-            for (const history of academicHistory) {
-                const isAttending = history.status === "In progress" ? 1 : 0;
+            for (const history of academic_history) {
+                const isAttending = history.status === 0 ? 1 : 0;
+                // TODO: Need validator and type should be added
+                // change to string id to buffer
+                if (typeof history.school_id === "string") {
+                    history.school_id = Buffer.from(history.school_id.replaceAll("-", ""), "hex");
+                }
                 const acaHistory = await AcademicHistory.create(
                     {
                         school_id: history.school_id,
@@ -148,20 +155,25 @@ export const createUnVerifiedStudentIdentity = async (userId: Buffer, data) => {
 
             searchDocument = {
                 ...searchDocument,
-                academicHistory: academicHistory,
-                examHistory: examHistory,
+                academic_history: academic_history,
+                exam_history: exam_history,
             };
 
             const searchRet = await studentSearch.addDocuments([searchDocument], { primaryKey: "id" });
 
             const searchTask = await client.waitForTask(searchRet.taskUid);
 
-            for (const exam of examHistory) {
+            for (const exam of exam_history) {
+                // TODO: Need validator and type should be added
+                // change to string id to buffer
+                if (typeof exam.exam_id === "string") {
+                    exam.exam_id = Buffer.from(exam.exam_id.replaceAll("-", ""), "hex");
+                }
                 await ExamHistory.create(
                     {
                         student_id: studentId,
                         exam_id: exam.exam_id,
-                        exam_result: exam.exam_result,
+                        level: exam.level,
                     },
                     { transaction: t },
                 );

@@ -96,10 +96,7 @@ const customFormat = winston.format((info: InformationType) => {
     const traceId = traceObj?.id ?? "";
     const glbTraceId = traceObj?.glbTraceId ?? "";
     const str = traceObj?.userId ?? undefined;
-    const userId =
-        str === undefined
-            ? ""
-            : `${str.slice(0, 8)}-${str.slice(8, 12)}-${str.slice(12, 16)}-${str.slice(16, 20)}-${str.slice(20)}`;
+    const userId = str ?? "";
     const fileName = errorAt.getFileName();
     const functionName = errorAt.getFunctionName() ?? errorAt.getMethodName() ?? "<anonymous>";
     const lineNumber = errorAt.getLineNumber();
@@ -203,7 +200,7 @@ if (process.env.NODE_ENV === "production") {
         ],
         exceptionHandlers: [new winston.transports.Console({})],
         rejectionHandlers: [new winston.transports.Console({})],
-        silent: true,
+        silent: false,
     };
 }
 

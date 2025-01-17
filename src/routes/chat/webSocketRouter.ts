@@ -28,9 +28,24 @@ import type { UserAttributes } from "../../models/rdbms/User";
 import type { APIType } from "api_spec";
 
 const { chatContentController, chatRoomController, chatUserController, chatUnreadController } = chatController;
-const userSentEvent = new QueueEvents("userSentMessage");
-const updateChatRoomEvent = new QueueEvents("updateChatRoom");
-const refreshChatRoomsEvent = new QueueEvents("refreshChatRooms");
+const userSentEvent = new QueueEvents("userSentMessage", {
+    connection: {
+        host: process.env.REDIS_HOST,
+        port: process.env.REDIS_PORT,
+    },
+});
+const updateChatRoomEvent = new QueueEvents("updateChatRoom", {
+    connection: {
+        host: process.env.REDIS_HOST,
+        port: process.env.REDIS_PORT,
+    },
+});
+const refreshChatRoomsEvent = new QueueEvents("refreshChatRooms", {
+    connection: {
+        host: process.env.REDIS_HOST,
+        port: process.env.REDIS_PORT,
+    },
+});
 type ResSomeoneSent = APIType.WebSocketType.ResSomeoneSent;
 type ResChatRoom = APIType.ChatRoomType.ResChatRoom;
 
@@ -558,7 +573,7 @@ export function __initChat(io: Server) {
         // TODO: 기기별 1개로 재한 필요함
         // 지금은 채팅 페이지에서 유저가 요청하는데로 생성하고 있음
         let chatUser = await chatUserController.getChatUserByUUID(sessionUser.id);
-
+        console.log(sessionUser);
         if (chatUser === null) {
             chatUser = await chatUserController.createChatUser(sessionUser.id);
         }

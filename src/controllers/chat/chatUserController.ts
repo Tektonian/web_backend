@@ -16,8 +16,8 @@ export const createChatUser = async (user_id: Buffer) => {
     return await ChatUser.create({
         user_id: user.user_id,
         email: user.email,
-        user_name: user.username,
-        user_name_glb: { en: user.username },
+        user_name: user.username ?? "",
+        user_name_glb: { en: user.username ?? "" },
         image_url: user.image,
     });
 };
