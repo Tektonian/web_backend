@@ -3,10 +3,7 @@ import express from "express";
 /**
  * Controller
  */
-import {
-    getPostedRequestsByUserId,
-    getRequestsByProviderUserId
-} from "../../controllers/wiip/RequestController.js";
+import { getPostedRequestsByUserId, getRequestsByProviderUserId } from "../../controllers/wiip/RequestController.js";
 import { getStudentByUserId } from "../../controllers/wiip/StudentController.js";
 import { getUserById, updateUserByUserId } from "../../controllers/wiip/UserController.js";
 /**

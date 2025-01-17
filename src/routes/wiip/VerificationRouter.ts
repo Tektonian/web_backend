@@ -217,7 +217,7 @@ function html(params: { url: string; host: string; theme: Theme; token: string }
             <td align="center"
                 style="padding: 10px 0px; font-size: 22px; font-family: Helvetica, Arial, sans-serif; color: ${color.text};">
                 Input <strong>${token}</strong>
-            </td>            
+            </td>
         </table>
       </td>
     </tr>

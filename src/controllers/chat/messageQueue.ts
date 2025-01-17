@@ -160,7 +160,7 @@ const userSentWorker = new Worker(
                     "image_url":"",
                     "created_at":"2024-12-13T02:58:26.272Z",
                     "updated_at":"2024-12-13T02:58:26.272Z","
-                    __v":0}} 
+                    __v":0}}
         */
         logger.debug(`userSentWorker: ${JSON.stringify(data)}`);
         // console.log(data);

@@ -32,7 +32,7 @@ export const getUnreadSequences = async (chatRoomId: Types.ObjectId) => {
 export const getUnreadCountOfUser = async (uuid: Buffer) => {
     const userUnreads = await Unread.find({ user_id: uuid });
     const chatRoomIds = userUnreads.map((unread) => unread.chatroom);
-    const chatRooms = await ChatRoom.find({ $and: [ {_id:{$in: chatRoomIds }}, {request_id: {$gt: 0}} ]  });
+    const chatRooms = await ChatRoom.find({ $and: [{ _id: { $in: chatRoomIds } }, { request_id: { $gt: 0 } }] });
 
     let ret = 0;
     chatRooms.forEach((chatRoom) => {

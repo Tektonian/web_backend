@@ -59,7 +59,7 @@ function clean_data {
     echo "Cleaning data"
     echo "Check sequelize/config file before you run the script"
     cd ${SEQ}
-    npx sequelize-cli db:seed:undo:all --url ${DB_URL} 
+    npx sequelize-cli db:seed:undo:all --url ${DB_URL}
     cd ..
 }
 

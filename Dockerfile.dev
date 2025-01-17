@@ -7,11 +7,11 @@ COPY ./web_backend /mesh/backend
 
 WORKDIR /mesh/backend
 
-RUN chmod +x wait-for-it.sh 
+RUN chmod +x wait-for-it.sh
 
 RUN npm update --force
 RUN npm install --force
- 
+
 
 # 실행 명령어
 CMD ["npm", "run", "dev:production"]
